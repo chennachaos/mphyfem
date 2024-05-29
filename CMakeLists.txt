@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-#project(electromechfem)
-project(femSolidmechanics)
+project(femMagnetomech)
+#project(femSolidmechanics)
 
 message("<< ${CMAKE_PROJECT_NAME} / ${PROJECT_NAME}")
 
@@ -41,7 +41,7 @@ src/lib
 src/mySolvers
 src/femSolidmechanics
 #src/electromechFEM
-#src/magnetomechFEM
+src/femMagnetomech
 #src/thermomechFEM
 #src/gelFEM
 #src/growthFEM
@@ -129,7 +129,6 @@ src/utilities/*.cpp
 
 
 file(GLOB sourcesSolidmechanics1
-#src/growthFEM/*h
 src/femSolidmechanics/*h
 src/material/*h
 src/mySolvers/*h
@@ -138,8 +137,24 @@ src/utilities/*h
 
 
 file(GLOB sourcesSolidmechanics2
-#src/growthFEM/*.cpp
 src/femSolidmechanics/*.cpp
+src/material/*.cpp
+src/mySolvers/*.cpp
+src/utilities/*.cpp
+)
+
+
+
+file(GLOB sourcesMagneto1
+#src/growthFEM/*h
+src/femMagnetomech/*h
+src/material/*h
+src/mySolvers/*h
+src/utilities/*h
+)
+
+file(GLOB sourcesMagneto2
+src/femMagnetomech/*.cpp
 src/material/*.cpp
 src/mySolvers/*.cpp
 src/utilities/*.cpp
@@ -149,13 +164,11 @@ src/utilities/*.cpp
 ##################################
 ##################################
 
-add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
-
-#add_executable(magnetomechFEM  src/magnetomechFEM/main.cpp ${sources1} ${sources2})
-
-#add_executable(growthFEM       src/growthFEM/main.cpp ${sourcesGrowth1}  ${sourcesGrowth2})
-
-#add_executable(inversegrowthFEM       src/inversegrowthFEM/main.cpp ${sourcesGrowth1}  ${sourcesGrowth2})
+#if(${CMAKE_PROJECT_NAME} == "femSolidmechanics")
+#add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
+#elseif(${CMAKE_PROJECT_NAME} == "femMagnetomech")
+add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
+#endif
 
 #pardiso600-GNU800-X86-64
 
@@ -164,5 +177,9 @@ target_link_libraries(${CMAKE_PROJECT_NAME} stdc++  gfortran gomp pthread m  bla
 #install(TARGETS solidfem RUNTIME DESTINATION /home/chenna/Documents/myCode/mphyfem/bin)
 
 install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION /home/chenna/Documents/myCode/mphyfem/bin)
+
+
+
+
 
 

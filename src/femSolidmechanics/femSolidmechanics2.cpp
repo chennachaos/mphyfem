@@ -104,7 +104,6 @@ int femSolidmechanics::setSolver(int slv)
     solverOK = true;
 
     if( convert2TISSOLID(SolnData.timeIntegrationScheme) != TISSOLID::STATIC )
-    //if( convert2TISSOLID(SolnData.getTimeIncrementScheme()) != TISSOLID::STEADY )
       setInitialConditions();
 
     solverPetsc->Fext.resize(nNode_global*ndof);
@@ -1044,9 +1043,9 @@ int femSolidmechanics::solveWithArclength()
 
 
 
-int femSolidmechanics::calcStiffnessAndResidual(int printRes, bool zeroMtx, bool zeroRes)
+int femSolidmechanics::calcStiffnessAndResidual()
 {
-    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolids::calcStiffnessAndResidual ...STARTED \n\n");}
+    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolidmechanics::calcStiffnessAndResidual ...STARTED \n\n");}
 
     int  ee, ii, jj, nsize;
 
@@ -1114,7 +1113,7 @@ int femSolidmechanics::calcStiffnessAndResidual(int printRes, bool zeroMtx, bool
 
     solverPetsc->currentStatus = ASSEMBLY_OK;
 
-    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolids::calcStiffnessAndResidual ... ENDED \n\n");}
+    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolidmechanics::calcStiffnessAndResidual ... ENDED \n\n");}
 
     return 0;
 }
@@ -1123,7 +1122,7 @@ int femSolidmechanics::calcStiffnessAndResidual(int printRes, bool zeroMtx, bool
 
 int femSolidmechanics::factoriseSolveAndUpdate()
 {
-    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolids::factoriseSolveAndUpdate ... STARTED \n\n");}
+    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolidmechanics::factoriseSolveAndUpdate ... STARTED \n\n");}
 
     time_t tstart, tend;
 
@@ -1211,7 +1210,7 @@ int femSolidmechanics::factoriseSolveAndUpdate()
       }
     }
 
-    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolids::factoriseSolveAndUpdate ... ENDED \n\n");}
+    if(debug) {PetscPrintf(MPI_COMM_WORLD, "     femSolidmechanics::factoriseSolveAndUpdate ... ENDED \n\n");}
 
     return 0;
 }

@@ -65,6 +65,12 @@ femBase::femBase()
     loadFactor = loadFactorPrev = loadFactorPrev2 = 0.0;
     loadFactorVec.push_back(loadFactor);
 
+    dispDegree = 0;
+    presDegree = 0;
+    mpotDegree = 0;
+
+    outputfrequency = 1;
+
     dirname = get_current_dir_name();
     vector<string> stringlist;
     boost::algorithm::split(stringlist, dirname, boost::is_any_of("/"), boost::token_compress_on);
@@ -1073,7 +1079,7 @@ void femBase::readSolverDetails(ifstream& infile, string& line)
             {
                 SolnData.setSpectralRadius(stod(stringlist[1]));
             }
-            else if(stringlist[0] == "infilealTime")
+            else if(stringlist[0] == "finalTime")
             {
                 timeFinal = stod(stringlist[1]);
             }

@@ -6,7 +6,7 @@
 #include "TimeFunction.h"
 #include "MyTime.h"
 
-extern vector<TimeFunction>  timeFunctions;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime                myTime;
 extern bool debug;
 
@@ -52,7 +52,7 @@ int Matl_MagnMech_Gent_Viscoelastic::computeStressAndTangent(bool tangFlag, int 
     //printMatrix(streMagn);
 
     VectorXd  ResiMagnfieldCur = F*(ResiMagnfield/J);
-    streMagn = (-1.0/mu0) * ((timeFunctions[0].getValue()*ApplMagnfield)* (ResiMagnfieldCur.transpose()) );
+    streMagn = (-1.0/mu0) * ((timeFunctions[0]->getValue()*ApplMagnfield)* (ResiMagnfieldCur.transpose()) );
 
 
     stre(0) += streMagn(0,0);    stre(3) += streMagn(0,1);    stre(6) += streMagn(0,2);

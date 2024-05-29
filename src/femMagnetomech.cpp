@@ -1,10 +1,10 @@
 /*
-! Program for solid mechanics Finite Element Method
+! Program for incompressible Navier-Stokes using Stabilised Finite Element Method
 !
 !
 ! Author: Dr. Chennakesava Kadapa
-! Date  : 19-May-2024
-! Place : Edinburgh, UK
+! Date  : 06-May-2020
+! Place : Swansea, UK
 !
 !
 */
@@ -13,11 +13,13 @@
 #include "headersVTK.h"
 #include "headersBasic.h"
 #include "headersEigen.h"
-#include "femSolidmechanics.h"
+#include "femMagnetomech.h"
 #include "Global.h"
+#include "FunctionsProgram.h"
 
 
 using namespace std;
+
 
 
 
@@ -55,34 +57,29 @@ int main(int argc, char* argv[])
     PetscInitialize(NULL, NULL, "./inputs/petsc_options.dat", NULL);
 
 
+    femMagnetomech  magnfem;
 
+    magnfem.readInput(inputfile);
 
-    femSolidmechanics  solidfem;
-
-    solidfem.readInput(inputfile);
-
-    solidfem.prepareInputData();
+    magnfem.prepareInputData();
 
     double timerStart, timerEnd;
 
     timerStart = MPI_Wtime();
-    solidfem.setSolver(2);
+    magnfem.setSolver(2);
     timerEnd = MPI_Wtime();
 
-    solidfem.solveFullyImplicit();
+    magnfem.solveFullyImplicit();
 
-    printf("\n\n Elapsed time = %f seconds \n\n", timerEnd - timerStart );
-
-    //solidfem.computeElementErrors(0);
-    //solidfem.plotGeom();
-    //solidfem.postProcess();
-
-    //solidfem.printComputerTimes();
+    //magnfem.postProcess();
+    //magnfem.printComputerTimes();
 
     printf("\n\n\n Program is successful \n\n\n ");
+
+    PetscFinalize(); //CHKERRQ(ierr);
 
     return 0;
 }
 
 
-//
+

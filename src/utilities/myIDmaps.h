@@ -59,7 +59,18 @@ enum  {
      ELEM_BEAM_3D_NODES2     = 152,
      ELEM_BEAM_3D_NODES3     = 153,
      //
-     ELEM_SHELL_FLAT_QUAD4   = 201
+     ELEM_SHELL_FLAT_QUAD4   = 201,
+     //
+     //
+     //
+     ELEM_MAGNMECH_2D_HM_10  = 2001,
+     ELEM_MAGNMECH_2D_HM_21  = 2002,
+     ELEM_MAGNMECH_2D_SM_221 = 2003,
+     //
+     ELEM_MAGNMECH_3D_HM_10  = 2051,
+     ELEM_MAGNMECH_3D_HM_21  = 2052,
+     ELEM_MAGNMECH_3D_SM_221 = 2053
+
 
 };
 
@@ -86,7 +97,16 @@ inline  int  getElementID_Standard(std::string& matkey)
      {"ELEM_BEAM_2D",                    0102},
      {"ELEM_TRUS_3D",                    0151},
      {"ELEM_BEAM_3D",                    0152},
-     {"dummy",0}
+     {"dummy",0},
+     //
+     {"ELEM_MAGNMECH_2D_HM_10",          ELEM_MAGNMECH_2D_HM_10},
+     {"ELEM_MAGNMECH_2D_HM_21",          ELEM_MAGNMECH_2D_HM_21},
+     {"ELEM_MAGNMECH_2D_SM_221",         ELEM_MAGNMECH_2D_SM_221},
+     {"dumm1",                           2005},
+     {"ELEM_MAGNMECH_3D_HM_10",          ELEM_MAGNMECH_3D_HM_10},
+     {"ELEM_MAGNMECH_3D_HM_21",          ELEM_MAGNMECH_3D_HM_21},
+     {"ELEM_MAGNMECH_3D_SM_221",         ELEM_MAGNMECH_3D_SM_221},
+     {"dumm2",                           2055},
     };
 
     unordered_map<string,int>::const_iterator got = map_elements.find(matkey);
@@ -104,13 +124,13 @@ inline  int  getElementID_Standard(std::string& matkey)
 inline  int  getElementID_MagnetoMech(string& matkey)
 {
     unordered_map<string,int>   map_elements = {
-     {"ELEM_MAGNMECH_2D_HM_10",          2001},
-     {"ELEM_MAGNMECH_2D_HM_21",          2002},
-     {"ELEM_MAGNMECH_2D_SM_221",         2003},
+     {"ELEM_MAGNMECH_2D_HM_10",          ELEM_MAGNMECH_2D_HM_10},
+     {"ELEM_MAGNMECH_2D_HM_21",          ELEM_MAGNMECH_2D_HM_21},
+     {"ELEM_MAGNMECH_2D_SM_221",         ELEM_MAGNMECH_2D_SM_221},
      {"dumm1",                           2005},
-     {"ELEM_MAGNMECH_3D_HM_10",          2051},
-     {"ELEM_MAGNMECH_3D_HM_21",          2052},
-     {"ELEM_MAGNMECH_3D_SM_221",         2053},
+     {"ELEM_MAGNMECH_3D_HM_10",          ELEM_MAGNMECH_3D_HM_10},
+     {"ELEM_MAGNMECH_3D_HM_21",          ELEM_MAGNMECH_3D_HM_21},
+     {"ELEM_MAGNMECH_3D_SM_221",         ELEM_MAGNMECH_3D_SM_221},
      {"dumm2",                           2055},
      {"dummy",0}
     };

@@ -1,5 +1,5 @@
 
-#include "MagnetoMech3DMixedBase21.h"
+#include "Elem_Magnmech_3D_HM_21.h"
 #include "MyTime.h"
 #include "GeomDataLagrange.h"
 #include "SolutionData.h"
@@ -13,103 +13,73 @@
 using namespace std;
 
 extern MyTime myTime;
-extern List<TimeFunction> timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 
 
 
-MagnetoMech3DMixedBase21::MagnetoMech3DMixedBase21()
+Elem_Magnmech_3D_HM_21::Elem_Magnmech_3D_HM_21()
+{
+  ndim = 3;
+  ndof = 3;
+}
+
+
+
+Elem_Magnmech_3D_HM_21::~Elem_Magnmech_3D_HM_21()
 {
 }
 
 
 
-MagnetoMech3DMixedBase21::~MagnetoMech3DMixedBase21()
+
+void Elem_Magnmech_3D_HM_21::prepareElemData()
 {
+  npElem = nodeNums.size();
+  nlbfU  = npElem;
+
+  nsize = nlbfU*ndof;
+
+
+  if( npElem == 10 )
+  {
+    nGP = 4;
+    ELEM_SHAPE = ELEM_SHAPE_TETRA;
+    nlbfP = 4;
+  }
+  else if( npElem == 18 )
+  {
+    nGP = 9;
+    ELEM_SHAPE = ELEM_SHAPE_WEDGE;
+    nlbfP = 6;
+  }
+  else if( npElem == 27 )
+  {
+    nGP = 8;
+    ELEM_SHAPE = ELEM_SHAPE_HEXA;
+    nlbfP = 8;
+  }
+  else
+  {
+     throw runtime_error("Elem_Solid_3D_Mixed1::prepareElemData() ... invalid element type");
+  }
+
+
+  nodeNumsPres.resize(nlbfP);
+  for(int ii=0; ii<nlbfP; ii++)
+    nodeNumsPres[ii] = nodeNums[ii];
+
+  forAssyVecPres = nodeNumsPres;
+
+
+  ElementBase::prepareElemData();
+
+  return;
 }
 
 
 
-int MagnetoMech3DMixedBase21::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
+int Elem_Magnmech_3D_HM_21::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 {
-    if( (Mlocal.rows() != nsize) || (Mlocal.cols() != nsize) )
-      Mlocal.resize(nsize, nsize);
-    Mlocal.setZero();
-
-    // mass lumping - row-wise sum
-    if(MassLumping)
-    {
-      double fact = elmDat[5]*computeVolume(true)/nlbfU;
-
-      for(int ii=0; ii<nsize; ii++)
-      {
-        Mlocal(ii,ii) = fact;
-      }
-    }
-    else
-    {
-      int  nGPt, ii, jj, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
-      double  fact, dvol0, Jac, bb1, cc1, param[3];
-
-      double rho0 = MatlData->getDensity();
-
-      VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
-
-      vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
-      if(ELEM_SHAPE == ELEM_SHAPE_TETRA_BERNSTEIN)
-      {
-        nGPt=10;
-        getGaussPointsTetra(nGPt, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-      }
-      else if(ELEM_SHAPE == ELEM_SHAPE_WEDGE_BERNSTEIN)
-      {
-        nGPt=9;
-        getGaussPointsWedge(nGPt, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-      }
-      else if(ELEM_SHAPE == ELEM_SHAPE_HEXA_BERNSTEIN)
-      {
-        nGPt=27;
-        getGaussPointsHexa(nGPt, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-      }
-      else
-      {
-        throw runtime_error("Element type not defined...");
-      }
-
-      for(gp=0; gp<nGPt; gp++)
-      {
-          param[0] = gausspoints1[gp];
-          param[1] = gausspoints2[gp];
-          param[2] = gausspoints3[gp];
-
-          GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
-
-          dvol0 = gaussweights[gp]*Jac;
-
-          for(ii=0;ii<nlbfU;ii++)
-          {
-            bb1 = (dvol0*rho0)*N[ii];
-
-            TI   = 3*ii;
-            TIp1 = TI+1;
-            TIp2 = TI+2;
-
-            for(jj=0; jj<nlbfU; jj++)
-            {
-              TJ   = 3*jj;
-              TJp1 = TJ+1;
-              TJp2 = TJ+2;
-
-              fact  = bb1*N[jj];
-
-              Mlocal(TI,   TJ)    += fact ;
-              Mlocal(TIp1, TJp1)  += fact ;
-              Mlocal(TIp2, TJp2)  += fact ;
-            }
-          }
-      } //gp
-      //cout << " elemVol = " << elemVol << endl;
-      //printMatrix(Klocal);  printf("\n\n\n");
-    }
 
     return 0;
 }
@@ -118,25 +88,26 @@ int MagnetoMech3DMixedBase21::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 
 
 
-int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
+int Elem_Magnmech_3D_HM_21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2)
 {
     int  err = 0, ii, jj, kk, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU), Np(nlbfP);
 
     double  detF, detFn, fact, fact1, dvol, dvol0, Jac, volstrain;
-    double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5, Rp, Jhat, thetahat;
-    double  param[3], bforce[3], force[3];
+    double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5, resip, Jhat, thetahat;
+    double  param[3], bforce[3]={0.0,0.0,0.0}, force[3];
     double  veloCur[3], acceCur[3], sig[3];
 
     int  Utype  = MatlData->getUtype();                     // volumetric energy function
     double BULK = 1.0/MatlData->getKinv();
+    bool  finite = MatlData->isFiniteStrain();
 
     double rho0 = MatlData->getDensity();
     double rho  = rho0 ;
-    bforce[0]   = elmDat[6]*timeFunction[0].prop ;
-    bforce[1]   = elmDat[7]*timeFunction[0].prop ;
-    bforce[2]   = elmDat[8]*timeFunction[0].prop ;
+    //bforce[0]   = elmDat[6]*timeFunction[0].prop ;
+    //bforce[1]   = elmDat[7]*timeFunction[0].prop ;
+    //bforce[2]   = elmDat[8]*timeFunction[0].prop ;
     double af   = SolnData->td(2);
     double dt   = myTime.dt;
     double acceFact1 = SolnData->td(5);
@@ -144,10 +115,10 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
     double FiniteFact = (finite == true) ? 1.0 : 0.0;
     double tCur = myTime.cur;
     //double Bres_Rad = 114.0, angle;
-    double Bres_Rad = 143.0, radius, angle;
+    //double Bres_Rad = 143.0, radius, angle;
 
-    double xNode[nlbfU], yNode[nlbfU], zNode[nlbfU], geom[3];
-    for(ii=0;ii<nlbfU;ii++)
+    double xNode[npElem], yNode[npElem], zNode[npElem], geom[3];
+    for(ii=0;ii<npElem;ii++)
     {
       xNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][0];
       yNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][1];
@@ -155,17 +126,7 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
     }
 
     vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
-
-    if(ELEM_SHAPE == ELEM_SHAPE_TETRA_BERNSTEIN)
-      getGaussPointsTetra(nGP, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-    else if(ELEM_SHAPE == ELEM_SHAPE_WEDGE_BERNSTEIN)
-      getGaussPointsWedge(nGP, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-    else if(ELEM_SHAPE == ELEM_SHAPE_HEXA_BERNSTEIN)
-      getGaussPointsHexa(nGP, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-    else
-    {
-        throw runtime_error("Element type not defined...");
-    }
+    nGP = getGaussPoints3D(npElem, gausspoints1, gausspoints2, gausspoints3, gaussweights);
 
 
     // resize local matrices and initialise them to zero
@@ -198,28 +159,28 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         dvol0 = Jac * gaussweights[gp];
         dvol = dvol0;
         elemVolOrig += dvol0;
 
         geom[0] = geom[1] = geom[2] = 0.0;
-        for(ii=0;ii<nlbfU;ii++)
+        for(ii=0;ii<npElem;ii++)
         {
           geom[0] += N[ii]*xNode[ii];
           geom[1] += N[ii]*yNode[ii];
           geom[2] += N[ii]*zNode[ii];
         }
 
-        radius = sqrt(geom[0]*geom[0]+geom[1]*geom[1]);
-        angle = atan(geom[1]/geom[0]);
+        //radius = sqrt(geom[0]*geom[0]+geom[1]*geom[1]);
+        //angle = atan(geom[1]/geom[0]);
 
         //MatlData->ResiMagnfield(0) = Bres_Rad*(1.0-radius*radius)*cos(angle);
         //MatlData->ResiMagnfield(1) = Bres_Rad*(1.0-radius*radius)*sin(angle);
 
-        MatlData->ResiMagnfield(0) = Bres_Rad*cos(angle);
-        MatlData->ResiMagnfield(1) = Bres_Rad*sin(angle);
+        //MatlData->ResiMagnfield(0) = Bres_Rad*cos(angle);
+        //MatlData->ResiMagnfield(1) = Bres_Rad*sin(angle);
 
         computeDefGradPrev(dN_dx, dN_dy, dN_dz, Fn);
 
@@ -238,29 +199,37 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
           throw runtime_error("Negative Jacobian in the element");
         }
 
-        acceCur[0] = computeValueDotDotCur(0, N);
-        acceCur[1] = computeValueDotDotCur(1, N);
-        acceCur[2] = computeValueDotDotCur(2, N);
+        acceCur[0] = computeAccelerationCur(0, N);
+        acceCur[1] = computeAccelerationCur(1, N);
+        acceCur[2] = computeAccelerationCur(2, N);
 
         if(finite)
         {
-          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0),  &dN_dz(0), Jac);
+          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0),  &dN_dz(0), Jac);
           dvol = gaussweights[gp]*Jac;
         }
         elemVolCur  += dvol;
 
-        // basis functions for pressure dof
-
-        if(ELEM_SHAPE == ELEM_SHAPE_TETRA_BERNSTEIN)
-          BernsteinBasisFunsTetra(1, param[0], param[1], param[2], &Np(0));
-        else if(ELEM_SHAPE == ELEM_SHAPE_WEDGE_BERNSTEIN)
-          BernsteinBasisFunsWedge(1, param[0], param[1], param[2], &Np(0));
-        else if(ELEM_SHAPE == ELEM_SHAPE_HEXA_BERNSTEIN)
-          BernsteinBasisFunsHexa(1, param[0], param[1], param[2], &Np(0));
-
-
         // evaluate pressure at the quadrature points
-        pres = computeValue2Cur(0, Np);
+
+        if(nlbfP == 1)
+        {
+          Np[0] = 1.0;
+          pres = presDOF[0];
+        }
+        else
+        {
+          if(nlbfP == 4)
+            LagrangeBasisFunsTetra(nlbfP, param[0], param[1], param[2], &(Np[0]));
+          else if(nlbfP == 8)
+            LagrangeBasisFunsHexa(nlbfP, param[0], param[1], param[2], &(Np[0]));
+
+          //printVector(Np);
+
+          pres = 0.0;
+          for(ii=0; ii<nlbfP; ii++)
+            pres += (Np[ii]*SolnData->presCur[nodeNumsPres[ii]]);
+        }
 
         MatlData->computeStressAndTangent(true, sss, Fn, F, pres, stre, Cmat, ivar, gp, dt);
         if(err !=0)          return 1;
@@ -348,11 +317,11 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
 
         if(finite)
         {
-          Rp = detF - (Jhat+thetahat*pres);
+          resip = detF - Jhat - thetahat*pres;
         }
         else
         {
-          Rp = volstrain - thetahat*pres;
+          resip = volstrain - thetahat*pres;
         }
 
         for(ii=0; ii<nlbfP; ii++)
@@ -360,7 +329,7 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
           bb4 = dvol*Np[ii]*af;
           bb5 = dvol0*Np[ii];
 
-          Flocal2(ii) -= bb5*Rp;
+          Flocal2(ii) -= bb5*resip;
 
           for(jj=0; jj<nlbfU; jj++)
           {
@@ -390,6 +359,7 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
       printMatrix(Kpp);
     }
 
+    /*
     if(SolnData->tis > 1110)
     {
         VectorXd  accC(nsize);
@@ -412,6 +382,7 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
         Kuu     +=  acceFact1*Cmat;
         Flocal1 -=  Cmat*accC;
     }
+    */
 
 
     return 0;
@@ -420,7 +391,7 @@ int MagnetoMech3DMixedBase21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matri
 
 
 
-void MagnetoMech3DMixedBase21::elementContourplot(int vartype, int varindex, int index)
+void Elem_Magnmech_3D_HM_21::elementContourplot(int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -449,7 +420,7 @@ void MagnetoMech3DMixedBase21::elementContourplot(int vartype, int varindex, int
 
        default:
 
-              cout  << " Invalid Variable Type to project in 'MagnetoMech3DMixedBase21::projectToNodes'" << endl;
+              cout  << " Invalid Variable Type to project in 'Elem_Magnmech_3D_HM_21::projectToNodes'" << endl;
               break;
     }
 
@@ -465,7 +436,7 @@ void MagnetoMech3DMixedBase21::elementContourplot(int vartype, int varindex, int
 }
 
 
-void MagnetoMech3DMixedBase21::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
+void Elem_Magnmech_3D_HM_21::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -494,7 +465,7 @@ void MagnetoMech3DMixedBase21::projectToNodes(bool extrapolateFlag, int vartype,
 
        default:
 
-              cout  << "           Invalid Variable Type to project in MagnetoMech3DMixedBase21::projectToNodes " << endl;
+              cout  << "           Invalid Variable Type to project in Elem_Magnmech_3D_HM_21::projectToNodes " << endl;
               break;
     }
 
@@ -521,8 +492,9 @@ void MagnetoMech3DMixedBase21::projectToNodes(bool extrapolateFlag, int vartype,
 
 
 
-void MagnetoMech3DMixedBase21::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_21::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
+/*
     double  detF, fact, dvol, dvol0, Jac, param[3];
  
     MatrixXd  F(3,3), Fn(3,3), Cmat(9,9), stresMat(3,3);
@@ -562,7 +534,7 @@ void MagnetoMech3DMixedBase21::projectStress(bool extrapolateFlag, int vartype, 
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         computeDefGradPrev(dN_dx, dN_dy, dN_dz, Fn);
         computeDefGrad(dN_dx, dN_dy, dN_dz, F);
@@ -596,21 +568,21 @@ void MagnetoMech3DMixedBase21::projectStress(bool extrapolateFlag, int vartype, 
         else if(varindex == 10)
            outval[gp] = pres;
     } //gp
-
+*/
     return;
 }
 
 
 
 
-void MagnetoMech3DMixedBase21::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_21::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
   return;
 }
 
 
 
-void MagnetoMech3DMixedBase21::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_21::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
     assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
 

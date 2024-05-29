@@ -6,7 +6,7 @@
 #include "TimeFunction.h"
 #include "MyTime.h"
 
-extern vector<TimeFunction>  timeFunctions;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime                myTime;
 extern bool debug;
 
@@ -58,15 +58,16 @@ int Matl_MagnMech_NeoHookean::computeStressAndTangent(bool tangFlag, int sss,  M
     /////////////////////////////////
     // similar to Zhao's papers in JMPS
     VectorXd  ResiMagnfieldCur = F*(ResiMagnfield/J);
-    streMagn = (-1.0/mu0) * ((timeFunctions[0].getValue()*ApplMagnfield)* (ResiMagnfieldCur.transpose()) );
+    VectorXd  ApplMagnfieldCur = timeFunctions[0]->getValue()*ApplMagnfield;
+    streMagn = (-1.0/mu0) * (ApplMagnfieldCur*ResiMagnfieldCur.transpose() );
 
     stre(0) += streMagn(0,0);    stre(3) += streMagn(0,1);    stre(6) += streMagn(0,2);
     stre(1) += streMagn(1,0);    stre(4) += streMagn(1,1);    stre(7) += streMagn(1,2);
     stre(2) += streMagn(2,0);    stre(5) += streMagn(2,1);    stre(8) += streMagn(2,2);
 
-//    printVector(ResiMagnfield);
-//    printVector(ResiMagnfieldCur);
-//    printVector(ApplMagnfield);
+    //cout << "timeFunctions[0].getValue() = " << timeFunctions[0].getValue() << endl;
+    //printVector(ResiMagnfieldCur);
+    //printVector(ApplMagnfieldCur);
 //    printMatrix(F);
 //    printMatrix(streMagn);
 //    printVector(stre);

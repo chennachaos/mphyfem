@@ -5,7 +5,6 @@
 #include "MyTime.h"
 #include <assert.h>
 #include <cmath>
-#include "Global.h"
 
 extern MyTime myTime;
 

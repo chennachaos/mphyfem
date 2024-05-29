@@ -1,5 +1,5 @@
 
-#include "MagnetoMech3DHex10.h"
+#include "Elem_Magnmech_3D_HM_10.h"
 #include "MyTime.h"
 #include "GeomDataLagrange.h"
 #include "SolutionData.h"
@@ -7,18 +7,17 @@
 #include "TimeFunction.h"
 #include "stressrecovery.h"
 #include "BasisFunctionsBernstein.h"
-#include "growthfunctions.h"
 #include "utilitiesmaterialHyperelastic.h"
 
 
 using namespace std;
 
 extern MyTime myTime;
-extern List<TimeFunction> timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 
 
 
-MagnetoMech3DHex10::MagnetoMech3DHex10()
+Elem_Magnmech_3D_HM_10::Elem_Magnmech_3D_HM_10()
 {
   ELEM_SHAPE = ELEM_SHAPE_HEXA_BERNSTEIN;
 
@@ -33,7 +32,7 @@ MagnetoMech3DHex10::MagnetoMech3DHex10()
   Kup.resize(nsize, 1);
   Kpu.resize(1, nsize);
   Kpp.resize(1, 1);
-  Rp.resize(1);
+  FlocalPres.resize(1);
 
   presDOF.resize(1); presDOF.setZero();
   presDOFprev  = presDOF;
@@ -41,12 +40,12 @@ MagnetoMech3DHex10::MagnetoMech3DHex10()
 }
 
 
-MagnetoMech3DHex10::~MagnetoMech3DHex10()
+Elem_Magnmech_3D_HM_10::~Elem_Magnmech_3D_HM_10()
 {
 }
 
 
-void MagnetoMech3DHex10::prepareElemData()
+void Elem_Magnmech_3D_HM_10::prepareElemData()
 {
   ElementBase::prepareElemData();
 
@@ -55,7 +54,7 @@ void MagnetoMech3DHex10::prepareElemData()
 
 
 
-double MagnetoMech3DHex10::computeVolume(bool configflag)
+double Elem_Magnmech_3D_HM_10::computeVolume(bool configflag)
 {
   double  dvol, Jac, param[3];
 
@@ -82,11 +81,11 @@ double MagnetoMech3DHex10::computeVolume(bool configflag)
           param[2] = gausspoints3[gp];
 
           if(configflag)
-            GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+            GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
           else
-            GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+            GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
-          dvol = gaussweights[gp]*(Jac*thick);
+          dvol = gaussweights[gp]*Jac;
 
           xx = yy= zz = 0.0;
           for(ii=0;ii<nlbfU;ii++)
@@ -104,7 +103,7 @@ double MagnetoMech3DHex10::computeVolume(bool configflag)
 
 
 
-int MagnetoMech3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
+int Elem_Magnmech_3D_HM_10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 {
     if( (Mlocal.rows() != nsize) || (Mlocal.cols() != nsize) )
       Mlocal.resize(nsize, nsize);
@@ -113,7 +112,7 @@ int MagnetoMech3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
     // mass lumping - row-wise sum
     if(MassLumping)
     {
-      double fact = elmDat[5]*computeVolume(true)/6.0;
+      double fact = 0.0;//elmDat[5]*computeVolume(true)/6.0;
 
       for(int ii=0; ii<nsize; ii++)
       {
@@ -127,7 +126,7 @@ int MagnetoMech3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
 
     double fact, dvol0, Jac, bb1, cc1, param[3];
-    double rho0 = elmDat[5] ;
+    double rho0 = 0.0;//elmDat[5] ;
 
     double xNode[8], yNode[8], zNode[4], xx, yy, zz;
     for(ii=0;ii<npElem;ii++)
@@ -148,9 +147,9 @@ int MagnetoMech3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
-        dvol0 = gaussweights[gp]*(thick*Jac);
+        dvol0 = gaussweights[gp]*Jac;
 
         xx = yy = zz = 0.0;
         for(ii=0;ii<nlbfU;ii++)
@@ -192,7 +191,7 @@ int MagnetoMech3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 }
 
 
-int MagnetoMech3DHex10::calcMassMatrixPressure(MatrixXd& Mlocal, bool MassLumping)
+int Elem_Magnmech_3D_HM_10::calcMassMatrixPressure(MatrixXd& Mlocal, bool MassLumping)
 {
     if( (Mlocal.rows() != 1) || (Mlocal.cols() != 1) )
       Mlocal.resize(1, 1);
@@ -203,52 +202,23 @@ int MagnetoMech3DHex10::calcMassMatrixPressure(MatrixXd& Mlocal, bool MassLumpin
 }
 
 
-double  MagnetoMech3DHex10::calcCriticalTimeStep(bool flag)
+double  Elem_Magnmech_3D_HM_10::calcCriticalTimeStep(bool flag)
 {
-    int  ii;
-
-    double xNode[4], yNode[4];
-    for(ii=0;ii<npElem;ii++)
-    {
-      xNode[ii] = GeomData->NodePosNew[nodeNums[ii]][0];
-      yNode[ii] = GeomData->NodePosNew[nodeNums[ii]][1];
-    }
-
-    double  xd, yd, charlen=1.0e10;
-    int  edge_nodes[3][2] = { {0,1}, {1,2}, {2,0}};
-
-    for(ii=0; ii<3; ii++)
-    {
-      xd = xNode[edge_nodes[ii][0]] - xNode[edge_nodes[ii][1]];
-      yd = yNode[edge_nodes[ii][0]] - yNode[edge_nodes[ii][1]]; 
-
-      charlen = min(charlen, xd*xd+yd*yd);
-    }
-    charlen = 0.5*sqrt(charlen);
-
-    double K    = matDat[0] ;
-    double mu   = matDat[1] ;
-    double rho  = elmDat[5] ;
-
-    double  wave_speed = sqrt((K+4.0*mu/3.0)/rho);
-    //double  wave_speed = sqrt((4.0*mu/3.0)/rho);
-
-    double  dtCric = charlen/wave_speed;
-
+    double  dtCric=0.0;
     return  dtCric;
 }
 
 
 
-int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& FlocalU, bool firstIter)
+int Elem_Magnmech_3D_HM_10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& FlocalU, bool firstIter)
 {
     int   err = 0,  ii, jj, kk, mm, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
 
-    double  detF, detFn, fact, fact1, dvol, dvol0, Jac, volstrain;
+    double  detF, detFn, fact, fact1, dvol, dvol0, Jac, volstrain, resip;
     double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5, Jhat, thetahat;
-    double  param[3], bforce[3], force[3];
+    double  param[3], bforce[3]={0.0,0.0,0.0}, force[3];
     double  veloCur[3], acceCur[3], sig[3];
 
     MatrixXd  F(3,3), Fn(3,3);
@@ -266,9 +236,9 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
     }
 
     double rho  = rho0 ;
-    bforce[0]   = elmDat[6]*timeFunction[0].prop ;
-    bforce[1]   = elmDat[7]*timeFunction[0].prop ;
-    bforce[2]   = elmDat[8]*timeFunction[0].prop ;
+    //bforce[0]   = elmDat[6]*timeFunction[0].prop ;
+    //bforce[1]   = elmDat[7]*timeFunction[0].prop ;
+    //bforce[2]   = elmDat[8]*timeFunction[0].prop ;
     double af   = SolnData->td(2);
     double dt   = myTime.dt;
     double acceFact1 = SolnData->td(5);
@@ -296,7 +266,7 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
     Kup.setZero();
     Kpu.setZero();
     Kpp.setZero();
-    Rp.setZero();
+    FlocalPres.setZero();
 
     MatrixXd  Cmat(9,9), Gc(3,9);
     VectorXd  stre(9);
@@ -315,9 +285,9 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
-        dvol0 = gaussweights[gp]*(Jac*thick);
+        dvol0 = gaussweights[gp]*Jac;
         dvol  = dvol0;
         elemVolOrig += dvol0;
 
@@ -347,14 +317,14 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
           throw runtime_error("Negative Jacobian in the element");
         }
 
-        acceCur[0] = computeValueDotDotCur(0, N);
-        acceCur[1] = computeValueDotDotCur(1, N);
-        acceCur[2] = computeValueDotDotCur(2, N);
+        acceCur[0] = computeAccelerationCur(0, N);
+        acceCur[1] = computeAccelerationCur(1, N);
+        acceCur[2] = computeAccelerationCur(2, N);
 
         if(finite)
         {
-          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
-          dvol = gaussweights[gp]*(Jac*thick);
+          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+          dvol = gaussweights[gp]*Jac;
         }
         elemVolCur  += dvol;
 
@@ -450,11 +420,11 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
 
         if(finite)
         {
-          Rp(0) += (detF - (Jhat+thetahat*pres)) *dvol0;
+          resip = detF-Jhat-thetahat*pres;
         }
         else
         {
-          Rp(0) += (volstrain-thetahat*pres) *dvol0;
+          resip = volstrain-thetahat*pres;
         }
 
         bb4 = dvol*af;
@@ -478,15 +448,16 @@ int MagnetoMech3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& Flocal
     // add contribution from the condensed matrix
 
     Kuu -=  ( Kup*(Kpu/Kpp(0,0)) );
-    FlocalU +=  ( Kup*(Rp/Kpp(0,0)) );
+    FlocalU +=  ( Kup*(FlocalPres/Kpp(0,0)) );
 
     return 0;
 }
 
 
 
-int MagnetoMech3DHex10::solveForPressure()
+int Elem_Magnmech_3D_HM_10::solveForPressure()
 {
+/*
     double  volstrain = 0.0, volstrainPrev=0.0;
     double  BULK = 1.0/matDat[1];
 
@@ -516,7 +487,7 @@ int MagnetoMech3DHex10::solveForPressure()
 
             GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
-            dvol0 = gaussweights[gp]*(Jac*thick);
+            dvol0 = gaussweights[gp]*Jac;
             elemVolOrig  += dvol0;
 
             F(0,0) = computeValueCur(0, dN_dx) + 1.0;           // eps_xx
@@ -531,15 +502,6 @@ int MagnetoMech3DHex10::solveForPressure()
 
             detF = F.determinant();
 
-            /*
-            //matlib2d_(matDat, F, &F33, stre, cc[0], &(intVar1[ll]), &(intVar2[ll]), &dt, &matId, &nivGP,     &finiteInt, &sss, &isw, &err, &count, NULL);
-            count++;
-            ll += nivGP;
-            pbar = (stre[0]+stre[1]+stre[2])/3.0;
-
-            //pres += pbar*dvol0;
-            //Jbar += detF*dvol0;
-            */
             pres += (detF-1.0)*dvol0;
         }
         pres = BULK*pres/elemVolOrig;
@@ -572,7 +534,7 @@ int MagnetoMech3DHex10::solveForPressure()
 
       presDOF[0] += (-Rp(0) - vtmp(0))/Kpp(0,0);
     }
-
+*/
     //cout <<  "pres = " <<  pres <<  endl;
 
     return 0;
@@ -580,8 +542,9 @@ int MagnetoMech3DHex10::solveForPressure()
 
 
 
-int MagnetoMech3DHex10::calcStiffnessAndResidualMixed2(MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
+int Elem_Magnmech_3D_HM_10::calcStiffnessAndResidualMixed2(MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TJ, TJp1;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -758,13 +721,14 @@ int MagnetoMech3DHex10::calcStiffnessAndResidualMixed2(MatrixXd& Kup, MatrixXd& 
     }//gp
 
     Kpp(0,0) = -elemVolOrig*eps;
-
+*/
     return 0;
 }
 
 
-int MagnetoMech3DHex10::calcResidual(VectorXd& Flocal)
+int Elem_Magnmech_3D_HM_10::calcResidual(VectorXd& Flocal)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TJ, TJp1;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -903,13 +867,14 @@ int MagnetoMech3DHex10::calcResidual(VectorXd& Flocal)
           Flocal(TIp1) += (bb5*force[1] - bb1*stre[3] - bb2*stre[1]) ;
         }
     }//gp
-
+*/
     return 0;
 }
 
 
-int MagnetoMech3DHex10::calcResidualPressure(VectorXd& Flocal)
+int Elem_Magnmech_3D_HM_10::calcResidualPressure(VectorXd& Flocal)
 {
+/*
     int gp, ii;
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
 
@@ -964,7 +929,7 @@ int MagnetoMech3DHex10::calcResidualPressure(VectorXd& Flocal)
 
         Flocal(0) += (fact*dvol0);
     }
-
+*/
     return 0;
 }
 
@@ -973,104 +938,7 @@ int MagnetoMech3DHex10::calcResidualPressure(VectorXd& Flocal)
 
 
 
-int MagnetoMech3DHex10::calcLoadVector(VectorXd& Flocal)
-{
-  if( NeumannBCs.size() == 0)
-    return 0;
-
-
-  int side, dir, ii, jj, nn, TI, TIp1, TJ, TJp1, gp, nGP=3;
-  int face_node_map[3][3]={{0,3,1},{1,4,2},{2,5,0}};
-  double  specVal, xNode[3], yNode[3], xx, yy, param[2], trac[2], normal[2], tang[2], N[3];
-  double  Jac, dvol;
-
-  vector<double>  gausspoints1, gaussweights;
-
-  getGaussPoints1D(nGP, gausspoints1, gaussweights);
-
-
-  // side 0 - 1-4-2
-  // side 1 - 2-5-3
-  // side 2 - 3-6-1
-
-  // loop over all the sides and compute force vector due to applied traction
-  for(nn=0; nn<NeumannBCs.size(); nn++)
-  {
-    //printVector(NeumannBCs[nn]);
-
-    side    = NeumannBCs[nn][0]; // edge/face number
-    dir     = NeumannBCs[nn][1]; // element number
-    specVal = NeumannBCs[nn][2]; // specified value
-    specVal *= timeFunction[0].prop; // load factor
-
-    //cout << side << '\t' << dir << '\t' << specVal << endl;
-
-    for(ii=0; ii<3; ii++)
-    {
-      //xNode[ii] = GeomData->NodePosOrig[SolnData->node_map_new_to_old[nodeNums[ii]]][0];
-      //yNode[ii] = GeomData->NodePosOrig[SolnData->node_map_new_to_old[nodeNums[ii]]][1];
-
-      xNode[ii] = GeomData->NodePosOrig[nodeNums[face_node_map[side][ii]]][0];
-      yNode[ii] = GeomData->NodePosOrig[nodeNums[face_node_map[side][ii]]][1];
-    }
-
-    //elemVol=0.0;
-    for(gp=0; gp<nGP; gp++)
-    {
-      param[0] = gausspoints1[gp];
-
-      //BernsteinBasisFunsEdge2D(degree, param, xNode, yNode, N, normal, Jac);
-
-      dvol = gaussweights[gp]*(Jac*thick);
-      elemVol += dvol;
-
-      //cout << " normal = " << normal[0] << '\t' << normal[1] << '\t' << Jac << '\t' << dvol << endl;
-      //cout << " Funcs = " << N[0] << '\t' << N[1] << '\t' << N[2] << endl;
-
-        xx = yy= 0.0;
-        for(ii=0;ii<3;ii++)
-        {
-          xx += N[ii]*xNode[ii];
-          yy += N[ii]*yNode[ii];
-        }
-
-        if(axsy)
-          dvol *= 2.0*PI*xx;
-
-        tang[0] = -normal[1];
-        tang[1] =  normal[0];
-
-        if(dir == 0)
-        {
-          trac[0] = specVal*normal[0]*dvol;
-          trac[1] = specVal*normal[1]*dvol;
-        }
-        if(dir == 1)
-        {
-          trac[0] = specVal*tang[0]*dvol;
-          trac[1] = specVal*tang[1]*dvol;
-        }
-
-        for(ii=0;ii<3;ii++)
-        {
-          TI   = face_node_map[side][ii]*ndof;
-          TIp1 = TI+1;
-
-          Flocal(TI)   += N[ii]*trac[0];
-          Flocal(TIp1) += N[ii]*trac[1];
-        }
-    } // for(gp=0; gp<nGP; gp++)
-    //cout << " Volume = " << elemVol << endl;
-  }
-
-  //printVector(Flocal);
-
-  return 0;
-}
-
-
-
-int MagnetoMech3DHex10::calcInternalForces()
+int Elem_Magnmech_3D_HM_10::calcLoadVector(VectorXd& Flocal)
 {
 
   return 0;
@@ -1078,7 +946,15 @@ int MagnetoMech3DHex10::calcInternalForces()
 
 
 
-void MagnetoMech3DHex10::elementContourplot(int vartype, int varindex, int index)
+int Elem_Magnmech_3D_HM_10::calcInternalForces()
+{
+
+  return 0;
+}
+
+
+
+void Elem_Magnmech_3D_HM_10::elementContourplot(int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -1107,7 +983,7 @@ void MagnetoMech3DHex10::elementContourplot(int vartype, int varindex, int index
 
        default:
 
-              cout  << " Invalid Variable Type to project in 'MagnetoMech3DHex10::projectToNodes'" << endl;
+              cout  << " Invalid Variable Type to project in 'Elem_Magnmech_3D_HM_10::projectToNodes'" << endl;
               break;
     }
 
@@ -1123,7 +999,7 @@ void MagnetoMech3DHex10::elementContourplot(int vartype, int varindex, int index
 }
 
 
-void MagnetoMech3DHex10::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
+void Elem_Magnmech_3D_HM_10::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -1167,7 +1043,7 @@ void MagnetoMech3DHex10::projectToNodes(bool extrapolateFlag, int vartype, int v
 }
 
 
-void MagnetoMech3DHex10::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_10::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
     int   err = 0, ii, jj, gp;
 
@@ -1201,7 +1077,7 @@ void MagnetoMech3DHex10::projectStress(bool extrapolateFlag, int vartype, int va
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         geom[0] = geom[1] = geom[2] = 0.0;
         for(ii=0;ii<nlbfU;ii++)
@@ -1234,14 +1110,14 @@ void MagnetoMech3DHex10::projectStress(bool extrapolateFlag, int vartype, int va
 
 
 
-void MagnetoMech3DHex10::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_10::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
   return;
 }
 
 
 
-void MagnetoMech3DHex10::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_HM_10::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
     assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
 
@@ -1258,201 +1134,8 @@ void MagnetoMech3DHex10::projectInternalVariable(bool extrapolateFlag, int varty
 
 
 
-int  MagnetoMech3DHex10::calcError(int index)
+int  Elem_Magnmech_3D_HM_10::calcError(int index)
 {
-    // compute error
-    ///////////////////////////////////////////////////////////
-
-  int   err,  isw,  count,  count1, ll, ii, jj, kk, gp;
-
-  double  param[2], Jac, dvol0, dvol, xx, yy, rad, theta, val, fact;
-  double  dispExact[2], dispNum[2], streDev[4], pbar;
-  double  detF, streExac[4], streNum[4], cc[4][4], Np[4];
-
-  VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU), stre(9);
-
-  double xNode[8], yNode[8], zNode[8], geom[3];
-  for(ii=0;ii<nlbfU;ii++)
-  {
-    xNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][0];
-    yNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][1];
-    zNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][2];
-  }
-
-  //ThickCylinder  analy(sss, matDat[1], matDat[2]);
-  //ElasticityFiniteStrain  analy(matDat[1], matDat[2]);
-  //ThickCylinder  analy(sss, matDat[1], matDat[2]);
-  double mu   = matDat[0] ;
-  double rho0 = elmDat[5] ;
-  double dt   = myTime.dt;
-  double tCur = myTime.cur;
-
-  double  lambda10=1.0, lambda30=1.0, beamlength=1.0, lambda1, lambda3, lambda11, alpha;
-  lambda10 = 1.0;
-  lambda11 = PI;
-  lambda30 = 1.0;
-  alpha = pi;
-
-    MatrixXd  F(3,3), Fe(3,3), Fg(3,3), FgInv(3,3);
-    double  timeFactor = timeFunction[0].prop, Jg;
-    double  growthFactor = elmDat[10]*timeFunction[0].prop ;
-
-
-  vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
-  getGaussPointsHexa(nGP, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-
-  elemError = 0.0;
-  if(index == 0) // L2 norm
-  {
-    for(gp=0;gp<nGP;gp++)
-    {
-          param[0] = gausspoints1[gp];
-          param[1] = gausspoints2[gp];
-
-          GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
-
-          dvol = gaussweights[gp] * Jac;
-
-          geom[0] = geom[1] = 0.0;
-          for(ii=0;ii<nlbfU;ii++)
-          {
-            geom[0] += xNode[ii]*N[ii];
-            geom[1] += yNode[ii]*N[ii];
-          }
-
-          dispNum[0] = computeValue(0, N);
-          dispNum[1] = computeValue(1, N);
-
-
-          lambda1 = lambda10 + lambda11*geom[1]/beamlength;
-          lambda3 = lambda30;
-
-          rad   = lambda30*geom[1] + beamlength*lambda10/alpha;
-
-          dispExact[0] = rad*sin(geom[0]*alpha/beamlength) - geom[0];
-          dispExact[1] = ( rad*cos(geom[0]*alpha/beamlength) - beamlength*lambda10/alpha ) - geom[1];
-
-          //cout << dispExact[0] << '\t' << dispNum[0] << '\t' << dispExact[1] << '\t' << dispNum[1] << endl;
-
-          dispExact[0] -= dispNum[0];
-          dispExact[1] -= dispNum[1];
-
-          fact = dispExact[0]*dispExact[0] + dispExact[1]*dispExact[1];
-
-          elemError += ( fact * dvol );
-    }//gp
-  }
-  else if(index == 1)
-  {
-    /*
-    count = 1;   ll = 0;   err = 0;   isw = 3;
-    for(gp=0;gp<nGP;gp++)
-    {
-          param[0] = gausspoints1[gp];
-          param[1] = gausspoints2[gp];
-
-          GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), Jac);
-
-          dvol = gaussweights[gp]*(Jac*thick);
-
-          xx = yy= 0.0;
-          for(ii=0;ii<nlbf;ii++)
-          {
-            xx += N[ii]*xNode[ii];
-            yy += N[ii]*yNode[ii];
-          }
-
-          F[0] = computeValueCur(0, dN_dx) + 1.0;
-          F[2] = computeValueCur(0, dN_dy);
-          F[1] = computeValueCur(1, dN_dx);
-          F[3] = computeValueCur(1, dN_dy) + 1.0;
-
-          detF =  F[0]*F[3] - F[1]*F[2];
-
-          // ADJUST F33 fOR 2D PROBLEMS BASED ON THE ASSUMPTIONS OF PLANE STRESS/PLANE STRAIN/AXISYMMETRIC
-
-          if(sss == 1)  // plane stress
-          {
-            if(finite)
-              F33 = 1.0/sqrt(detF);
-            else
-              F33 = 3.0 - F[0] - F[3];
-          }
-          else if(sss == 2)    // plane strain
-            F33 = 1.0;
-
-          matlib2d_(matDat, F, &F33, streNum, cc[0], &(intVar1[ll]), &(intVar2[ll]), &dt, &matId, &nivGP, &finiteInt, &sss, &isw, &err, &count, NULL);
-          count++;
-          ll += nivGP;
-
-          pbar = (streNum[0]+streNum[1]+streNum[2])/3.0;
-
-          streDev[0] = streNum[0] - pbar;
-          streDev[1] = streNum[1] - pbar;
-          streDev[2] = streNum[2] - pbar;
-          streDev[3] = streNum[3];
-
-          streNum[0] = streDev[0] + pres;
-          streNum[1] = streDev[1] + pres;
-          streNum[2] = streDev[2] + pres;
-
-          rad   = sqrt(xx*xx + yy*yy) ;
-          theta = atan2(yy, xx);
-
-          for(ii=0; ii<4; ii++)
-            streExac[ii] -= streNum[ii];
-
-          //fact = streExac[0]*streExac[0] + streExac[1]*streExac[1] + streExac[3]*streExac[3];
-          fact = streExac[0]*streExac[0] + streExac[1]*streExac[1] + streExac[2]*streExac[2] + streExac[3]*streExac[3];
-
-          elemError += ( fact * dvol );
-    }//gp
-    */
-  }
-  else if(index == 2)
-  {
-    count = 1;   ll = 0;   err = 0;   isw = 3;
-    for(gp=0;gp<nGP;gp++)
-    {
-          param[0] = gausspoints1[gp];
-          param[1] = gausspoints2[gp];
-
-          GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
-
-          dvol = gaussweights[gp]*(Jac*thick);
-
-          geom[0] = geom[1] = 0.0;
-          for(ii=0;ii<nlbfU;ii++)
-          {
-            geom[0] += xNode[ii]*N[ii];
-            geom[1] += yNode[ii]*N[ii];
-          }
-
-        F(0,0) = computeValueCur(0, dN_dx) + 1.0;            // eps_xx
-        F(0,1) = computeValueCur(0, dN_dy);                  // eps_xy
-        F(1,0) = computeValueCur(1, dN_dx);                  // eps_yx
-        F(1,1) = computeValueCur(1, dN_dy) + 1.0;            // eps_yy
-
-        detF = F(0,0)*F(1,1) - F(0,1)*F(1,0);
-
-        growthfunction_beam_singlelayer(timeFactor,  geom,  Fg);
-        //growthfunction_beam_multilayer(timeFactor, geom,  Fg);
-        //growthfunction_isotropic(1, ndim,  growthFactor,  Fg);
-        FgInv = Fg.inverse();
-        Jg = Fg.determinant();
-
-        // elastic part of the deformation gradient
-        Fe = F*FgInv;
-
-        pbar = 0.0;
-
-        val = pres - pbar;
-        fact = val*val;
-
-        elemError += ( fact * dvol );
-    }//gp
-  }
-
   return 0;
 }
 

@@ -1,5 +1,5 @@
 
-#include "MagnetoMech3DMixedBase221.h"
+#include "Elem_Magnmech_3D_SM_221.h"
 #include "MyTime.h"
 #include "GeomDataLagrange.h"
 #include "SolutionData.h"
@@ -13,25 +13,26 @@
 using namespace std;
 
 extern MyTime myTime;
-extern List<TimeFunction> timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 
 
 
-MagnetoMech3DMixedBase221::MagnetoMech3DMixedBase221()
+Elem_Magnmech_3D_SM_221::Elem_Magnmech_3D_SM_221()
 {
 }
 
 
 
-MagnetoMech3DMixedBase221::~MagnetoMech3DMixedBase221()
+Elem_Magnmech_3D_SM_221::~Elem_Magnmech_3D_SM_221()
 {
 }
 
 
 
 
-int MagnetoMech3DMixedBase221::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
+int Elem_Magnmech_3D_SM_221::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 {
+/*
     if( (Mlocal.rows() != nsize) || (Mlocal.cols() != nsize) )
       Mlocal.resize(nsize, nsize);
     Mlocal.setZero();
@@ -110,7 +111,7 @@ int MagnetoMech3DMixedBase221::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping
       //cout << " elemVol = " << elemVol << endl;
       //printMatrix(Klocal);  printf("\n\n\n");
     }
-
+*/
     return 0;
 }
 
@@ -119,7 +120,7 @@ int MagnetoMech3DMixedBase221::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping
 
 
 
-int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kuf, MatrixXd& Kfu, MatrixXd& Kff, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& FlocalU, VectorXd& FlocalF, VectorXd& FlocalP, bool firstIter)
+int  Elem_Magnmech_3D_SM_221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kuf, MatrixXd& Kfu, MatrixXd& Kff, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& FlocalU, VectorXd& FlocalF, VectorXd& FlocalP, bool firstIter)
 {
     int   err = 0, ii, jj, kk, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
@@ -127,7 +128,7 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
 
     double  detF, detFn, trF, fact, fact1, dvol, dvol0, Jac, volstrain;
     double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5, Rp, Jhat, thetahat;
-    double  param[3], bforce[3], force[3], tarr[6],  tarr2[6];
+    double  param[3], bforce[3]={0.0,0.0,0.0}, force[3], tarr[6],  tarr2[6];
     double  veloCur[3], acceCur[3], sig[3];
 
     MatrixXd  Cmat(9,9), Bmat(9,3), Amat(3,3),  Gc(3,9), F(3,3), Fn(3,3);
@@ -139,16 +140,16 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
     F.setZero();
     stre.setZero();
 
-    double  timeFactor = timeFunction[0].prop, timeFactorPrev = timeFactor-myTime.dt;
+    //double  timeFactor = timeFunction[0].prop, timeFactorPrev = timeFactor-myTime.dt;
 
     int  Utype  = MatlData->getUtype();                     // volumetric energy function
     double BULK = 1.0/MatlData->getKinv();
 
     double rho0 = MatlData->getDensity();
     double rho  = rho0 ;
-    bforce[0]   = elmDat[6]*timeFunction[0].prop ;
-    bforce[1]   = elmDat[7]*timeFunction[0].prop ;
-    bforce[2]   = elmDat[8]*timeFunction[0].prop ;
+    //bforce[0]   = elmDat[6]*timeFunction[0].prop ;
+    //bforce[1]   = elmDat[7]*timeFunction[0].prop ;
+    //bforce[2]   = elmDat[8]*timeFunction[0].prop ;
     double af   = SolnData->td(2);
     double dt   = myTime.dt;
     double acceFact1 = SolnData->td(5);
@@ -211,7 +212,7 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         dvol0 = gaussweights[gp]*Jac;
         dvol  = dvol0;
@@ -234,13 +235,13 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
           throw runtime_error("Negative Jacobian in the element");
         }
 
-        acceCur[0] = computeValueDotDotCur(0, N);
-        acceCur[1] = computeValueDotDotCur(1, N);
-        acceCur[2] = computeValueDotDotCur(2, N);
+        acceCur[0] = computeAccelerationCur(0, N);
+        acceCur[1] = computeAccelerationCur(1, N);
+        acceCur[2] = computeAccelerationCur(2, N);
 
         if(finite)
         {
-          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+          GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
           dvol = gaussweights[gp]*Jac;
         }
         elemVolCur  += dvol;
@@ -250,9 +251,9 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
         magnField.setZero();
         for(ii=0; ii<nlbfF; ii++)
         {
-          magnField[0] -= (dN_dx[ii]*SolnData->var3Cur[nodeNums[ii]]);
-          magnField[1] -= (dN_dy[ii]*SolnData->var3Cur[nodeNums[ii]]);
-          magnField[2] -= (dN_dz[ii]*SolnData->var3Cur[nodeNums[ii]]);
+          //magnField[0] -= (dN_dx[ii]*SolnData->var3Cur[nodeNums[ii]]);
+          //magnField[1] -= (dN_dy[ii]*SolnData->var3Cur[nodeNums[ii]]);
+          //magnField[2] -= (dN_dz[ii]*SolnData->var3Cur[nodeNums[ii]]);
         }
         //printVector(SolnData->var3Cur);
         //printVector(dN_dy);
@@ -472,6 +473,7 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
     printVector(FlocalP);
     */
 
+    /*
     if(SolnData->tis > 0)
     {
         VectorXd  accC(nsize);
@@ -494,6 +496,7 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
         Kuu     +=  acceFact1*Cmat;
         FlocalU -=  Cmat*accC;
     }
+    */
 
     return 0;
 }
@@ -502,7 +505,7 @@ int  MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Mat
 
 
 /*
-int MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
+int Elem_Magnmech_3D_SM_221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
 {
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
@@ -867,7 +870,7 @@ int MagnetoMech3DMixedBase221::calcStiffnessAndResidualMixed(MatrixXd& Kuu, Matr
 
 
 
-void MagnetoMech3DMixedBase221::elementContourplot(int vartype, int varindex, int index)
+void Elem_Magnmech_3D_SM_221::elementContourplot(int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -896,7 +899,7 @@ void MagnetoMech3DMixedBase221::elementContourplot(int vartype, int varindex, in
 
        default:
 
-              cout  << " Invalid Variable Type to project in 'MagnetoMech3DMixedBase221::projectToNodes'" << endl;
+              cout  << " Invalid Variable Type to project in 'Elem_Magnmech_3D_SM_221::projectToNodes'" << endl;
               break;
     }
 
@@ -912,7 +915,7 @@ void MagnetoMech3DMixedBase221::elementContourplot(int vartype, int varindex, in
 }
 
 
-void MagnetoMech3DMixedBase221::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
+void Elem_Magnmech_3D_SM_221::projectToNodes(bool extrapolateFlag, int vartype, int varindex, int index)
 {
    double outval[50];
 
@@ -963,8 +966,9 @@ void MagnetoMech3DMixedBase221::projectToNodes(bool extrapolateFlag, int vartype
 }
 
 
-void MagnetoMech3DMixedBase221::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_SM_221::projectStress(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
+/*
     double  detF, dvol, Jac, fact, dvol0, pbar, param[3];
     MatrixXd  F(3,3), Fn(3,3), Cmat(9,9), Bmat(9,3), Amat(3,3);
     VectorXd  stre(9),  magnDisp(3),  magnField(3);
@@ -1001,7 +1005,7 @@ void MagnetoMech3DMixedBase221::projectStress(bool extrapolateFlag, int vartype,
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE_HEXA_BERNSTEIN, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE_HEXA_BERNSTEIN, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         computeDefGradPrev(dN_dx, dN_dy, dN_dz, Fn);
         computeDefGrad(dN_dx, dN_dy, dN_dz, F);
@@ -1034,20 +1038,20 @@ void MagnetoMech3DMixedBase221::projectStress(bool extrapolateFlag, int vartype,
            //outval[gp] = 0.0;
         }
     } //gp
-
+*/
     return;
 }
 
 
 
-void MagnetoMech3DMixedBase221::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_SM_221::projectStrain(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
   return;
 }
 
 
 
-void MagnetoMech3DMixedBase221::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
+void Elem_Magnmech_3D_SM_221::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
     assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
 

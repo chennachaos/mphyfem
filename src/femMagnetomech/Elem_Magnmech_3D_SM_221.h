@@ -1,18 +1,20 @@
 
-#ifndef incl_MagnetoMech2DMixedBase221_h
-#define incl_MagnetoMech2DMixedBase221_h
+#ifndef incl_Elem_Magnmech_3D_SM_221_h
+#define incl_Elem_Magnmech_3D_SM_221_h
 
 
 #include "ElementBase.h"
 
 
-class  MagnetoMech2DMixedBase221 : public ElementBase
+class  Elem_Magnmech_3D_SM_221 : public ElementBase
 {
   public:
 
-    MagnetoMech2DMixedBase221();
+    Elem_Magnmech_3D_SM_221();
 
-    virtual ~MagnetoMech2DMixedBase221();
+    virtual ~Elem_Magnmech_3D_SM_221();
+
+    virtual int calcMassMatrix(MatrixXd& Mlocal, bool MassLumping);
 
     virtual int  calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixXd& Kuf, MatrixXd& Kfu, MatrixXd& Kff, MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& FlocalU, VectorXd& FlocalF, VectorXd& FlocalP, bool firstIter=false);
 

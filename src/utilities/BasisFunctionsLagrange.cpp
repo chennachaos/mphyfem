@@ -1123,7 +1123,10 @@ void LagrangeBasisFunsTetra(int npElem, double xi1, double xi2, double xi3, doub
 
 void LagrangeBasisFunsHexa(int npElem, double xi1, double xi2, double xi3, double* N)
 {
-    int ind = pow(npElem,1/3);
+    int ind;
+    if(npElem == 8)       ind=2;
+    else if(npElem == 27) ind=3;
+
     double  Nu[ind], Nv[ind], Nw[ind];
 
     Lagrange_BasisFuns1D(ind, xi1, Nu);
