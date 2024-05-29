@@ -118,7 +118,7 @@ void femBase::readInputGMSH(string& fname)
 
     if(infile.fail())
     {
-       cout << " Could not open the Output file" << endl;
+       cout << " Could not open the input mesh file" << endl;
        exit(1);
     }
 
@@ -349,9 +349,9 @@ void femBase::readInput(string& fname)
 {
     cout << " femBase::readInput " << endl;
 
-    inputfilename = fname;
+    string  configfname = "./inputs/config";
 
-    ifstream  infile(fname);
+    ifstream  infile(configfname);
 
     if(infile.fail())
     {
@@ -478,7 +478,9 @@ void femBase::readFiles(ifstream& infile, string& line)
 
             if(stringlist[0] == "mesh")
             {
-                readInputGMSH(stringlist[1]);
+                inputfilename = stringlist[1];
+                string gmshfname =  "./inputs/"+inputfilename+".msh";
+                readInputGMSH(gmshfname);
             }
             else if(stringlist[0] == "solution")
             {

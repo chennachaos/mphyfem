@@ -1061,10 +1061,10 @@ int femSolidmechanics::addExternalForces()
                     traction[1] = ( specValues[0]*normal[1] + specValues[1]*tangent1[1] )*dvol;
                     traction[2] = ( specValues[0]*normal[2] + specValues[1]*tangent1[2] )*dvol;
 
-                    cout << "normals" << endl;
-                    cout <<   normal[0] << '\t' <<   normal[1] << '\t' <<   normal[2] << endl;
-                    cout << tangent1[0] << '\t' << tangent1[1] << '\t' << tangent1[2] << endl;
-                    cout << tangent2[0] << '\t' << tangent2[1] << '\t' << tangent2[2] << endl; cout << endl;
+                    //cout << "normals" << endl;
+                    //cout <<   normal[0] << '\t' <<   normal[1] << '\t' <<   normal[2] << endl;
+                    //cout << tangent1[0] << '\t' << tangent1[1] << '\t' << tangent1[2] << endl;
+                    //cout << tangent2[0] << '\t' << tangent2[1] << '\t' << tangent2[2] << endl; cout << endl;
 
                     for(ii=0; ii<npElem; ii++)
                     {

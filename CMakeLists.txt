@@ -27,7 +27,7 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 message ("Using GNU C++ compiler")
 #set(COPT "-std=c++11 -g -w -funroll-loops -ftree-vectorize -ftree-vectorizer-verbose=1  -Wno-write-strings -Wno-uninitialized -Wno-deprecated  -Wno-format -fpermissive -frounding-math -fstack-protector-all")
 
-set(COPT "-std=c++17 -O0 -g -Wno-uninitialized -Wno-sign-compare -Wno-write-strings  -Wno-deprecated  -Wno-unused  -Wno-format -Wno-narrowing  -Wno-reorder  -Wreturn-type -Wno-ignored-attributes -fopenmp  -fpermissive -frounding-math -fstack-protector-all")
+set(COPT "-std=c++17 -O3 -g -Wno-uninitialized -Wno-sign-compare -Wno-write-strings  -Wno-deprecated  -Wno-unused  -Wno-format -Wno-narrowing  -Wno-reorder  -Wreturn-type -Wno-ignored-attributes -fopenmp  -fpermissive -frounding-math -fstack-protector-all")
 #endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COPT}")

@@ -21,6 +21,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    /*
     //Set the input file name
     //The file name is specified from the command line
     if(argc == 0)
@@ -33,9 +34,11 @@ int main(int argc, char* argv[])
     string  inputfile  = argv[1];
 
     printf("\n    Input file         = %s \n ", inputfile.c_str());
+    */
 
+    string  inputfile;
 
-    string petscoptionsfile = "petsc_options.dat";
+    string petscoptionsfile = "./inputs/petsc_options.dat";
 
     ifstream fin(petscoptionsfile);
 
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
     fin.close();
 
 
-    PetscInitialize(NULL, NULL, "petsc_options.dat", NULL);
+    PetscInitialize(NULL, NULL, "./inputs/petsc_options.dat", NULL);
 
 
 
