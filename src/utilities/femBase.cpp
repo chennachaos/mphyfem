@@ -70,6 +70,7 @@ femBase::femBase()
     mpotDegree = 0;
 
     outputfrequency = 1;
+    outputfreq_vtk  = 1;
 
     dirname = get_current_dir_name();
     vector<string> stringlist;
@@ -100,6 +101,7 @@ femBase::~femBase()
   }
   MatlDataList.clear(); // Purge the contents so no one tries to delete them again
 
+  fout_nodaldata.close();
 }
 
 
@@ -344,6 +346,20 @@ void femBase::readInputGMSH(string& fname)
     while(elemConn.size() > nElem_global)
         elemConn.pop_back();
 
+
+    string  fnameout = inputfilename+"-nodaloutput.dat";
+    fout_nodaldata.open(fnameout, std::ofstream::out | std::ofstream::trunc);
+
+    if(fout_nodaldata.fail())
+    {
+       cout << " Could not open the Output file for nodal data" << endl;
+       exit(1);
+    }
+
+    //fout.setf(ios::fixed);
+    //fout.setf(ios::showpoint);
+    //fout.precision(8);
+
     return;
 }
 
@@ -441,6 +457,11 @@ void femBase::readInput(string& fname)
 
                 printVector(outputlist_nodal);
                 printVector(outputlist_elemental);
+            }
+            else if(line.compare(string("Nodal Data Output")) == 0)
+            {
+                cout << "Output" << endl;
+                readNodalDataOutputDetails(infile, line);
             }
             else
             {
@@ -1087,6 +1108,10 @@ void femBase::readSolverDetails(ifstream& infile, string& line)
             {
                 stepsMax = stoi(stringlist[1]);
             }
+            else if(stringlist[0] == "outputFrequency")
+            {
+                outputfreq_vtk = stoi(stringlist[1]);
+            }
             else if(stringlist[0] == "masslumping")
             {
                 SolnData.MassLumping = ( stoi(stringlist[1]) == 1);
@@ -1206,6 +1231,43 @@ void femBase::readOutputDetails(ifstream& infile, string& line)
             {
                 throw runtime_error("femBase::readOutputDetails ... Option not available");
             }
+        }
+    }
+
+    return;
+}
+
+
+
+void  femBase::readNodalDataOutputDetails(ifstream& infile, string& line)
+{
+    vector<string>  stringlist;
+    vector<double>  dbllist;
+
+    // read {
+    getline(infile,line);    boost::trim(line);
+
+    while( infile && (line != "}") )
+    {
+        getline(infile,line);    boost::trim(line);
+
+        cout << line << endl;
+
+        if(line[0] == '}') break;
+
+
+        if( isActiveLine(line) )
+        {
+            boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+
+            dbllist.clear();
+            for(auto& str: stringlist)
+            {
+                boost::trim(str);
+                dbllist.push_back(stod(str));
+            }
+
+            NodalDataOutput.push_back(dbllist);
         }
     }
 

@@ -139,8 +139,11 @@ void  femMagnetomech::postProcess()
 {
     if(debug) cout << " femSolidmechanics::postProcess ... STARTED " << endl;
 
-    //if( (filecount % outputfrequency) != 0 )
-      //return;
+    if( (filecount % outputfreq_vtk) != 0 )
+    {
+      filecount++;
+      return;
+    }
 
     bool extrapolateFlag = false;
     int  vartype = 4;

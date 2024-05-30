@@ -1251,31 +1251,31 @@ int femSolidmechanics::writeNodalData()
     int ii, jj, bb, ee, type, nn, n1, n2, n3, dof;
     double val;
 
-    for(ee=0; ee<OutputData.size(); ee++)
+    for(ee=0; ee<NodalDataOutput.size(); ee++)
     {
-      type  = (int) (OutputData[ee][0]);
-      nn    = (int) (OutputData[ee][1] - 1);
-      dof   = (int) (OutputData[ee][2] - 1);
+      type  = (int) (NodalDataOutput[ee][0]);
+      nn    = (int) (NodalDataOutput[ee][1] - 1);
+      dof   = (int) (NodalDataOutput[ee][2] - 1);
 
       switch(type)
       {
         case  1 : // total force on all the requested nodes
 
               val = 0.0;
-              for(ii=0; ii<(OutputData.size()-3); ii++)
-                val += SolnData.force[OutputData[ee][3+ii]*ndof+dof];
+              for(ii=0; ii<(NodalDataOutput.size()-3); ii++)
+                val += SolnData.force[NodalDataOutput[ee][3+ii]*ndof+dof];
 
         break;
 
         case  2 : // total reaction on all the requested nodes
 
-              dof   = (int) (OutputData[ee][1] - 1);
+              dof   = (int) (NodalDataOutput[ee][1] - 1);
 
-              n1 = OutputData[ee].size()-2;
+              n1 = NodalDataOutput[ee].size()-2;
               val = 0.0;
               for(ii=0; ii<n1; ii++)
               {
-                nn  =  (int) (OutputData[ee][2+ii]-1) ;
+                nn  =  (int) (NodalDataOutput[ee][2+ii]-1) ;
                 val += SolnData.reac[nn*ndof+dof];
               }
 
@@ -1374,31 +1374,31 @@ int femSolidmechanics::writeNodalDataExplicitScheme()
 
     fout_explicit << myTime.cur << '\t' << timeFunctions[0]->getValue();
 
-    for(ee=0; ee<OutputData.size(); ee++)
+    for(ee=0; ee<NodalDataOutput.size(); ee++)
     {
-      type  = (int) (OutputData[ee][0]);
-      nn    = (int) (OutputData[ee][1] - 1);
-      dof   = (int) (OutputData[ee][2] - 1);
+      type  = (int) (NodalDataOutput[ee][0]);
+      nn    = (int) (NodalDataOutput[ee][1] - 1);
+      dof   = (int) (NodalDataOutput[ee][2] - 1);
 
       switch(type)
       {
         case  1 : // total force on all the requested nodes
 
               val = 0.0;
-              for(ii=0; ii<(OutputData.size()-3); ii++)
-                val += SolnData.force[OutputData[ee][3+ii]*ndof+dof];
+              for(ii=0; ii<(NodalDataOutput.size()-3); ii++)
+                val += SolnData.force[NodalDataOutput[ee][3+ii]*ndof+dof];
 
         break;
 
         case  2 : // total reaction on all the requested nodes
 
-              dof   = (int) (OutputData[ee][1] - 1);
+              dof   = (int) (NodalDataOutput[ee][1] - 1);
 
-              n1 = OutputData[ee].size()-2;
+              n1 = NodalDataOutput[ee].size()-2;
               val = 0.0;
               for(ii=0; ii<n1; ii++)
               {
-                nn  =  (int) (OutputData[ee][2+ii]-1) ;
+                nn  =  (int) (NodalDataOutput[ee][2+ii]-1) ;
                 val += SolnData.reac[nn*ndof+dof];
               }
 

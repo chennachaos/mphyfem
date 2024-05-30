@@ -1373,7 +1373,7 @@ int femMagnetomech::setInitialConditions()
 
       //SolnData.velo[ind]    =    0.0;
       //SolnData.velo[ind+1]  =    0.0;
-      SolnData.velo[ind+2]  = xx;
+      //SolnData.velo[ind+2]  = xx;
     }
 
     //printVector(SolnData.velo);
@@ -1873,6 +1873,89 @@ bool femMagnetomech::diverging(double factor)
 void femMagnetomech::writeNodalData()
 {
     //cout << " femMagnetomech::writeNodalData() " << endl;
+    int ii, jj, bb, ee, type, nn, n1, n2, n3, dof;
+    double val;
+
+    fout_nodaldata << myTime.cur;
+
+    for(ee=0; ee<NodalDataOutput.size(); ee++)
+    {
+      type  = (int) (NodalDataOutput[ee][0]);
+      nn    = (int) (NodalDataOutput[ee][1] - 1);
+      dof   = (int) (NodalDataOutput[ee][2] - 1);
+
+      switch(type)
+      {
+        case  1 : // total force on all the requested nodes
+
+              val = 0.0;
+              //for(ii=0; ii<(NodalDataOutput.size()-3); ii++)
+                //val += SolnData.force[nn*ndof+dof];
+
+        break;
+
+        case  2 : // total reaction on all the requested nodes
+
+              dof   = (int) (NodalDataOutput[ee][1] - 1);
+
+              n1 = NodalDataOutput[ee].size()-2;
+              val = 0.0;
+              for(ii=0; ii<n1; ii++)
+              {
+                nn  =  (int) (NodalDataOutput[ee][2+ii]-1) ;
+                val += SolnData.reac[nn*ndof+dof];
+              }
+
+        break;
+
+        case  3 : // displacement
+
+            /*
+            if( midnodeData[nn][0] ) // if midnode
+            {
+              n1 = nn*ndof+dof;
+              n2 = midnodeData[nn][1]*ndof+dof;
+              n3 = midnodeData[nn][2]*ndof+dof;
+
+              val  = 0.50*SolnData.disp[n1];
+              val += 0.25*SolnData.disp[n2];
+              val += 0.25*SolnData.disp[n3];
+            }
+            else
+            {
+            */
+              val = SolnData.disp[nn*ndof+dof];
+            //}
+
+        break;
+
+        case  4 : // velocity
+
+            val = SolnData.velo[nn*ndof+dof];
+
+        break;
+
+        case  5 : // acceleration
+
+            val = SolnData.acce[nn*ndof+dof];
+
+        break;
+
+        case  9: // loadfactor for the arc-length method
+
+            val = loadFactor;
+
+        break;
+
+        default :
+
+              cerr << "femSolidmechanics::writeNodalData() ... invalid value of 'type'!" << endl;
+        break;
+      }
+
+      fout_nodaldata << setw(20) << val;
+    }
+    fout_nodaldata << endl;
 
     return;
 }

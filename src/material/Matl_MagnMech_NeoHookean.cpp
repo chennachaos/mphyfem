@@ -65,7 +65,7 @@ int Matl_MagnMech_NeoHookean::computeStressAndTangent(bool tangFlag, int sss,  M
     stre(1) += streMagn(1,0);    stre(4) += streMagn(1,1);    stre(7) += streMagn(1,2);
     stre(2) += streMagn(2,0);    stre(5) += streMagn(2,1);    stre(8) += streMagn(2,2);
 
-    //cout << "timeFunctions[0].getValue() = " << timeFunctions[0].getValue() << endl;
+    //cout << "timeFunctions[0].getValue() = " << timeFunctions[0]->getValue() << endl;
     //printVector(ResiMagnfieldCur);
     //printVector(ApplMagnfieldCur);
 //    printMatrix(F);

@@ -30,7 +30,7 @@ class femBase
         int  ntotdofs_local, ntotdofs_global, n_mpi_procs, this_mpi_proc, nElem_global;
         int  elem_start, elem_end, nElem_local, nNode_local;
         int  row_start, row_end, node_start, node_end, nNode_owned;
-        int  iterationsMax, stepsMax, outputfrequency;
+        int  iterationsMax, stepsMax, outputfrequency, outputfreq_vtk;
         int  ndim, ndof, lumpType, filecount, numProc, numMaterials, numElemTypes;
         int  numPhysicalNames, numBoundaryPatches, numDomains, numBoundaryConditions, numTractionConditions;
         int  IterNum, iterCount, dispDOF, mpotDOF, presDOF, tempDOF;
@@ -64,7 +64,7 @@ class femBase
 
         vector<vector<double> >  DirichletBCs, NeumannBCs, DerivativeBCs, InitialConds;
         vector<vector<double> >  DirichletBCs_Pres, DirichletBCs_Epot, DirichletBCs_Mpot, DirichletBCs_Temp;
-        vector<vector<double> >  pointBCs, OutputData, nodeForcesData, ElemFaceLoadData;
+        vector<vector<double> >  pointBCs, OutputData, nodeForcesData, NodalDataOutput;
         vector<double>  loadFactorVec;
 
         vector<vector<int> >  elemConn, elemConnFaces, node_elem_conn;
@@ -93,6 +93,7 @@ class femBase
 
         vector<string>  outputlist_nodal, outputlist_elemental;
 
+        ofstream fout_nodaldata;
 
     public:
 
@@ -144,6 +145,8 @@ class femBase
         void  readControlParameters(string& fname);
 
         void  readNodalForces(ifstream& infile, string& line);
+
+        void  readNodalDataOutputDetails(ifstream& infile, string& line);
 
         void  readInitialConditions(ifstream& infile, string& line);
 
