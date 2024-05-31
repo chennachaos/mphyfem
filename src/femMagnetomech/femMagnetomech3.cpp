@@ -2,7 +2,7 @@
 #include "femMagnetomech.h"
 #include "MyTime.h"
 #include "TimeFunction.h"
-
+#include <boost/algorithm/string.hpp>
 
 extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime myTime;
@@ -564,6 +564,236 @@ void  femMagnetomech::projectFromElemsToNodes(bool extrapolateFlag, int vartype,
 
     return;
 }
+
+
+
+
+
+void  femMagnetomech::writeResult()
+{
+    string  fname = inputfilename+".soln";
+
+    ofstream fout(fname);
+
+    if(fout.fail())
+    {
+       cout << " Could not open the Output file for writing the solution" << endl;
+       exit(1);
+    }
+
+    int nn, ind;
+
+    fout << "Dimension "  << ndim << endl;
+    fout << "Time "       << myTime.cur << endl;
+    fout << "Nodes "      << nNode_global << endl;
+    fout << "Elments "    << nElem_global << endl;
+
+    fout << "Displacement" << endl;
+    if(ndim == 3)
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.disp(ind) << setw(20) << SolnData.disp(ind+1) << setw(20) << SolnData.disp(ind+2) << endl;
+      }
+    }
+    else
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.disp(ind) << setw(20) << SolnData.disp(ind+1) << endl;
+      }
+    }
+
+    fout << "Velocity" << endl;
+    if(ndim == 3)
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.velo(ind) << setw(20) << SolnData.velo(ind+1) << setw(20) << SolnData.velo(ind+2) << endl;
+      }
+    }
+    else
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.velo(ind) << setw(20) << SolnData.velo(ind+1) << endl;
+      }
+    }
+
+    fout << "Acceleration" << endl;
+    if(ndim == 3)
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.acce(ind) << setw(20) << SolnData.acce(ind+1) << setw(20) << SolnData.acce(ind+2) << endl;
+      }
+    }
+    else
+    {
+      for(nn=0; nn<nNode_global; nn++)
+      {
+        ind = nn*ndof;
+        fout << nn+1 << setw(20) << SolnData.acce(ind) << setw(20) << SolnData.acce(ind+1) << endl;
+      }
+    }
+
+    fout << "Pressure" << endl;
+    for(nn=0; nn<nNode_global; nn++)
+    {
+        fout << nn+1 << setw(20) << SolnData.pres(nn) << endl;
+    }
+
+    fout.close();
+
+    return;
+}
+
+
+
+
+
+void  femMagnetomech::readResult()
+{
+    if(restartfilename.size() == 0)
+      return;
+
+    cout << "restartfilename  = " << restartfilename << endl;
+
+    string  fname  = "./inputs/"+restartfilename;
+
+
+    ifstream infile(fname);
+
+    if(infile.fail())
+    {
+       cout << " Could not open the input mesh file" << endl;
+       exit(1);
+    }
+
+    string line;
+    vector<string>  stringlist;
+    int  nn, dd, ind;
+
+
+    //read the dimension
+    getline(infile,line);    boost::trim(line);
+    //cout << line << endl;
+    boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+    for(auto& str: stringlist)  boost::trim(str);
+    assert(stoi(stringlist[1]) == ndim);
+
+    //read time
+    getline(infile,line);    boost::trim(line);
+    //cout << line << endl;
+
+    //read node count
+    getline(infile,line);
+    //cout << line << endl;
+    boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+    for(auto& str: stringlist)  boost::trim(str);
+    assert(stoi(stringlist[1]) == nNode_global);
+
+    //read element count
+    getline(infile,line);
+    cout << line << endl;
+    boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+    for(auto& str: stringlist)  boost::trim(str);
+    assert(stoi(stringlist[1]) == nElem_global);
+
+    //read Displacement tag
+    getline(infile,line);
+
+    //read Displacement values
+    for(nn=0; nn<nNode_global; nn++)
+    {
+        getline(infile,line);
+        boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+        for(auto& str: stringlist)  boost::trim(str);
+
+        nn = stoi(stringlist[0])-1;
+        ind = nn*ndof;
+
+        for(dd=0; dd<ndim; dd++)
+          SolnData.disp[ind+dd]   = stod(stringlist[dd+1]);
+    }
+
+    //read Velocity tag
+    getline(infile,line);
+
+    //read Displacement values
+    for(nn=0; nn<nNode_global; nn++)
+    {
+        getline(infile,line);
+        boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+        for(auto& str: stringlist)  boost::trim(str);
+
+        nn = stoi(stringlist[0])-1;
+        ind = nn*ndof;
+
+        for(dd=0; dd<ndim; dd++)
+          SolnData.velo[ind+dd]   = stod(stringlist[dd+1]);
+    }
+
+    //read Acceleration tag
+    getline(infile,line);
+
+    //read Displacement values
+    for(nn=0; nn<nNode_global; nn++)
+    {
+        getline(infile,line);
+        boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+        for(auto& str: stringlist)  boost::trim(str);
+
+        nn = stoi(stringlist[0])-1;
+        ind = nn*ndof;
+
+        for(dd=0; dd<ndim; dd++)
+          SolnData.acce[ind+dd]   = stod(stringlist[dd+1]);
+    }
+
+    //read Pressure tag
+    getline(infile,line);
+
+    //read Displacement values
+    for(nn=0; nn<nNode_global; nn++)
+    {
+        getline(infile,line);
+        boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+        for(auto& str: stringlist)  boost::trim(str);
+
+        nn = stoi(stringlist[0])-1;
+
+        SolnData.pres[nn] = stod(stringlist[1]);
+    }
+
+    infile.close();
+
+
+    SolnData.saveSolution();
+
+    SolnData.dispCur = SolnData.disp;
+
+    for(nn=0; nn<nNode_global; nn++)
+    {
+      for(dd=0; dd<ndim; dd++)
+      {
+        // ndof is used here instead of ndim.
+        // this is important for beam and shell elements
+        ind = nn*ndof+dd;
+
+        GeomData.NodePosNew[nn][dd] = GeomData.NodePosOrig[nn][dd] + SolnData.disp[ind];
+        GeomData.NodePosCur[nn][dd] = GeomData.NodePosOrig[nn][dd] + SolnData.dispCur[ind];
+      }
+    }
+
+    return;
+}
+
 
 
 

@@ -105,7 +105,9 @@ class femMagnetomech : public femBase
 
         void  writeNodalData();
 
-        void  writeReadResult(int, string &);
+        void  writeResult();
+
+        void  readResult();
 
         void  plotGeom();
 

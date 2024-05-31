@@ -751,6 +751,7 @@ int femMagnetomech::solveWithNewtonRaphson()
     solverPetsc->Fext.resize(nNode_global*ndof);
 
     setInitialConditions();
+    readResult();
     postProcess();
     writeNodalData();
 
@@ -860,6 +861,8 @@ int femMagnetomech::solveWithNewtonRaphson()
             reset();
         }
     }
+
+    writeResult();
 
     PetscPrintf(MPI_COMM_WORLD, "\n\n\n Simulation reached the specified final time or maximum steps specified ... \n\n\n");
 

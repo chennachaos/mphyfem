@@ -53,8 +53,10 @@ int Matl_MagnMech_NeoHookean_Viscoelastic::computeStressAndTangent(bool tangFlag
 
     //printMatrix(streMagn);
 
+    // similar to Zhao's papers in JMPS
     VectorXd  ResiMagnfieldCur = F*(ResiMagnfield/J);
-    streMagn = (-1.0/mu0) * ((timeFunctions[0]->getValue()*ApplMagnfield)* (ResiMagnfieldCur.transpose()) );
+    VectorXd  ApplMagnfieldCur = timeFunctions[0]->getValue()*ApplMagnfield;
+    streMagn = (-1.0/mu0) * (ApplMagnfieldCur*ResiMagnfieldCur.transpose() );
 
 
     stre(0) += streMagn(0,0);    stre(3) += streMagn(0,1);    stre(6) += streMagn(0,2);
@@ -69,6 +71,7 @@ int Matl_MagnMech_NeoHookean_Viscoelastic::computeStressAndTangent(bool tangFlag
     /////////////////////////////////
     // Viscoelastic part
 
+    tis = "BDF1";
     SetTimeParametersFluid(tis, spectralRadius, dt, td);
 
     err = computeStressAndTangent_Viscoelasticity_Model1(data_viscoelastic, gp, F, td, ivar, dt, stre, Cmat);

@@ -1744,14 +1744,14 @@ int femMagnetomech::timeUpdate()
     }
 
     // copy internal variables intVar1 to intVar2
-    if(intVarFlag)
-      copyElemInternalVariables();
+    //if(intVarFlag)
+      //copyElemInternalVariables();
 
     // update time functions
     for(auto& tmf : timeFunctions)
       tmf->update();
 
-    SolnData.saveSolution();
+    //SolnData.saveSolution();
 
     // set Dirichlet boundary conditions
     setBoundaryConditions();
@@ -1795,8 +1795,8 @@ int femMagnetomech::reset()
   SolnData.reset();
 
   // copy internal variables intVar1 to intVar2
-  //if(intVarFlag)
-    //copyElemInternalVariables();
+  if(intVarFlag)
+    copyElemInternalVariables();
 
   return 0;
 }
@@ -1836,7 +1836,6 @@ int femMagnetomech::copyElemInternalVariables()
   for(int e=0; e<nElem_global; e++)
   {
     elems[e]->ivar.reset();
-    //elems[e]->intVar = elems[e]->intVarPrev;
   }
 
   return 0;

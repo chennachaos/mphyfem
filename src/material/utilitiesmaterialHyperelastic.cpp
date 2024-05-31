@@ -819,6 +819,10 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
     // Right Cauchy-Green tensor;
     MatrixXd  C = Ft*F, Cinv = C.inverse(), CbarInv = pow(J,r2d3)*Cinv;
 
+    //printMatrix(F);
+    //printMatrix(C);
+    //printMatrix(CbarInv);
+
     double  Jm5d3 = pow(J, -5.0/3.0);
     double  dij, dik, dil, djk, djl, dkl;
 
@@ -833,13 +837,13 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
 
     //cout << "numSeries = " << numSeries << endl;
 
+
     for(int seriescount=0; seriescount<numSeries; seriescount++)
     {
         jj = 2*seriescount;
 
         double  mu   = data_viscoelastic[1+jj];    // modulus
         double  tau  = data_viscoelastic[1+jj+1];  // relaxation time
-
 
         VectorXd  AnVec = ivar.varPrev.block<9,1>(9*seriescount,gp), AVec(9), AdotVec(9);
         VectorXd  AdotnVec = ivar.varDotPrev.block<9,1>(9*seriescount,gp);
@@ -850,7 +854,7 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
 
         //MatrixXd  AMat = ((dt/tau)*CbarInv+AnMat)/(1.0+dt/tau);
 
-        MatrixXd  AMat = ( (gamm*dt/am/tau)*CbarInv + (1.0 -(1.0-af)*gamm*dt/am/tau)*AnMat - ((gamm-am)*dt/am/gamm)*AdotnMat)/(1.0+af*gamm*dt/am/tau);
+        MatrixXd  AMat = ( (gamm*dt/am/tau)*CbarInv + (1.0 -(1.0-af)*gamm*dt/am/tau)*AnMat - ((gamm-am)*dt/am/gamm)*AdotnMat )/(1.0+af*gamm*dt/am/tau);
 
         //printMatrix(AMat);
 
@@ -866,10 +870,12 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
 
 
         MatrixXd  Atilde = F*AMat*Ft;
-        MatrixXd  Ahat = Atilde;
-        //MatrixXd  Ahat = 0.5*(Atilde+Atilde.transpose());
+        //MatrixXd  Ahat = Atilde;
+        MatrixXd  Ahat = 0.5*(Atilde+Atilde.transpose());
         MatrixXd AC = AMat*C.transpose();
         double  IAC = AC.trace();
+
+        //printVector(stre);
 
         /////////////////////////////////
         // Cauchy stress tensor
@@ -882,6 +888,10 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
         stre[2] += fact1*Ahat(2,0);    stre[5] += fact1*Ahat(2,1);    stre[8] += fact1*Ahat(2,2);
         stre[0] -= fact2 ;             stre[4] -= fact2 ;             stre[8] -= fact2 ;
 
+        //cout << mu << '\t' << tau << '\t' << fact1 << '\t' << fact2 << endl;
+
+        //printMatrix(Ahat);
+        //printVector(stre);
         /////////////////////////////////
         // material tangent tensor
 

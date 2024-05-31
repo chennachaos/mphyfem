@@ -511,7 +511,7 @@ void femBase::readFiles(ifstream& infile, string& line)
             }
             else if(stringlist[0] == "solution")
             {
-                //readSolution(stringlist[1]);
+                restartfilename = stringlist[1];
             }
             else
             {

@@ -25,7 +25,7 @@ class femBase
         SolverLibrary  SOLVER_LIB_TYPE;
         SolverType   NONLINEAR_SOLVER_TYPE;
 
-        string  inputfilename, dirname;
+        string  inputfilename, dirname, restartfilename;
         PetscErrorCode  errpetsc;
         int  ntotdofs_local, ntotdofs_global, n_mpi_procs, this_mpi_proc, nElem_global;
         int  elem_start, elem_end, nElem_local, nNode_local;

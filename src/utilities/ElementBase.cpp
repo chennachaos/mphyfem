@@ -87,6 +87,9 @@ void ElementBase::initialiseIntVar()
     {
         case 101:
         case 103:
+        case 104:
+        case 105:
+        case 106:
         case 2006:
         case 2007:
 
@@ -99,16 +102,13 @@ void ElementBase::initialiseIntVar()
         break;
     }
 
-    //cout << " nGP   = " << nGP << endl;
-    //cout << " nivGP = " << nivGP << endl;
+    cout << " nGP   = " << nGP << endl;
+    cout << " nivGP = " << nivGP << endl;
 
     // allocate memory for internal variables
     if(nivGP > 0)
     {
         ivar.initialise(nivGP*9, nGP);
-
-        //intVar.resize(nivGP*9, nGP); intVar.setZero();
-        //intVarPrev = intVar;
     }
 
     return;

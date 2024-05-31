@@ -19,9 +19,16 @@ int  InternalVariables::initialise(int rows, int cols)
 {
     var.resize(rows, cols); var.setZero();
 
+    for(int jj=0; jj<cols; jj++)
+    {
+        var(0,jj) = 1.0;
+        var(4,jj) = 1.0;
+        var(8,jj) = 1.0;
+    }
+
     varPrev    = var;
-    varDot     = var;
-    varDotPrev = var;
+    varDot     = var*0.0;
+    varDotPrev = var*0.0;
 
     return 0;
 }

@@ -54,7 +54,7 @@ void Elem_Magnmech_3D_HM_21::prepareElemData()
   }
   else if( npElem == 27 )
   {
-    nGP = 8;
+    nGP = 27;
     ELEM_SHAPE = ELEM_SHAPE_HEXA;
     nlbfP = 8;
   }
@@ -109,7 +109,6 @@ int Elem_Magnmech_3D_HM_21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
     //bforce[1]   = elmDat[7]*timeFunction[0].prop ;
     //bforce[2]   = elmDat[8]*timeFunction[0].prop ;
     double af   = SolnData->td(2);
-    double dt   = myTime.dt;
     double acceFact1 = SolnData->td(5);
     double acceFact2 = acceFact1;
     double FiniteFact = (finite == true) ? 1.0 : 0.0;
@@ -231,7 +230,7 @@ int Elem_Magnmech_3D_HM_21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
             pres += (Np[ii]*SolnData->presCur[nodeNumsPres[ii]]);
         }
 
-        MatlData->computeStressAndTangent(true, sss, Fn, F, pres, stre, Cmat, ivar, gp, dt);
+        MatlData->computeStressAndTangent(true, sss, Fn, F, pres, stre, Cmat, ivar, gp, myTime.dt);
         if(err !=0)          return 1;
 
         // Calculate Stiffness and Residual
