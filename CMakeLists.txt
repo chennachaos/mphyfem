@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(femMagnetomech)
-#project(femSolidmechanics)
+#project(femMagnetomech)
+project(femSolidmechanics)
 
 message("<< ${CMAKE_PROJECT_NAME} / ${PROJECT_NAME}")
 
@@ -164,17 +164,16 @@ src/utilities/*.cpp
 ##################################
 ##################################
 
-#if(${CMAKE_PROJECT_NAME} == "femSolidmechanics")
-#add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
-#elseif(${CMAKE_PROJECT_NAME} == "femMagnetomech")
-add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
-#endif
+#if(${CMAKE_PROJECT_NAME} EQUAL "femSolidmechanics")
+add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
+#elseif(${CMAKE_PROJECT_NAME} EQUAL "femMagnetomech")
+#add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
+#endif()
 
 #pardiso600-GNU800-X86-64
 
 target_link_libraries(${CMAKE_PROJECT_NAME} stdc++  gfortran gomp pthread m  blas  lapack  metis parmetis  pardiso  petsc  mpi  mpi_cxx  superlu  vtkCommonCore-9.1  vtkIOCore-9.1  vtkIOGeometry-9.1  vtkIOXML-9.1  vtkIOImage-9.1  vtkIOExport-9.1   vtkFiltersCore-9.1  vtkFiltersGeneral-9.1   vtkFiltersModeling-9.1  vtkFiltersSources-9.1  vtkCommonExecutionModel-9.1  vtkCommonDataModel-9.1)
 
-#install(TARGETS solidfem RUNTIME DESTINATION /home/chenna/Documents/myCode/mphyfem/bin)
 
 install(TARGETS ${CMAKE_PROJECT_NAME} RUNTIME DESTINATION /home/chenna/Documents/myCode/mphyfem/bin)
 

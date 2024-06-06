@@ -102,8 +102,8 @@ void ElementBase::initialiseIntVar()
         break;
     }
 
-    cout << " nGP   = " << nGP << endl;
-    cout << " nivGP = " << nivGP << endl;
+    //cout << " nGP   = " << nGP << endl;
+    //cout << " nivGP = " << nivGP << endl;
 
     // allocate memory for internal variables
     if(nivGP > 0)
@@ -952,7 +952,8 @@ int  ElementBase::calcError2D(int index)
 
   vector<double>  matDat = MatlData->matData;
 
-  ThickCylinder  analy(2, matDat[0], matDat[1]);
+  //ThickCylinder  analy(matDat[0], matDat[1]);
+  ThickCylinderComposite  analy(matDat[0], matDat[1]);
   //ElasticityFiniteStrain  analy(matDat[1], matDat[2]);
   //ThickCylinder  analy(sss, matDat[1], matDat[2]);
   double dt   = myTime.dt;
@@ -995,7 +996,7 @@ int  ElementBase::calcError2D(int index)
           dispExact[0] = analy.dispX(rad, theta);
           dispExact[1] = analy.dispY(rad, theta);
 
-          //cout << rad << '\t' << theta << endl;
+          cout << rad << '\t' << theta << endl;
           //cout << dispExact[0] << '\t' << dispNum[0] << endl;
           //cout << dispExact[1] << '\t' << dispNum[1] << endl; cout << endl;
 
@@ -1007,7 +1008,7 @@ int  ElementBase::calcError2D(int index)
           elemError += ( fact * dvol );
     }//gp
   }
-  else if(index == 1)
+  else if(index == 1) // pressure
   {
     for(gp=0;gp<nGP;gp++)
     {
@@ -1132,12 +1133,11 @@ int  ElementBase::calcError3D(int index)
 {
   int   err,  isw,  count,  count1, ll, ii, jj, kk, gp;
 
-  double  param[3], Jac, dvol0, dvol, rad, theta, val, fact;
-  double  dispExact[3], dispNum[3], streDev[9], pbar;
-  double  F[9], detF, streExac[9], streNum[9], Np[nlbfP];
-
   VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
-  //cout << " index = " << index << endl;
+
+  double  param[3], Jac, dvol0, dvol, rad, theta, phi, val, fact;
+  double  dispExact[3], dispNum[3], pNum, pExact;
+  double  detF, streExact[6], streNum[6], Np[nlbfP];
 
   double xNode[nlbfU], yNode[nlbfU], zNode[nlbfU], geom[3];
   for(ii=0;ii<nlbfU;ii++)
@@ -1150,15 +1150,16 @@ int  ElementBase::calcError3D(int index)
 
   vector<double>  matDat = MatlData->matData;
 
-  ThickSphere  analy(matDat[0], matDat[1]);
+  //ThickSphere  analy(matDat[0], matDat[1]);
+  ThickSphereComposite  analy(matDat[0], matDat[1]);
   //ElasticityFiniteStrain  analy(matDat[1], matDat[2]);
   //ThickCylinder  analy(sss, matDat[1], matDat[2]);
   double dt   = myTime.dt;
   double tCur = myTime.cur;
 
 
-    vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
-    nGP = getGaussPoints3D(npElem, gausspoints1, gausspoints2, gausspoints3, gaussweights);
+  vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
+  nGP = getGaussPoints3D(npElem, gausspoints1, gausspoints2, gausspoints3, gaussweights);
   //cout << " index = " << index << endl;
 
   elemError = 0.0;
@@ -1166,7 +1167,6 @@ int  ElementBase::calcError3D(int index)
   {
     for(gp=0;gp<nGP;gp++)
     {
-      cout << " gp = " << gp << endl;
           param[0] = gausspoints1[gp];
           param[1] = gausspoints2[gp];
           param[2] = gausspoints3[gp];
@@ -1198,6 +1198,7 @@ int  ElementBase::calcError3D(int index)
 
           //cout << dispExact[0] << '\t' << dispNum[0] << endl;
           //cout << dispExact[1] << '\t' << dispNum[1] << endl;
+          //cout << dispExact[2] << '\t' << dispNum[2] << endl;
 
           dispExact[0] -= dispNum[0];
           dispExact[1] -= dispNum[1];
@@ -1210,74 +1211,6 @@ int  ElementBase::calcError3D(int index)
   }
   else if(index == 1)
   {
-    /*
-    count = 1;   ll = 0;   err = 0;   isw = 3;
-    for(gp=0;gp<nGP;gp++)
-    {
-          param[0] = gausspoints1[gp];
-          param[1] = gausspoints2[gp];
-
-          GeomData->computeBasisFunctions2D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), Jac);
-
-          dvol = gaussweights[gp]*(Jac*thick);
-
-          xx = yy= 0.0;
-          for(ii=0;ii<nlbf;ii++)
-          {
-            xx += N[ii]*xNode[ii];
-            yy += N[ii]*yNode[ii];
-          }
-
-          F[0] = computeValueCur(0, dN_dx) + 1.0;
-          F[2] = computeValueCur(0, dN_dy);
-          F[1] = computeValueCur(1, dN_dx);
-          F[3] = computeValueCur(1, dN_dy) + 1.0;
-
-          detF =  F[0]*F[3] - F[1]*F[2];
-
-          // ADJUST F33 fOR 2D PROBLEMS BASED ON THE ASSUMPTIONS OF PLANE STRESS/PLANE STRAIN/AXISYMMETRIC
-
-          if(sss == 1)  // plane stress
-          {
-            if(finite)
-              F33 = 1.0/sqrt(detF);
-            else
-              F33 = 3.0 - F[0] - F[3];
-          }
-          else if(sss == 2)    // plane strain
-            F33 = 1.0;
-
-          matlib2d_(matDat, F, &F33, streNum, cc[0], &(intVar1[ll]), &(intVar2[ll]), &dt, &matId, &nivGP, &finiteInt, &sss, &isw, &err, &count, NULL);
-          count++;
-          ll += nivGP;
-
-          pbar = (streNum[0]+streNum[1]+streNum[2])/3.0;
-
-          streDev[0] = streNum[0] - pbar;
-          streDev[1] = streNum[1] - pbar;
-          streDev[2] = streNum[2] - pbar;
-          streDev[3] = streNum[3];
-
-          streNum[0] = streDev[0] + pres;
-          streNum[1] = streDev[1] + pres;
-          streNum[2] = streDev[2] + pres;
-
-          rad   = sqrt(xx*xx + yy*yy) ;
-          theta = atan2(yy, xx);
-
-          for(ii=0; ii<4; ii++)
-            streExac[ii] -= streNum[ii];
-
-          //fact = streExac[0]*streExac[0] + streExac[1]*streExac[1] + streExac[3]*streExac[3];
-          fact = streExac[0]*streExac[0] + streExac[1]*streExac[1] + streExac[2]*streExac[2] + streExac[3]*streExac[3];
-
-          elemError += ( fact * dvol );
-    }//gp
-    */
-  }
-  else if(index == 2)
-  {
-    count = 1;   ll = 0;   err = 0;   isw = 3;
     for(gp=0;gp<nGP;gp++)
     {
           param[0] = gausspoints1[gp];
@@ -1296,16 +1229,104 @@ int  ElementBase::calcError3D(int index)
             geom[2] += zNode[ii]*N[ii];
           }
 
+          rad   = sqrt(geom[0]*geom[0] + geom[1]*geom[1] + geom[2]*geom[2]);
+          theta = atan(geom[1]/geom[0]);
+          phi   = acos(geom[2]/rad);
+
           // evaluate pressure at the quadrature points
-          BernsteinBasisFunsQuad(1, param[0], param[1], Np);
-          pres = 0.0;
-          for(ii=0; ii<nlbfP; ii++)
-            pres += (Np[ii]*SolnData->pres[nodeNumsPres[ii]]);
 
-          pbar = 0.0;
+          if(nlbfP == 1)
+          {
+            Np[0] = 1.0;
+            pNum = presDOF[0];
+          }
+          else
+          {
+            if(nlbfP == 4)
+              LagrangeBasisFunsTetra(nlbfP, param[0], param[1], param[2], Np);
+            else if(nlbfP == 8)
+              LagrangeBasisFunsHexa(nlbfP, param[0], param[1], param[2], Np);
 
-          val = pres - pbar;
-          fact = val*val;
+            pNum = 0.0;
+            for(ii=0; ii<nlbfP; ii++)
+              pNum += (Np[ii]*SolnData->pres[nodeNumsPres[ii]]);
+          }
+
+        pExact = analy.pressure(rad, theta, phi);
+
+        val = pres - pExact;
+        fact = val*val;
+
+        elemError += ( fact * dvol );
+    }//gp
+  }
+  else if(index == 2)
+  {
+    MatrixXd  F(3,3);
+    VectorXd  stre(9);
+
+    for(gp=0;gp<nGP;gp++)
+    {
+          param[0] = gausspoints1[gp];
+          param[1] = gausspoints2[gp];
+          param[2] = gausspoints3[gp];
+
+          GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+
+          dvol = gaussweights[gp] * Jac;
+
+          geom[0] = geom[1] = geom[2] = 0.0;
+          for(ii=0;ii<nlbfU;ii++)
+          {
+            geom[0] += xNode[ii]*N[ii];
+            geom[1] += yNode[ii]*N[ii];
+            geom[2] += zNode[ii]*N[ii];
+          }
+
+          rad   = sqrt(geom[0]*geom[0] + geom[1]*geom[1] + geom[2]*geom[2]);
+          theta = atan(geom[1]/geom[0]);
+          phi   = acos(geom[2]/rad);
+
+          computeDefGradCur(dN_dx, dN_dy, dN_dz, F);
+
+          // evaluate pressure at the quadrature points
+
+          if(nlbfP == 1)
+          {
+            Np[0] = 1.0;
+            pNum = presDOF[0];
+          }
+          else
+          {
+            if(nlbfP == 4)
+              LagrangeBasisFunsTetra(nlbfP, param[0], param[1], param[2], Np);
+            else if(nlbfP == 8)
+              LagrangeBasisFunsHexa(nlbfP, param[0], param[1], param[2], Np);
+
+            pNum = 0.0;
+            for(ii=0; ii<nlbfP; ii++)
+              pNum += (Np[ii]*SolnData->pres[nodeNumsPres[ii]]);
+          }
+
+
+          MatlData->computeMechanicalStress(F, pNum, stre);
+
+          analy.stresses(geom[0], geom[1], geom[2], streExact);
+
+          streNum[0] = stre[0]; //xx
+          streNum[1] = stre[4]; //yy
+          streNum[2] = stre[8]; //zz
+          streNum[3] = stre[1]; //xy
+          streNum[4] = stre[5]; //yz
+          streNum[5] = stre[2]; //xz
+
+          fact = 0.0;
+          for(ii=0; ii<6; ii++)
+          {
+            //cout << ii << '\t' << streExact[ii] << '\t' << streNum[ii] << endl;
+            streExact[ii] -= streNum[ii];
+            fact += streExact[ii]*streExact[ii];
+          }
 
           elemError += ( fact * dvol );
     }//gp

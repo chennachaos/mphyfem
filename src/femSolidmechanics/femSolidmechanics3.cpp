@@ -36,8 +36,8 @@ void femSolidmechanics::plotGeom()
     vtkSmartPointer<vtkLagrangeTriangle>    triaHigherVTK     =  vtkSmartPointer<vtkLagrangeTriangle>::New();
     vtkSmartPointer<vtkLagrangeTetra>    tetraHigherVTK     =  vtkSmartPointer<vtkLagrangeTetra>::New();
 
-    vtkSmartPointer<vtkFloatArray>           vecVTK       =  vtkSmartPointer<vtkFloatArray>::New();
-    vtkSmartPointer<vtkFloatArray>           vecVTK2      =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           dispVTK       =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           veloVTK      =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           scaVTK       =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           scaVTK2      =  vtkSmartPointer<vtkFloatArray>::New();
 
@@ -288,13 +288,13 @@ void  femSolidmechanics::postProcess()
     vtkSmartPointer<vtkBiQuadraticQuadraticWedge>  wedge18VTK = vtkSmartPointer<vtkBiQuadraticQuadraticWedge>::New();
     vtkSmartPointer<vtkTriQuadraticHexahedron>  hexa27VTK    =  vtkSmartPointer<vtkTriQuadraticHexahedron>::New();
 
-    vtkSmartPointer<vtkFloatArray>           vecVTK       =  vtkSmartPointer<vtkFloatArray>::New();
-    vtkSmartPointer<vtkFloatArray>           vecVTK2      =  vtkSmartPointer<vtkFloatArray>::New();
-    vtkSmartPointer<vtkFloatArray>           scaVTK       =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           dispVTK       =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           veloVTK      =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           presVTK       =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           scaVTK2      =  vtkSmartPointer<vtkFloatArray>::New();
 
-    vtkSmartPointer<vtkFloatArray>           cellDataVTK  =  vtkSmartPointer<vtkFloatArray>::New();
-    vtkSmartPointer<vtkFloatArray>           cellDataVTK2 =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           matlIdVTKcell  =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           elemIdVTKcell =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           strainVTK    =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           stressVTK    =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           procIdVTKcell =  vtkSmartPointer<vtkFloatArray>::New();
@@ -329,12 +329,17 @@ void  femSolidmechanics::postProcess()
     vector<int> nodeNums;
 
 
-    vecVTK->SetName("disp");
-    vecVTK2->SetName("velocity");
-    vecVTK->SetNumberOfComponents(3);
-    vecVTK->SetNumberOfTuples(nNode_global);
-    vecVTK2->SetNumberOfComponents(3);
-    vecVTK2->SetNumberOfTuples(nNode_global);
+    dispVTK->SetName("disp");
+    veloVTK->SetName("velocity");
+    dispVTK->SetNumberOfComponents(3);
+    dispVTK->SetNumberOfTuples(nNode_global);
+    veloVTK->SetNumberOfComponents(3);
+    veloVTK->SetNumberOfTuples(nNode_global);
+
+    matlIdVTKcell->SetName("MatlID");
+    matlIdVTKcell->SetNumberOfTuples(nElem_global);
+    elemIdVTKcell->SetName("ElemID");
+    elemIdVTKcell->SetNumberOfTuples(nElem_global);
 
     //printVector(SolnData.disp);
     //printVector(SolnData.pres);
@@ -346,7 +351,7 @@ void  femSolidmechanics::postProcess()
     else
       timeloadstamp->SetTuple1(0, myTime.cur);
 
-    int  idd = 0;
+    int  idd = ElementTypeDataList[0]->getElemTypeNameNum();
 
     if(ndim == 2)
     {
@@ -365,7 +370,7 @@ void  femSolidmechanics::postProcess()
           vec[0] = SolnData.disp[kk];
           vec[1] = SolnData.disp[kk+1];
 
-          vecVTK->InsertTuple(ii, vec);
+          dispVTK->InsertTuple(ii, vec);
 
           vec[0] = SolnData.velo[kk];
           vec[1] = SolnData.velo[kk+1];
@@ -373,7 +378,7 @@ void  femSolidmechanics::postProcess()
           //vec[0] = SolnData.veloDotCur[kk];
           //vec[1] = SolnData.veloDotCur[kk+1];
 
-          vecVTK2->InsertTuple(ii, vec);
+          veloVTK->InsertTuple(ii, vec);
       }
 
       // center nodes for 9-noded quadrilateral elements
@@ -409,7 +414,7 @@ void  femSolidmechanics::postProcess()
           vec[0]  = SolnData.disp[ndof*elems[ee]->nodeNums[8]];
           vec[1]  = SolnData.disp[ndof*elems[ee]->nodeNums[8]+1];
 
-          vecVTK->SetTuple(elems[ee]->nodeNums[8], vec);
+          dispVTK->SetTuple(elems[ee]->nodeNums[8], vec);
 
           //vec[0]  = 0.2500*SolnData.velo[ndof*elems[ee]->nodeNums[0]];
           //vec[0] += 0.2500*SolnData.velo[ndof*elems[ee]->nodeNums[1]];
@@ -424,12 +429,15 @@ void  femSolidmechanics::postProcess()
           vec[0]  = SolnData.velo[ndof*elems[ee]->nodeNums[8]];
           vec[1]  = SolnData.velo[ndof*elems[ee]->nodeNums[8]+1];
 
-          vecVTK2->SetTuple(elems[ee]->nodeNums[8], vec);
+          veloVTK->SetTuple(elems[ee]->nodeNums[8], vec);
         }
       }
 
       for(ee=0;ee<nElem_global;ee++)
       {
+        matlIdVTKcell->SetTuple1(ee, elems[ee]->matType);
+        elemIdVTKcell->SetTuple1(ee, elems[ee]->elmType);
+
         nodeNums = elems[ee]->nodeNums;
         //printVector(nodeNums);
         npElem = nodeNums.size();
@@ -501,18 +509,21 @@ void  femSolidmechanics::postProcess()
           vec[1] = SolnData.disp[kk+1];
           vec[2] = SolnData.disp[kk+2];
 
-          vecVTK->InsertTuple(ii, vec);
+          dispVTK->InsertTuple(ii, vec);
 
           vec[0] = SolnData.velo[kk];
           vec[1] = SolnData.velo[kk+1];
           vec[2] = SolnData.velo[kk+2];
 
-          vecVTK2->InsertTuple(ii, vec);
+          veloVTK->InsertTuple(ii, vec);
       }
 
 
       for(ee=0; ee<nElem_global; ee++)
       {
+        matlIdVTKcell->SetTuple1(ee, elems[ee]->matType);
+        elemIdVTKcell->SetTuple1(ee, elems[ee]->elmType);
+
         nodeNums = elems[ee]->nodeNums;
         //printVector(nodeNums);
         npElem = nodeNums.size();
@@ -578,8 +589,15 @@ void  femSolidmechanics::postProcess()
       }
     }
 
-    cellDataVTK->SetName("pres");
-    cellDataVTK->SetNumberOfTuples(nElem_global);
+    uGridVTK->SetPoints(pointsVTK);
+    uGridVTK->GetFieldData()->AddArray(timeloadstamp);
+    uGridVTK->GetPointData()->SetVectors(dispVTK);
+    uGridVTK->GetPointData()->AddArray(veloVTK);
+    uGridVTK->GetCellData()->AddArray(elemIdVTKcell);
+    uGridVTK->GetCellData()->AddArray(matlIdVTKcell);
+
+    //cellDataVTK->SetName("pres");
+    //cellDataVTK->SetNumberOfTuples(nElem_global);
     /*
     for(ee=0;ee<nElem_global;ee++)
     {
@@ -593,51 +611,26 @@ void  femSolidmechanics::postProcess()
 
     if(intVarFlag)
     {
-      scaVTK2->SetName("epstrn");
-      scaVTK2->SetNumberOfTuples(nNode_global);
-      projectStresses(1, 5, 6, index);
+      //scaVTK2->SetName("epstrn");
+      //scaVTK2->SetNumberOfTuples(nNode_global);
+      //projectStresses(1, 5, 6, index);
+
+      //uGridVTK->GetPointData()->AddArray(scaVTK2);
     }
 
-    scaVTK->SetName("pres");
-    scaVTK->SetNumberOfTuples(nNode_global);
+    presVTK->SetName("pressure");
+    presVTK->SetNumberOfTuples(nNode_global);
 
     cout << vartype << '\t' << varindex << '\t' << index << endl;
 
-    if(MIXED_STAB_ELEMENT)
-    {
-      // stabilised elements with semi-implicit scheme
-      if( (idd == 56) || (idd == 57) || (idd == 58) || (idd == 59) )
-      {
-        for(ii=0;ii<nNode_global;ii++)
-        {
-          scaVTK->SetTuple1(ii, SolnData.pres[ii]);
-        }
-      }
-      // stabilised elements with fully-implicit scheme
-      else
-      {
-        for(ii=0;ii<nNode_global;ii++)
-        {
-          n1 = ii*ndof;
-
-          val = SolnData.disp[n1+ndim];
-
-          if( midnodeData[ii][0] )
-          {
-            n2 = midnodeData[ii][1]*ndof;
-            n3 = midnodeData[ii][2]*ndof;
-
-            val  = 0.50*val;
-            val += 0.25*SolnData.disp[n2+ndim];
-            val += 0.25*SolnData.disp[n3+ndim];
-          }
-
-          scaVTK->SetTuple1(ii, val);
-        }
-      }
+    if( (idd == ELEM_SOLID_2D_TRIA7_MIXED1) ||
+        (idd == ELEM_SOLID_2D_TRIA10_MIXED1) ||
+        (idd == ELEM_SOLID_3D_TETRA11_MIXED1) ||
+        (idd == ELEM_SOLID_3D_TETRA20_MIXED1) )
+     {
+      postProcessPressureForDiscontinuousElements();
     }
-
-    if(MIXED_ELEMENT)
+    else if(MIXED_ELEMENT)
     {
         if( (idd == 212) || (idd == 214) || (idd == 223) || (idd == 225) || (idd == 227) )
         {
@@ -650,7 +643,7 @@ void  femSolidmechanics::postProcess()
               val  = 0.5*SolnData.pres[midnodeData[ii][1]];
               val += 0.5*SolnData.pres[midnodeData[ii][2]];
             }
-            scaVTK->SetTuple1(ii, val);
+            presVTK->SetTuple1(ii, val);
           }
         }
 
@@ -664,7 +657,7 @@ void  femSolidmechanics::postProcess()
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[8], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[8], val);
           }
         }
         else if( (idd == 225) ) // Wedge element
@@ -676,21 +669,21 @@ void  femSolidmechanics::postProcess()
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[4]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[15], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[15], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[0]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[5]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[16], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[16], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[1]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[4]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[5]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[17], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[17], val);
           }
         }
         else if( (idd == 227) ) // Hexa element
@@ -702,51 +695,53 @@ void  femSolidmechanics::postProcess()
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[20], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[20], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[0]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[1]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[4]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[5]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[21], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[21], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[0]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[7]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[4]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[22], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[22], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[1]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[6]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[5]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[23], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[23], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[2]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[3]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[6]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[7]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[24], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[24], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[4]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[5]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[6]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[7]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[25], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[25], val);
 
             val  = 0.25*SolnData.pres[elems[ee]->nodeNums[10]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[12]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[14]];
             val += 0.25*SolnData.pres[elems[ee]->nodeNums[15]];
 
-            scaVTK->SetTuple1(elems[ee]->nodeNums[26], val);
+            presVTK->SetTuple1(elems[ee]->nodeNums[26], val);
           }
         }
+
+        uGridVTK->GetPointData()->SetScalars(presVTK);
     }
     else
     {
@@ -756,19 +751,10 @@ void  femSolidmechanics::postProcess()
     }
 
 
-    uGridVTK->SetPoints(pointsVTK);
-    uGridVTK->GetFieldData()->AddArray(timeloadstamp);
-    uGridVTK->GetPointData()->SetScalars(scaVTK);
-    uGridVTK->GetPointData()->SetVectors(vecVTK);
-    uGridVTK->GetPointData()->AddArray(vecVTK2);
-    uGridVTK->GetCellData()->SetScalars(cellDataVTK);
-    if(intVarFlag)
-      uGridVTK->GetPointData()->AddArray(scaVTK2);
 
 
     char fname[200];
     sprintf(fname,"%s%s%06d%s", inputfilename.c_str(),"-",filecount, ".vtu");
-    filecount++;
 
     writerUGridVTK->SetFileName(fname);
     writerUGridVTK->SetInputData(uGridVTK);
@@ -778,6 +764,141 @@ void  femSolidmechanics::postProcess()
 
     return;
 }
+
+
+
+
+void  femSolidmechanics::postProcessPressureForDiscontinuousElements()
+{
+    if(debug) cout << " femSolidmechanics::postProcessPressureForDiscontinuousElements ... STARTED " << endl;
+
+
+    vtkSmartPointer<vtkUnstructuredGrid>     uGridVTK     =  vtkSmartPointer<vtkUnstructuredGrid>::New();
+    vtkSmartPointer<vtkPoints>               pointsVTK    =  vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkVertex>               vertexVTK    =  vtkSmartPointer<vtkVertex>::New();
+
+    vtkSmartPointer<vtkLine>                 lineVTK      =  vtkSmartPointer<vtkLine>::New();
+    vtkSmartPointer<vtkTriangle>             triaVTK      =  vtkSmartPointer<vtkTriangle>::New();
+    vtkSmartPointer<vtkQuad>                 quadVTK      =  vtkSmartPointer<vtkQuad>::New();
+    vtkSmartPointer<vtkTetra>                tetraVTK     =  vtkSmartPointer<vtkTetra>::New();
+    vtkSmartPointer<vtkWedge>                wedgeVTK     =  vtkSmartPointer<vtkWedge>::New();
+    vtkSmartPointer<vtkHexahedron>           hexaVTK      =  vtkSmartPointer<vtkHexahedron>::New();
+
+    vtkSmartPointer<vtkFloatArray>           presVTK      =  vtkSmartPointer<vtkFloatArray>::New();
+
+    vtkSmartPointer<vtkFloatArray>           matlIdVTKcell  =  vtkSmartPointer<vtkFloatArray>::New();
+    vtkSmartPointer<vtkFloatArray>           elemIdVTKcell =  vtkSmartPointer<vtkFloatArray>::New();
+
+    vtkSmartPointer<vtkFloatArray>           timeloadstamp  =  vtkSmartPointer<vtkFloatArray>::New();
+
+    vtkSmartPointer<vtkXMLUnstructuredGridWriter>  writerUGridVTK =  vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+
+    int  dd, ii, jj, ll, nn, ind;
+    double xx, yy, zz;
+
+    vtkIdType pt[50];
+    vector<int> nodeNums, nodeNumsPres;
+
+    matlIdVTKcell->SetName("MatlID");
+    matlIdVTKcell->SetNumberOfTuples(nElem_global);
+    elemIdVTKcell->SetName("ElemID");
+    elemIdVTKcell->SetNumberOfTuples(nElem_global);
+
+
+    presVTK->SetName("pressure");
+    presVTK->SetNumberOfTuples(nElem_global*elems[0]->nlbfP);
+
+    timeloadstamp->SetName("TIME");
+    timeloadstamp->SetNumberOfTuples(1);
+    if(ARC_LENGTH)
+      timeloadstamp->SetTuple1(0, loadFactor);
+    else
+      timeloadstamp->SetTuple1(0, myTime.cur);
+
+  if(ndim == 2)
+  {
+    zz = 0.0;
+    for(int ee=0; ee<nElem_global; ee++)
+    {
+      matlIdVTKcell->SetTuple1(ee, elems[ee]->matType);
+      elemIdVTKcell->SetTuple1(ee, elems[ee]->elmType);
+
+      nodeNums = elems[ee]->nodeNums;
+
+      ind = ee*3;
+      for(ll=0; ll<3; ll++)
+      {
+        nn = nodeNums[ll];
+
+        xx = GeomData.NodePosNew[nn][0];
+        yy = GeomData.NodePosNew[nn][1];
+
+        pt[0] = pointsVTK->InsertNextPoint(xx, yy, zz);
+
+        vertexVTK->GetPointIds()->SetId(0, pt[0]);
+
+        triaVTK->GetPointIds()->SetId(ll, pt[0]);
+
+        presVTK->SetTuple1(ind+ll, SolnData.pres[ind+ll]);
+      }
+
+      uGridVTK->InsertNextCell(triaVTK->GetCellType(), triaVTK->GetPointIds());
+    }
+  }//if(ndim
+  else
+  {
+    for(int ee=0; ee<nElem_global; ee++)
+    {
+      matlIdVTKcell->SetTuple1(ee, elems[ee]->matType);
+      elemIdVTKcell->SetTuple1(ee, elems[ee]->elmType);
+
+      nodeNums = elems[ee]->nodeNums;
+
+      ind = ee*4;
+      for(ll=0; ll<4; ll++)
+      {
+        nn = nodeNums[ll];
+
+        xx = GeomData.NodePosNew[nn][0];
+        yy = GeomData.NodePosNew[nn][1];
+        zz = GeomData.NodePosNew[nn][2];
+
+        pt[0] = pointsVTK->InsertNextPoint(xx, yy, zz);
+
+        vertexVTK->GetPointIds()->SetId(0, pt[0]);
+
+        tetraVTK->GetPointIds()->SetId(ll, pt[0]);
+
+        presVTK->SetTuple1(ind+ll, SolnData.pres[ind+ll]);
+      }
+
+      uGridVTK->InsertNextCell(tetraVTK->GetCellType(), tetraVTK->GetPointIds());
+    }
+
+  }
+
+
+    uGridVTK->SetPoints(pointsVTK);
+    uGridVTK->GetFieldData()->AddArray(timeloadstamp);
+    uGridVTK->GetPointData()->SetScalars(presVTK);
+    uGridVTK->GetCellData()->AddArray(elemIdVTKcell);
+    uGridVTK->GetCellData()->AddArray(matlIdVTKcell);
+
+    char fname[200];
+    sprintf(fname,"%s%s%06d%s", inputfilename.c_str(),"-pressure-",filecount, ".vtu");
+
+    writerUGridVTK->SetFileName(fname);
+    writerUGridVTK->SetInputData(uGridVTK);
+    writerUGridVTK->Write();
+
+    if(debug) cout << " femSolidmechanics::postProcessPressureForDiscontinuousElements ... ENDED " << endl;
+
+  return;
+}
+
+
+
+
 
 
 

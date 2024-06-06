@@ -828,6 +828,7 @@ int femSolidmechanics::solveWithNewtonRaphson()
         {
             stepsCompleted++;
 
+            filecount++;
             postProcess();
 
             writeNodalData();

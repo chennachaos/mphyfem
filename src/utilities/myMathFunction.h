@@ -18,7 +18,7 @@ class myMathFunction
   public:
 
     //member variables
-    double  x, y, z;
+    double  x, y, z, t;
 
     exprtk::expression<double>   expression;
 
@@ -34,7 +34,7 @@ class myMathFunction
 
     void initialise(const string& expr_);
 
-    double getValue(double x_=0, double y_=0, double z_=0);
+    double getValue(double x_=0, double y_=0, double z_=0, double t_=0);
 
     string  getExpression()
     { return expr; }

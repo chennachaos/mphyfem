@@ -167,7 +167,7 @@ int femSolidmechanics::prepareInputData()
 
     for(ee=0;ee<nElem_global;ee++)
     {
-      printVector(elemConn[ee]);
+      //printVector(elemConn[ee]);
 
       npElem = elemConn[ee].size()-5;
       nodeNums.resize(npElem);
@@ -861,7 +861,7 @@ int femSolidmechanics::setBoundaryConditions()
                 yc = GeomData.NodePosOrig[nn][1];
                 zc = GeomData.NodePosOrig[nn][2];
 
-                value = mathfun.getValue(xc, yc, zc) * loadFactor;
+                value = mathfun.getValue(xc, yc, zc, myTime.cur) * loadFactor;
 
                 //cout << xc << '\t' << yc << '\t' << zc << '\t' << loadFactor << '\t' << value << endl;
 

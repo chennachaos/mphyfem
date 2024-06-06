@@ -366,11 +366,12 @@ public:
 class  ThickCylinder
 {
   private:
-    double  pin, ri, ro, G, E, nu, fact, a, b1, b2, A;
+    int sss=2;
+    double  pin, ri, ro, G, E, nu, b1, b2, A, B;
 
   public:
 
-    ThickCylinder(int sss, double E1, double nu1)
+    ThickCylinder(double E1, double nu1)
     {
       //E = 200.0;
       //nu = 0.3;
@@ -382,16 +383,14 @@ class  ThickCylinder
 
       pin = 1.0;
 
-      fact = pin*ri*ri/(ro*ro-ri*ri);
-      A = fact;
+      A = pin*ri*ri/(ro*ro-ri*ri);
+      B = A*ro*ro;
 
-      a = fact/E;
-
-      b2 = (1.0+nu)*ro*ro;
+      b2 = 1.0 + nu;
 
       if(sss==1)// plane-stress
       {
-        b1 = 1.0 - nu ;
+        b1 = 1.0 - nu;
       }
       else //if(sss==2)// plane-strain
       {
@@ -412,37 +411,27 @@ class  ThickCylinder
 
     double  dispR(double r, double t)
     {
-      return   ( a*( b1*r + b2/r) );
+      return   (b1*A*r + b2*B/r)/E;
     }
 
     double  dispX(double r, double t)
     {
-      return   ( a*( b1*r + b2/r)*cos(t) );
+      return   dispR(r,t)*cos(t);
     }
 
     double  dispY(double r, double t)
     {
-      return   ( a*( b1*r + b2/r)*sin(t) );
+      return   dispR(r,t)*sin(t);
     }
-
-    //double  dispX(double  x, double y)
-    //{
-      //return   ( a*( b1 + b2/(x*x+y*y))*x );
-    //}
-
-    //double  dispY(double  x, double y)
-    //{
-      //return   ( a*( b1 + b2/(x*x+y*y))*y );
-    //}
 
     double  stressRR(double r, double t)
     {
-      return  (fact*(1.0-ro*ro/r/r));
+      return  (A-B/r/r);
     }
 
     double  stressTT(double r, double t)
     {
-      return  (fact*(1.0+ro*ro/r/r));
+      return  (A+B/r/r);
     }
 
     double  stressRT(double r, double t)
@@ -459,42 +448,21 @@ class  ThickCylinder
     {
       return  2*(1.0+nu)*A/3.0;
     }
-    //double  stressXX(double x, double y)
-    //{
-      //return  fact*(1.0 - ro*ro*(x*x-y*y)/(x*x+y*y)/(x*x+y*y));
-    //}
-
-    //double  stressYY(double x, double y)
-    //{
-      //return  fact*(1.0 + ro*ro*(x*x-y*y)/(x*x+y*y)/(x*x+y*y));
-    //}
-
-    //double  stressXY(double x, double y)
-    //{
-      //return  fact*( - ro*ro*(2.0*x*y)/(x*x+y*y)/(x*x+y*y));
-    //}
 
     double  stressXX(double r, double t)
     {
-      return  fact*(1.0 - ro*ro*cos(2.0*t)/r/r);
+      return  (A - B*cos(2.0*t)/r/r);
     }
 
     double  stressYY(double r, double t)
     {
-       return  fact*(1.0 + ro*ro*cos(2.0*t)/r/r);
+       return  (A + B*cos(2.0*t)/r/r);
     }
 
     double  stressXY(double r, double t)
     {
-      return  fact*(- ro*ro*sin(2.0*t)/r/r);
+      return  (-B*sin(2.0*t)/r/r);
     }
-
-    //void  stresses(double r, double t, double* val)
-    //{
-      //val[0] = fact*(1.0 - ro*ro*cos(2.0*t)/r/r);
-      //val[1] = fact*(1.0 + ro*ro*cos(2.0*t)/r/r);
-      //val[2] = fact*(- ro*ro*sin(2.0*t)/r/r);
-    //}
 
     void  stresses1(double r, double t, double* val)
     {
@@ -542,7 +510,7 @@ class  ThickCylinder
       */
     }
 
-
+    /*
     double  strainXX(double r, double t)
     {
       return  ( a*(b1 - b2/r/r)*cos(t)*cos(t) + a*(b1 + b2/r/r)*sin(t)*sin(t) ) ;
@@ -566,7 +534,199 @@ class  ThickCylinder
 
       return;
     }
+    */
 };
+
+
+
+
+
+
+
+class  ThickCylinderComposite
+{
+  private:
+    int sss=2;
+    double  pin, ri, ro, rm, E1, nu1, E2, nu2, b1, b2, A1, B1, A2, B2;
+
+  public:
+
+    ThickCylinderComposite(double E_, double nu_)
+    {
+      E1 = 200.0;
+      E2 =  20.0;
+      nu1 = 0.5;
+      nu2 = nu1;
+
+      ri = 100.0;
+      ro = 200.0;
+      rm = 150.0;
+
+      pin = 1.0;
+
+      A1 = (80.0*nu1-108.0)/(114.0*nu1-149.0);
+      B1 = (1940000.0*nu1-2570000.0)/(114.0*nu1-149.0);
+      A2 = (8.0*nu1-8.0)/(114.0*nu1-149.0);
+      B2 = (320000.0*nu1-320000.0)/(114.0*nu1-149.0);
+
+      //cout << A1 << '\t' << B1 << endl;
+      //cout << A2 << '\t' << B2 << endl;
+
+      b2 = 1.0 + nu1;
+
+      if(sss==1)// plane-stress
+      {
+        b1 = 1.0 - nu1;
+      }
+      else //if(sss==2)// plane-strain
+      {
+        b1 = (1.0+nu1)*(1.0-2*nu1);
+      }
+    }
+
+    ~ThickCylinderComposite() {}
+
+    double  forceX(double x, double y)
+    { return 0.0; }
+
+    double  forceY(double x, double y)
+    { return 0.0; }
+
+    double  forceR(double r, double t)
+    { return 0.0; }
+
+    double  dispR(double r, double t)
+    {
+      if(r <= rm)
+        return   (b1*A1*r + b2*B1/r)/E1;
+      else
+        return   (b1*A2*r + b2*B2/r)/E2;
+    }
+
+    double  dispX(double r, double t)
+    {
+      return   dispR(r,t)*cos(t);
+    }
+
+    double  dispY(double r, double t)
+    {
+      return   dispR(r,t)*sin(t);
+    }
+
+    double  stressRR(double r, double t)
+    {
+      if(r <= rm)
+        return  (A1-B1/r/r);
+      else
+        return  (A2-B2/r/r);
+    }
+
+    double  stressTT(double r, double t)
+    {
+      if(r <= rm)
+        return  (A1+B1/r/r);
+      else
+        return  (A2+B2/r/r);
+    }
+
+    double  stressRT(double r, double t)
+    {
+      return  0.0;
+    }
+
+    double  stressZZ(double r, double t)
+    {
+      if(r <= rm)
+        return  nu1*(stressRR(r, t)+stressTT(r, t));
+      else
+        return  nu2*(stressRR(r, t)+stressTT(r, t));
+    }
+
+    double  pressure(double r, double t)
+    {
+      if(r <= rm)
+        return  2*(1.0+nu1)*A1/3.0;
+      else
+        return  2*(1.0+nu2)*A2/3.0;
+    }
+
+    double  stressXX(double r, double t)
+    {
+      if(r <= rm)
+        return  (A1 - B1*cos(2.0*t)/r/r);
+      else
+        return  (A2 - B2*cos(2.0*t)/r/r);
+    }
+
+    double  stressYY(double r, double t)
+    {
+      if(r <= rm)
+        return  (A1 + B1*cos(2.0*t)/r/r);
+      else
+        return  (A2 + B2*cos(2.0*t)/r/r);
+    }
+
+    double  stressXY(double r, double t)
+    {
+      if(r <= rm)
+        return  (-B1*sin(2.0*t)/r/r);
+      else
+        return  (-B2*sin(2.0*t)/r/r);
+    }
+
+    void  stresses1(double r, double t, double* val)
+    {
+      double srr = stressRR(r, t), stt = stressTT(r, t), srt = 0.0;
+      double ct = cos(t), st = sin(t);
+
+      val[0] = srr*ct*ct + stt*st*st - 2*srt*st*ct; // xx
+      val[1] = srr*st*st + stt*ct*ct + 2*srt*st*ct; // yy
+      val[2] = (srr-stt)*st*ct + srt*(ct*ct-st*st); // xy
+      if( r <= rm)
+        val[3] = nu1*(srr+stt); //zz
+      else
+        val[3] = nu2*(srr+stt); //zz
+    }
+
+    void  stresses2(double x, double y, double* val)
+    {
+      /*
+      // ur = a*( b1*r + b2/r);
+
+      double  du[3][3];
+      double  a1 = a*b1;
+      double  a2 = a*b2;
+      double  r = sqrt(x*x+y*y);
+      double  rP3 = r*r*r;
+      double  rP5 = r*r*r*r*r;
+
+      du[0][0] = -3.0*a2*x*x/rP5 + a1 + a2/rP3;
+      du[0][1] = -3.0*a2*x*y/rP5;
+      du[0][2] =  0.0;
+
+      du[1][0] = -3.0*a2*y*x/rP5;
+      du[1][1] = -3.0*a2*y*y/rP5 + a1 + a2/rP3;
+      du[1][2] =  0.0;
+
+      du[2][0] = 0.0;
+      du[2][1] = 0.0;
+      du[2][2] = 0.0;
+
+      double volstrn = du[0][0]+du[1][1]+du[2][2];
+
+      val[0] = 2.0*G*du[0][0] + L*volstrn ;
+      val[1] = 2.0*G*du[1][1] + L*volstrn ;
+      val[2] = 2.0*G*du[2][2] + L*volstrn ;
+      val[3] = G*(du[0][1]+du[1][0]);
+      val[4] = G*(du[1][2]+du[2][1]);
+      val[5] = G*(du[2][0]+du[0][2]);
+      */
+    }
+
+};
+
+
+
 
 
 
@@ -574,14 +734,14 @@ class  ThickCylinder
 class  ThickSphere
 {
   private:
-    double  pin, ri, ro, E, nu, G, K, L, A, B, fact, fact1, fact2, fact3, fact4;
+    double  pin, ri, ro, E, nu, G, K, L, A, B;
 
   public:
 
-    ThickSphere(double E1, double nu1)
+    ThickSphere(double E_, double nu_)
     {
-      E  = E1;
-      nu = nu1;
+      E  = E_;
+      nu = nu_;
 
       G = E/2.0/(1.0+nu);
       K = E/3.0/(1.0-2.0*nu);
@@ -594,13 +754,6 @@ class  ThickSphere
 
       A = pin*ri*ri*ri/(ro*ro*ro-ri*ri*ri);
       B = A*ro*ro*ro;
-
-      fact4 = ri*ri*ri/(ro*ro*ro-ri*ri*ri);
-
-      fact1 = pin*fact4/E;
-
-      fact2 = (1.0-2.0*nu);
-      fact3 = (1.0+nu)*ro*ro*ro/2.0;
     }
 
     ~ThickSphere() {}
@@ -616,22 +769,22 @@ class  ThickSphere
 
     double  dispR(double r, double t, double p)
     {
-      return   ( fact1*( fact2*r + fact3/r/r) );
+      return   ( (1.0-2.0*nu)*A*r + (1+nu)*B/r/r/2.0 )/E;
     }
 
     double  dispX(double r, double t, double p)
     {
-      return   ( (fact1*( fact2*r + fact3/r/r) )*sin(p)*cos(t) );
+      return   dispR(r, t, p)*sin(p)*cos(t);
     }
 
     double  dispY(double r, double t, double p)
     {
-      return   ( (fact1*( fact2*r + fact3/r/r) )*sin(p)*sin(t) );
+      return   dispR(r, t, p)*sin(p)*sin(t);
     }
 
     double  dispZ(double r, double t, double p)
     {
-      return   ( (fact1*( fact2*r + fact3/r/r) )*cos(p) );
+      return   dispR(r, t, p)*cos(p);
     }
 
     void  disp(double x, double y, double z, double* val)
@@ -640,7 +793,7 @@ class  ThickSphere
       double  t = atan(y/x);
       double  p = acos(z/r);
 
-      double ur = fact1*( fact2*r + fact3/r/r);
+      double ur = dispR(r, t, p);
 
       val[0] = ur*sin(p)*cos(t);
       val[1] = ur*sin(p)*sin(t);
@@ -654,53 +807,50 @@ class  ThickSphere
 
     double  stressRR(double r, double t, double p)
     {
-      return  (fact4*pin*(1.0-ro*ro*ro/r/r/r));
+      return  (A-B/r/r/r);
     }
 
     double  stressTT(double r, double t, double p)
     {
-      return  (fact4*pin*(ro*ro*ro/r/r/r/2.0+1.0));
+      return  (A+B/r/r/r/2.0);
     }
 
     double  stressPP(double r, double t, double p)
     {
-      return  (fact4*pin*(ro*ro*ro/r/r/r/2.0+1.0));
-    }
-
-    double  stressXX(double r, double t, double p)
-    {
-      return  fact*(1.0 - ro*ro*cos(2.0*t)/r/r);
-    }
-
-    double  stressYY(double r, double t, double p)
-    {
-       return  fact*(1.0 + ro*ro*cos(2.0*t)/r/r);
-    }
-
-    double  stressXY(double r, double t, double p)
-    {
-      return  fact*(- ro*ro*sin(2.0*t)/r/r);
+      return  (A+B/r/r/r/2.0);
     }
 
     void  stresses(double x, double y, double z, double* val)
     {
+      double  r = sqrt(x*x + y*y + z*z);
+      double  t = atan(y/x);
+      double  p = acos(z/r);
+
+      MatrixXd  strCart(3,3), strSph(3,3), Rot(3,3);
+
+      Rot(0,0) = sin(p)*cos(t);    Rot(0,1) = sin(p)*sin(t);    Rot(0,2) =  cos(p);
+      Rot(1,0) = cos(p)*cos(t);    Rot(1,1) = cos(p)*sin(t);    Rot(1,2) = -sin(p);
+      Rot(2,0) =       -sin(t);    Rot(2,1) =        cos(t);    Rot(2,2) =  0.0;
+
+      strSph.setZero();
+      strSph(0,0) = stressRR(r,t,p);
+      strSph(1,1) = stressTT(r,t,p);
+      strSph(2,2) = stressTT(r,t,p);
+
+      strCart = Rot.transpose()*strSph*Rot;
+
+      val[0] = strCart(0,0); //xx
+      val[1] = strCart(1,1); //yy
+      val[2] = strCart(2,2); //zz
+      val[3] = strCart(0,1); //xy
+      val[4] = strCart(1,2); //yz
+      val[5] = strCart(0,2); //xz
+
+
       /*
-      Matrix3d  Srr, Sxx, Rot;
-      Srr.setZero();
-      Sxx.setZero();
-      Rot.setZero();
-
-      Srr(0,0) = fact4*pin*(ro*ro*ro/r/r/r-1.0);
-      Srr(1,1) = fact4*pin*(ro*ro*ro/r/r/r/2.0+1.0);
-      Srr(2,2) = fact4*pin*(ro*ro*ro/r/r/r/2.0+1.0);
-
-      val[0] = fact4*pin*(ro*ro*ro/r/r/r-1.0);
-      val[1] = fact4*pin*(ro*ro*ro/r/r/r/2.0+1.0);
-      val[2] = val[1];
-      val[3] = 0.0;
-      val[4] = 0.0;
-      val[5] = 0.0;
-      */
+      double fact1 = A/E;
+      double fact2 = (1.0-2.0*nu);
+      double fact3 = (1.0+nu)*ro*ro*ro/2.0;
 
       double  du[3][3];
       double  a1 = fact1*fact2;
@@ -723,41 +873,218 @@ class  ThickSphere
 
       double volstrn = du[0][0]+du[1][1]+du[2][2];
 
-      val[0] = 2.0*G*du[0][0] + L*volstrn ;
-      val[1] = 2.0*G*du[1][1] + L*volstrn ;
-      val[2] = 2.0*G*du[2][2] + L*volstrn ;
-      val[3] = G*(du[0][1]+du[1][0]);
-      val[4] = G*(du[1][2]+du[2][1]);
-      val[5] = G*(du[2][0]+du[0][2]);
-
+      val[0] = 2.0*G*du[0][0] + L*volstrn ; //xx
+      val[1] = 2.0*G*du[1][1] + L*volstrn ; //yy
+      val[2] = 2.0*G*du[2][2] + L*volstrn ; //zz
+      val[3] = G*(du[0][1]+du[1][0]);       //xy
+      val[4] = G*(du[1][2]+du[2][1]);       //yz
+      val[5] = G*(du[2][0]+du[0][2]);       //xz
+      */
     }
 
-
-    double  strainXX(double r, double t, double p)
-    {
-      return  0.0 ;
-    }
-
-    double  strainYY(double r, double t, double p)
-    {
-      return  0.0 ;
-    }
-
-    double  strainXY(double r, double t, double p)
-    {
-      return  0.0 ;
-    }
-
-    void  strains(double r, double t, double p, double* val)
-    {
-      val[0] =  0.0;
-      val[1] =  0.0 ;
-      val[2] =  0.0 ;
-
-      return;
-    }
 };
 
+
+
+
+
+
+
+
+class  ThickSphereComposite
+{
+  private:
+    double  pin, ri, ro, rm, E1, E2, nu1, nu2, G1, K1, L1, G2, K2, L2, A1, B1, A2, B2;
+
+  public:
+
+    ThickSphereComposite(double E_, double nu_)
+    {
+      E1 = 200.0;
+      E2 =  20.0;
+      nu1 = nu_;
+      nu2 = nu1;
+
+      G1 = E1/2.0/(1.0+nu1);
+      K1 = E1/3.0/(1.0-2.0*nu1);
+      L1 = K1 - 2.0*G1/3.0;
+
+      G2 = E2/2.0/(1.0+nu2);
+      K2 = E2/3.0/(1.0-2.0*nu2);
+      L2 = K2 - 2.0*G2/3.0;
+
+      ri = 100.0;
+      ro = 200.0;
+      rm = 150.0;
+
+      pin = 1.0;
+
+      A1 = (212*nu1 - 508)/(670*nu1 - 1373);
+      B1 = (882000000*nu1 - 1881000000)/(670*nu1 - 1373);
+      A2 = (36*nu1 - 36)/(670*nu1 - 1373);
+      B2 = (288000000*nu1 - 288000000)/(670*nu1 - 1373);
+    }
+
+    ~ThickSphereComposite() {}
+
+    double  forceX(double x, double y, double z)
+    { return 0.0; }
+
+    double  forceY(double x, double y, double z)
+    { return 0.0; }
+
+    double  forceR(double r, double t, double p)
+    { return 0.0; }
+
+    double  dispR(double r, double t, double p)
+    {
+      if(r <= rm)
+        return   ( (1.0-2.0*nu1)*A1*r + (1+nu1)*B1/r/r/2.0 )/E1;
+      else
+        return   ( (1.0-2.0*nu2)*A2*r + (1+nu2)*B2/r/r/2.0 )/E2;
+    }
+
+    double  dispX(double r, double t, double p)
+    {
+      return   dispR(r, t, p)*sin(p)*cos(t);
+    }
+
+    double  dispY(double r, double t, double p)
+    {
+      return   dispR(r, t, p)*sin(p)*sin(t);
+    }
+
+    double  dispZ(double r, double t, double p)
+    {
+      return   dispR(r, t, p)*cos(p);
+    }
+
+    void  disp(double x, double y, double z, double* val)
+    {
+      double  r = sqrt(x*x + y*y + z*z);
+      double  t = atan(y/x);
+      double  p = acos(z/r);
+
+      double ur = dispR(r, t, p);
+
+      val[0] = ur*sin(p)*cos(t);
+      val[1] = ur*sin(p)*sin(t);
+      val[2] = ur*cos(p);
+    }
+
+    double  pressure(double r, double t, double p)
+    {
+      if(r <= rm)
+        return  A1;
+      else
+        return  A2;
+    }
+
+    double  stressRR(double r, double t, double p)
+    {
+      if(r <= rm)
+        return  (A1-B1/r/r/r);
+      else
+        return  (A2-B2/r/r/r);
+    }
+
+    double  stressTT(double r, double t, double p)
+    {
+      if(r <= rm)
+        return  (A1+B1/r/r/r/2.0);
+      else
+        return  (A2+B2/r/r/r/2.0);
+    }
+
+    double  stressPP(double r, double t, double p)
+    {
+      if(r <= rm)
+        return  (A1+B1/r/r/r/2.0);
+      else
+        return  (A2+B2/r/r/r/2.0);
+    }
+
+    void  stresses(double x, double y, double z, double* val)
+    {
+      double  r = sqrt(x*x + y*y + z*z);
+      double  t = atan(y/x);
+      double  p = acos(z/r);
+
+      MatrixXd  strCart(3,3), strSph(3,3), Rot(3,3);
+
+      Rot(0,0) = sin(p)*cos(t);    Rot(0,1) = sin(p)*sin(t);    Rot(0,2) =  cos(p);
+      Rot(1,0) = cos(p)*cos(t);    Rot(1,1) = cos(p)*sin(t);    Rot(1,2) = -sin(p);
+      Rot(2,0) =       -sin(t);    Rot(2,1) =        cos(t);    Rot(2,2) =  0.0;
+
+      strSph.setZero();
+      strSph(0,0) = stressRR(r,t,p);
+      strSph(1,1) = stressTT(r,t,p);
+      strSph(2,2) = stressTT(r,t,p);
+
+      strCart = Rot.transpose()*strSph*Rot;
+
+      val[0] = strCart(0,0); //xx
+      val[1] = strCart(1,1); //yy
+      val[2] = strCart(2,2); //zz
+      val[3] = strCart(0,1); //xy
+      val[4] = strCart(1,2); //yz
+      val[5] = strCart(0,2); //xz
+
+      /*
+      double  r = sqrt(x*x+y*y+z*z);
+
+      double fact1, fact2, fact3, G, L;
+
+      if(r <= rm)
+      {
+        fact1 = A1/E1;
+        fact2 = (1.0-2.0*nu1);
+        fact3 = (1.0+nu1)*ro*ro*ro/2.0;
+
+        G = G1;
+        L = L1;
+      }
+      else
+      {
+        fact1 = A2/E2;
+        fact2 = (1.0-2.0*nu2);
+        fact3 = (1.0+nu2)*ro*ro*ro/2.0;
+
+        G = G2;
+        L = L2;
+      }
+
+      double  a1 = fact1*fact2;
+      double  a2 = fact1*fact3;
+      double  rP3 = r*r*r;
+      double  rP5 = r*r*r*r*r;
+
+      double  du[3][3];
+      du[0][0] = -3.0*a2*x*x/rP5 + a1 + a2/rP3;
+      du[0][1] = -3.0*a2*x*y/rP5;
+      du[0][2] = -3.0*a2*x*z/rP5;
+
+      du[1][0] = -3.0*a2*y*x/rP5;
+      du[1][1] = -3.0*a2*y*y/rP5 + a1 + a2/rP3;
+      du[1][2] = -3.0*a2*y*z/rP5;
+
+      du[2][0] = -3.0*a2*z*x/rP5;
+      du[2][1] = -3.0*a2*z*y/rP5;
+      du[2][2] = -3.0*a2*z*z/rP5 + a1 + a2/rP3;
+
+      double volstrn = du[0][0]+du[1][1]+du[2][2];
+
+      val[0] = 2.0*G*du[0][0] + L*volstrn ; //xx
+      val[1] = 2.0*G*du[1][1] + L*volstrn ; //yy
+      val[2] = 2.0*G*du[2][2] + L*volstrn ; //zz
+      val[3] = G*(du[0][1]+du[1][0]);       //xy
+      val[4] = G*(du[1][2]+du[2][1]);       //yz
+      val[5] = G*(du[2][0]+du[0][2]);       //xz
+      */
+
+    }
+
+};
 
 
 

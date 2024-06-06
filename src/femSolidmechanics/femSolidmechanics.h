@@ -87,7 +87,7 @@ class femSolidmechanics : public femBase
 
         int  calcMassMatrixForExplicitDynamics();
 
-        virtual int calcStiffnessAndResidual(int printRes=2, bool zeroMtx=true, bool zeroRes=true);
+        virtual int calcStiffnessAndResidual();
 
         virtual int factoriseSolveAndUpdate();
 
@@ -130,6 +130,8 @@ class femSolidmechanics : public femBase
         virtual  void  plotGeom();
 
         virtual  void  postProcess();
+
+        void  postProcessPressureForDiscontinuousElements();
 
         int  processForBernsteinElements();
 
