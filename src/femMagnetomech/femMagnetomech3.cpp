@@ -354,13 +354,14 @@ void  femMagnetomech::postProcess()
         //SyyNodesVTK->SetTuple1(ii, output2[ii]);
         //SzzNodesVTK->SetTuple1(ii, output3[ii]);
 
-        presVTK->SetTuple1(ii, output4[ii]);
+        //presVTK->SetTuple1(ii, output4[ii]);
+      presVTK->SetTuple1(ii, SolnData.pres[ii]);
     }
 
-    //uGridVTK->GetPointData()->SetScalars(presVTK);
+    uGridVTK->GetPointData()->SetScalars(presVTK);
     //uGridVTK->GetPointData()->AddArray(SxxNodesVTK);
     //uGridVTK->GetPointData()->AddArray(SyyNodesVTK);
-    uGridVTK->GetPointData()->AddArray(SzzNodesVTK);
+    //uGridVTK->GetPointData()->AddArray(SzzNodesVTK);
 
     // magnetic potential
     ////////////////////////////
