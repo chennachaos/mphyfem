@@ -1053,11 +1053,11 @@ void Elem_Magnmech_3D_SM_221::projectStrain(bool extrapolateFlag, int vartype, i
 
 void Elem_Magnmech_3D_SM_221::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
-    assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
+    assert( (ivar.var.size() > 0) && (varindex < nivGP) );
 
     for(int gp=0; gp<nGP; gp++)
     {
-       outval[gp] = ivar.var(varindex, gp);
+       //outval[gp] = ivar.var(varindex, gp);
     }//gp
 
     //cout << varindex << '\t' << outval[0] << '\t' << outval[1] << '\t' << outval[2] << endl;

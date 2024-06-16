@@ -49,6 +49,8 @@ void TimeFunction::update()
   double t = myTime.cur, tmt0;
   std::vector<double>  p;
 
+  tol = 1.e-12;
+
   factor = 0.;
   for(int i=0; i<nblocks; ++i)
   {

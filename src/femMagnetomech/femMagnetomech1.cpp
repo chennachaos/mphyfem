@@ -592,6 +592,7 @@ int  femMagnetomech::prepareDataForMixedElements()
 
   SolnData.pres.setZero();
 
+  SolnData.presPrev = SolnData.pres;
   SolnData.presApplied = SolnData.pres;
 
   return 0;
@@ -1432,6 +1433,7 @@ int femMagnetomech::setBoundaryConditions()
 
         // nodeNums contains new node numbers which are used for the solution
         // nodeCoordsOrig contains coordinates of nodes with numbers before domain decompositions
+        PetscPrintf(MPI_COMM_WORLD, " timeFunctionNum = 1 ... load Factor = %12.6f \n", timeFunctions[0]->getValue());
 
         nodeNums = bc->bpt->nodeNums;
 
@@ -1769,6 +1771,8 @@ int femMagnetomech::updateIterStep()
     if(debug)  cout << " femMagnetomech::updateIterStep() ... " << endl;
 
     SolnData.updateIterStep();
+
+    cout << " aaaaaaaa " << endl;
 
     int  nn, dd, ind;
     for(nn=0; nn<nNode_global; nn++)

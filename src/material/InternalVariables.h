@@ -20,7 +20,7 @@ class InternalVariables
     //member variables
     vector<double>  matData;
 
-    MatrixXd  var, varPrev, varDot, varDotPrev;
+    vector<Matrix3d>  var, varPrev, varDot, varDotPrev;
 
     //member functions
 

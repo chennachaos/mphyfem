@@ -28,8 +28,8 @@ int Matl_LinearElastic_Viscoelastic::computeStressAndTangent(bool tangFlag, int 
      xz -> 13   yz -> 23  zz -> 33
     */
 
-
     int isw = 1,  err = 0;
+/*
 
     // check for the validity of input data and assumptions
 
@@ -113,7 +113,7 @@ int Matl_LinearElastic_Viscoelastic::computeStressAndTangent(bool tangFlag, int 
     // ()*dik*dlj
     for(ii=0; ii<9; ii++)
         Cmat(ii,ii) += mu;
-
+*/
     return err;
 }
 

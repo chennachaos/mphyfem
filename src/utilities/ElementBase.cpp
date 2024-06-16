@@ -108,7 +108,7 @@ void ElementBase::initialiseIntVar()
     // allocate memory for internal variables
     if(nivGP > 0)
     {
-        ivar.initialise(nivGP*9, nGP);
+        ivar.initialise(nGP, nivGP);
     }
 
     return;

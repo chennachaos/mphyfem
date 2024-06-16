@@ -750,8 +750,8 @@ int femMagnetomech::solveWithNewtonRaphson()
 
     solverPetsc->Fext.resize(nNode_global*ndof);
 
-    setInitialConditions();
-    readResult();
+    //setInitialConditions();
+    //readResult();
     postProcess();
     writeNodalData();
 

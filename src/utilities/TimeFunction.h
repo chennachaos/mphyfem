@@ -13,7 +13,7 @@ class TimeFunction
 
   public:
 
-    double tol = 1.e-10, factor;
+    double tol, factor;
 
     vector<double>  t0, tf;
     vector<vector<double> >  ps; // coefficients

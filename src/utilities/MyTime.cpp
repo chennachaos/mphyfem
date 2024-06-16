@@ -27,6 +27,10 @@ void MyTime::update()
 {
     prev2 = prev;
     prev  = cur;
+
+    if(cur+dt > 1000.0)
+      dt = 0.003;
+
     cur  += dt;
 
     return;

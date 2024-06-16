@@ -15,20 +15,24 @@ InternalVariables::~InternalVariables()
 
 
 
-int  InternalVariables::initialise(int rows, int cols)
+int  InternalVariables::initialise(int nGP, int nivGP)
 {
-    var.resize(rows, cols); var.setZero();
+    int  size = nGP*nivGP;
+    var.resize(size);
+    varPrev.resize(size);
+    varDot.resize(size);
+    varDotPrev.resize(size);
 
-    for(int jj=0; jj<cols; jj++)
+    Matrix3d Id = Matrix3d::Identity();
+
+    for(int ii=0; ii<var.size(); ii++)
     {
-        var(0,jj) = 1.0;
-        var(4,jj) = 1.0;
-        var(8,jj) = 1.0;
-    }
+        var[ii] = Id;
+        varPrev[ii] = Id;
 
-    varPrev    = var;
-    varDot     = var*0.0;
-    varDotPrev = var*0.0;
+        varDot[ii].setZero();
+        varDotPrev[ii].setZero();
+    }
 
     return 0;
 }
@@ -45,8 +49,11 @@ int InternalVariables::update(VectorXd&  stre, MatrixXd&  Cmat)
 
 int InternalVariables::reset()
 {
-    var    = varPrev;
-    varDot = varDotPrev;
+    for(int ii=0; ii<var.size(); ii++)
+    {
+        var[ii]    = varPrev[ii];
+        varDot[ii] = varDotPrev[ii];
+    }
 
     return 0;
 }
@@ -56,8 +63,11 @@ int InternalVariables::reset()
 
 int InternalVariables::saveSolution()
 {
-    varPrev    = var;
-    varDotPrev = varDot;
+    for(int ii=0; ii<var.size(); ii++)
+    {
+        varPrev[ii]    = var[ii];
+        varDotPrev[ii] = varDot[ii];
+    }
 
     return 0;
 }
