@@ -336,8 +336,24 @@ int  growthfunction_rod(int ftype, int ndim, double timeFact, double* geom,  Eig
     // curvature only
     //Fg(2,2) += timeFact*(geom[0]+geom[1]);
     // curvature and twist
-    double  phi = PI/3.0;
-    Fg(2,2) += timeFact*geom[2]*(geom[0]*cos(2.0*PI*geom[2]/40.0)+geom[1]*sin(2.0*PI*geom[2]/40.0));
+    if(ftype == 1) // circle
+    {
+      Fg(2,2) -= timeFact*0.5*PI*geom[0];
+    }
+    if(ftype == 2) // spiral
+    {
+      Fg(2,2) -= timeFact*0.5*PI*geom[0]*geom[2];
+    }
+    if(ftype == 3) // helical
+    {
+      Fg(0,2) += timeFact*0.4;
+      Fg(2,2) -= timeFact*2.0*PI*geom[1];
+    }
+    else if(ftype == 4)
+    {
+      double  phi = PI/3.0;
+      Fg(2,2) += timeFact*geom[2]*(geom[0]*cos(2.0*PI*geom[2]/40.0)+geom[1]*sin(2.0*PI*geom[2]/40.0));
+    }
 
     return 0;
 }

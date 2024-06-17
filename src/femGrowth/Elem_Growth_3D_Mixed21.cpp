@@ -98,7 +98,7 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
     double  detF, detFn, fact, fact1, dvol, dvol0, Jac, volstrain;
     double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5, resip, Jhat, thetahat;
     double  param[3], bforce[3]={0.0,0.0,0.0}, force[3];
-    double  veloCur[3], acceCur[3], sig[3];
+    double  veloCur[3], acceCur[3], sig[3], Jg, Je;
 
     int  Utype  = MatlData->getUtype();                     // volumetric energy function
     double BULK = 1.0/MatlData->getKinv();
@@ -114,8 +114,6 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
     double acceFact2 = acceFact1;
     double FiniteFact = (finite == true) ? 1.0 : 0.0;
     double tCur = myTime.cur;
-    //double Bres_Rad = 114.0, angle;
-    //double Bres_Rad = 143.0, radius, angle;
 
     double xNode[npElem], yNode[npElem], zNode[npElem], geom[3];
     for(ii=0;ii<npElem;ii++)
@@ -170,6 +168,11 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
 
         GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
+        if(Jac < 0.0)
+        {
+          throw runtime_error("Negative Jacobian in the element");
+        }
+
         dvol0 = Jac * gaussweights[gp];
         dvol = dvol0;
         elemVolOrig += dvol0;
@@ -181,15 +184,6 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
           geom[1] += N[ii]*yNode[ii];
           geom[2] += N[ii]*zNode[ii];
         }
-
-        //radius = sqrt(geom[0]*geom[0]+geom[1]*geom[1]);
-        //angle = atan(geom[1]/geom[0]);
-
-        //MatlData->ResiMagnfield(0) = Bres_Rad*(1.0-radius*radius)*cos(angle);
-        //MatlData->ResiMagnfield(1) = Bres_Rad*(1.0-radius*radius)*sin(angle);
-
-        //MatlData->ResiMagnfield(0) = Bres_Rad*cos(angle);
-        //MatlData->ResiMagnfield(1) = Bres_Rad*sin(angle);
 
         computeDefGradPrev(dN_dx, dN_dy, dN_dz, Fn);
 
@@ -204,12 +198,16 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
         detF = F.determinant();
 
 
-        growthfunction_isotropic(1, ndim, growthFactor, Fg);
+        growthfunction_rod(3, ndim, growthFactor, geom, Fg);
+        //growthfunction_isotropic(3, ndim, growthFactor, Fg);
+        //printMatrix(Fg);
 
-        if(detF < 0.0)
-        {
-          throw runtime_error("Negative Jacobian in the element");
-        }
+        FgInv = Fg.inverse();
+        Jg = Fg.determinant();
+
+        // elastic part of the deformation gradient
+        Fe = F*FgInv;
+
 
         acceCur[0] = computeAccelerationCur(0, N);
         acceCur[1] = computeAccelerationCur(1, N);
@@ -243,8 +241,10 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
             pres += (Np[ii]*SolnData->presCur[nodeNumsPres[ii]]);
         }
 
-        MatlData->computeStressAndTangent(true, sss, Fn, F, pres, stre, Cmat, ivar, gp, myTime.dt);
+        MatlData->computeStressAndTangent(true, sss, Fn, Fe, pres, stre, Cmat, ivar, gp, myTime.dt);
         if(err !=0)          return 1;
+
+        //printVector(stre);
 
         // Calculate Stiffness and Residual
         //==============================================
@@ -329,7 +329,7 @@ int Elem_Growth_3D_Mixed21::calcStiffnessAndResidualMixed(MatrixXd& Kuu, MatrixX
 
         if(finite)
         {
-          resip = detF - Jhat - thetahat*pres;
+          resip = detF - Jg*(Jhat + thetahat*pres);
         }
         else
         {

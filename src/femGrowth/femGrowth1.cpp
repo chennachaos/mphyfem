@@ -2,7 +2,7 @@
 #include "femGrowth.h"
 #include "MyTime.h"
 #include "TimeFunction.h"
-#include "NewElementMagnetoMech.h"
+#include "NewElementGrowthFEM.h"
 #include "NewMaterial.h"
 #include <algorithm>
 #include "utilitiesmaterial.h"
@@ -138,8 +138,8 @@ int femGrowth::prepareInputData()
     MIXED_ELEMENT_P0   = false;
     MIXED_STAB_ELEMENT = false;
 
-    if( (idd == ELEM_MAGNMECH_2D_HM_21)          ||
-        (idd == ELEM_MAGNMECH_3D_HM_21)          )
+    if( (idd == ELEM_GROWTH_2D_MIXED21)          ||
+        (idd == ELEM_GROWTH_3D_MIXED21)          )
     {
       MIXED_ELEMENT = true;
 
@@ -207,7 +207,7 @@ int femGrowth::prepareInputData()
 
       //cout << " elemId = " << elemId << '\t' << ElementTypeDataList[elemId]->getElemTypeNameNum() << endl;
 
-      elems[ee] = NewElementMagnetomechFEM(ElementTypeDataList[elemId]->getElemTypeNameNum());
+      elems[ee] = NewElementGrowthFEM(ElementTypeDataList[elemId]->getElemTypeNameNum());
 
       //cout << " matId  = " << matId << endl;
 
@@ -284,7 +284,6 @@ int femGrowth::prepareInputData()
 
     cout << " dispDegree  = " << dispDegree << endl;
     cout << " presDegree  = " << presDegree << endl;
-    cout << " mpotDegree  = " << mpotDegree << endl;
 
 
     if(debug) PetscPrintf(PETSC_COMM_WORLD, "     femGrowth::prepareInputData()  .... FINISHED ...\n\n");
@@ -1732,7 +1731,8 @@ int femGrowth::timeUpdate()
 
     // set parameters for the time integration scheme.
     // need to be done every time step to account for adaptive time stepping
-    SolnData.setTimeParam();
+    //SolnData.setTimeParam();
+    SolnData.timeUpdate();
 
     int  idd = 0;//SolnData.ElemProp[0]->id;
     // TODO: set MIXED_ELEMENT_P0
@@ -1771,8 +1771,6 @@ int femGrowth::updateIterStep()
     if(debug)  cout << " femGrowth::updateIterStep() ... " << endl;
 
     SolnData.updateIterStep();
-
-    cout << " aaaaaaaa " << endl;
 
     int  nn, dd, ind;
     for(nn=0; nn<nNode_global; nn++)

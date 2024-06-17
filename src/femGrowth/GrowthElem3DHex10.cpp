@@ -14,7 +14,7 @@
 using namespace std;
 
 extern MyTime myTime;
-extern List<TimeFunction> timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 
 
 
@@ -33,9 +33,10 @@ GrowthElem3DHex10::GrowthElem3DHex10()
   Kup.resize(nsize, 1);
   Kpu.resize(1, nsize);
   Kpp.resize(1, 1);
-  Rp.resize(1);
+  //Rp.resize(1);
 
-  pres = presPrev = 0.0;
+  presDOF.setZero();
+  presDOFprev.setZero();
 }
 
 
@@ -55,6 +56,7 @@ void GrowthElem3DHex10::prepareElemData()
 
 double GrowthElem3DHex10::computeVolume(bool configflag)
 {
+/*
   double  dvol, Jac, param[3];
 
   VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -96,7 +98,7 @@ double GrowthElem3DHex10::computeVolume(bool configflag)
 
           elemVol += dvol;
   }//gp
-
+*/
   return elemVol;
 }
 
@@ -104,6 +106,7 @@ double GrowthElem3DHex10::computeVolume(bool configflag)
 
 int GrowthElem3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 {
+/*
     if( (Mlocal.rows() != nsize) || (Mlocal.cols() != nsize) )
       Mlocal.resize(nsize, nsize);
     Mlocal.setZero();
@@ -185,7 +188,7 @@ int GrowthElem3DHex10::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
     cout << " elemVolOrig = " << elemVolOrig << endl;
     //printMatrix(Klocal);  printf("\n\n\n");
   }
-
+*/
   return 0;
 }
 
@@ -203,6 +206,7 @@ int GrowthElem3DHex10::calcMassMatrixPressure(MatrixXd& Mlocal, bool MassLumping
 
 double  GrowthElem3DHex10::calcCriticalTimeStep(bool flag)
 {
+/*
     int  ii;
 
     double xNode[4], yNode[4];
@@ -232,14 +236,16 @@ double  GrowthElem3DHex10::calcCriticalTimeStep(bool flag)
     //double  wave_speed = sqrt((4.0*mu/3.0)/rho);
 
     double  dtCric = charlen/wave_speed;
-
     return  dtCric;
+*/
+  return 0.0;
 }
 
 
 
 int GrowthElem3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& FlocalU, bool firstIter)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -513,7 +519,7 @@ int GrowthElem3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& FlocalU
 
     Kuu -=  ( Kup*(Kpu/Kpp(0,0)) );
     FlocalU +=  ( Kup*(Rp/Kpp(0,0)) );
-
+*/
     return 0;
 }
 
@@ -521,6 +527,7 @@ int GrowthElem3DHex10::calcStiffnessAndResidual(MatrixXd& Kuu, VectorXd& FlocalU
 
 int GrowthElem3DHex10::solveForPressure()
 {
+/*
     double  volstrain = 0.0, volstrainPrev=0.0;
     double  BULK = 1.0/matDat[1];
 
@@ -565,15 +572,6 @@ int GrowthElem3DHex10::solveForPressure()
 
             detF = F.determinant();
 
-            /*
-            //matlib2d_(matDat, F, &F33, stre, cc[0], &(intVar1[ll]), &(intVar2[ll]), &dt, &matId, &nivGP,     &finiteInt, &sss, &isw, &err, &count, NULL);
-            count++;
-            ll += nivGP;
-            pbar = (stre[0]+stre[1]+stre[2])/3.0;
-
-            //pres += pbar*dvol0;
-            //Jbar += detF*dvol0;
-            */
             pres += (detF-1.0)*dvol0;
         }
         pres = BULK*pres/elemVolOrig;
@@ -606,7 +604,7 @@ int GrowthElem3DHex10::solveForPressure()
 
       pres += (-Rp(0) - vtmp(0))/Kpp(0,0);
     }
-
+*/
     //cout <<  "pres = " <<  pres <<  endl;
 
     return 0;
@@ -616,6 +614,7 @@ int GrowthElem3DHex10::solveForPressure()
 
 int GrowthElem3DHex10::calcStiffnessAndResidualMixed2(MatrixXd& Kup, MatrixXd& Kpu, MatrixXd& Kpp, VectorXd& Flocal1, VectorXd& Flocal2, bool firstIter)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TJ, TJp1;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -792,13 +791,14 @@ int GrowthElem3DHex10::calcStiffnessAndResidualMixed2(MatrixXd& Kup, MatrixXd& K
     }//gp
 
     Kpp(0,0) = -elemVolOrig*eps;
-
+*/
     return 0;
 }
 
 
 int GrowthElem3DHex10::calcResidual(VectorXd& Flocal)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TJ, TJp1;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -937,13 +937,14 @@ int GrowthElem3DHex10::calcResidual(VectorXd& Flocal)
           Flocal(TIp1) += (bb5*force[1] - bb1*stre[3] - bb2*stre[1]) ;
         }
     }//gp
-
+*/
     return 0;
 }
 
 
 int GrowthElem3DHex10::calcResidualPressure(VectorXd& Flocal)
 {
+/*
     int gp, ii;
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
 
@@ -998,7 +999,7 @@ int GrowthElem3DHex10::calcResidualPressure(VectorXd& Flocal)
 
         Flocal(0) += (fact*dvol0);
     }
-
+*/
     return 0;
 }
 
@@ -1009,95 +1010,7 @@ int GrowthElem3DHex10::calcResidualPressure(VectorXd& Flocal)
 
 int GrowthElem3DHex10::calcLoadVector(VectorXd& Flocal)
 {
-  if( NeumannBCs.size() == 0)
-    return 0;
 
-
-  int side, dir, ii, jj, nn, TI, TIp1, TJ, TJp1, gp, nGP=3;
-  int face_node_map[3][3]={{0,3,1},{1,4,2},{2,5,0}};
-  double  specVal, xNode[3], yNode[3], xx, yy, param[2], trac[2], normal[2], tang[2], N[3];
-  double  Jac, dvol;
-
-  vector<double>  gausspoints1, gaussweights;
-
-  getGaussPoints1D(nGP, gausspoints1, gaussweights);
-
-
-  // side 0 - 1-4-2
-  // side 1 - 2-5-3
-  // side 2 - 3-6-1
-
-  // loop over all the sides and compute force vector due to applied traction
-  for(nn=0; nn<NeumannBCs.size(); nn++)
-  {
-    //printVector(NeumannBCs[nn]);
-
-    side    = NeumannBCs[nn][0]; // edge/face number
-    dir     = NeumannBCs[nn][1]; // element number
-    specVal = NeumannBCs[nn][2]; // specified value
-    specVal *= timeFunction[0].prop; // load factor
-
-    //cout << side << '\t' << dir << '\t' << specVal << endl;
-
-    for(ii=0; ii<3; ii++)
-    {
-      //xNode[ii] = GeomData->NodePosOrig[SolnData->node_map_new_to_old[nodeNums[ii]]][0];
-      //yNode[ii] = GeomData->NodePosOrig[SolnData->node_map_new_to_old[nodeNums[ii]]][1];
-
-      xNode[ii] = GeomData->NodePosOrig[nodeNums[face_node_map[side][ii]]][0];
-      yNode[ii] = GeomData->NodePosOrig[nodeNums[face_node_map[side][ii]]][1];
-    }
-
-    //elemVol=0.0;
-    for(gp=0; gp<nGP; gp++)
-    {
-      param[0] = gausspoints1[gp];
-
-      //BernsteinBasisFunsEdge2D(degree, param, xNode, yNode, N, normal, Jac);
-
-      dvol = gaussweights[gp]*(Jac*thick);
-      elemVol += dvol;
-
-      //cout << " normal = " << normal[0] << '\t' << normal[1] << '\t' << Jac << '\t' << dvol << endl;
-      //cout << " Funcs = " << N[0] << '\t' << N[1] << '\t' << N[2] << endl;
-
-        xx = yy= 0.0;
-        for(ii=0;ii<3;ii++)
-        {
-          xx += N[ii]*xNode[ii];
-          yy += N[ii]*yNode[ii];
-        }
-
-        if(axsy)
-          dvol *= 2.0*PI*xx;
-
-        tang[0] = -normal[1];
-        tang[1] =  normal[0];
-
-        if(dir == 0)
-        {
-          trac[0] = specVal*normal[0]*dvol;
-          trac[1] = specVal*normal[1]*dvol;
-        }
-        if(dir == 1)
-        {
-          trac[0] = specVal*tang[0]*dvol;
-          trac[1] = specVal*tang[1]*dvol;
-        }
-
-        for(ii=0;ii<3;ii++)
-        {
-          TI   = face_node_map[side][ii]*ndof;
-          TIp1 = TI+1;
-
-          Flocal(TI)   += N[ii]*trac[0];
-          Flocal(TIp1) += N[ii]*trac[1];
-        }
-    } // for(gp=0; gp<nGP; gp++)
-    //cout << " Volume = " << elemVol << endl;
-  }
-
-  //printVector(Flocal);
 
   return 0;
 }
@@ -1226,8 +1139,8 @@ void GrowthElem3DHex10::projectStress(bool extrapolateFlag, int vartype, int var
     getGaussPointsHexa(nGP, gausspoints1, gausspoints2, gausspoints3, gaussweights);
 
     MatrixXd  F(3,3), Fg(3,3), FgInv(3,3), Fe(3,3);
-    double  timeFactor = timeFunction[0].prop, Jg;
-    double  growthFactor = elmDat[10]*timeFunction[0].prop ;
+    double  timeFactor = timeFunctions[0]->getValue(), Jg;
+    double  growthFactor = timeFunctions[0]->getValue();
     F.setZero();
 
     count = 1;   ll = 0;   err = 0;   isw = 3;
@@ -1237,7 +1150,7 @@ void GrowthElem3DHex10::projectStress(bool extrapolateFlag, int vartype, int var
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         geom[0] = geom[1] = geom[2] = 0.0;
         for(ii=0;ii<nlbfU;ii++)
@@ -1297,11 +1210,11 @@ void GrowthElem3DHex10::projectStrain(bool extrapolateFlag, int vartype, int var
 
 void GrowthElem3DHex10::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
-    assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
+    assert( (ivar.var.size() > 0) && (varindex < nivGP) );
 
     for(int gp=0; gp<nGP; gp++)
     {
-       outval[gp] = ivar.var(varindex, gp);
+       //outval[gp] = ivar.var(varindex, gp);
     }//gp
 
     //cout << varindex << '\t' << outval[0] << '\t' << outval[1] << '\t' << outval[2] << endl;
@@ -1314,6 +1227,7 @@ void GrowthElem3DHex10::projectInternalVariable(bool extrapolateFlag, int vartyp
 
 int  GrowthElem3DHex10::calcError(int index)
 {
+/*
     // compute error
     ///////////////////////////////////////////////////////////
 
@@ -1336,8 +1250,8 @@ int  GrowthElem3DHex10::calcError(int index)
   //ThickCylinder  analy(sss, matDat[1], matDat[2]);
   //ElasticityFiniteStrain  analy(matDat[1], matDat[2]);
   //ThickCylinder  analy(sss, matDat[1], matDat[2]);
-  double mu   = matDat[0] ;
-  double rho0 = elmDat[5] ;
+  double mu   = 1.0;
+  double rho0 = 0.0;
   double dt   = myTime.dt;
   double tCur = myTime.cur;
 
@@ -1398,7 +1312,6 @@ int  GrowthElem3DHex10::calcError(int index)
   }
   else if(index == 1)
   {
-    /*
     count = 1;   ll = 0;   err = 0;   isw = 3;
     for(gp=0;gp<nGP;gp++)
     {
@@ -1461,7 +1374,6 @@ int  GrowthElem3DHex10::calcError(int index)
 
           elemError += ( fact * dvol );
     }//gp
-    */
   }
   else if(index == 2)
   {
@@ -1506,7 +1418,7 @@ int  GrowthElem3DHex10::calcError(int index)
         elemError += ( fact * dvol );
     }//gp
   }
-
+*/
   return 0;
 }
 

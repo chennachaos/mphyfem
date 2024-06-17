@@ -73,6 +73,12 @@ class femGrowth : public femBase
 
         int  solveWithArclength();
 
+        int  solveStepDeflation();
+
+        int  solveStepArcLengthGrowthModel();
+
+        int  computerInternalForceDerivativeOfGrowth();
+
         int  copyElemInternalVariables();
 
         virtual int calcStiffnessAndResidual();

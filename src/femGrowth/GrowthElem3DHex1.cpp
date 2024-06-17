@@ -12,7 +12,7 @@
 using namespace std;
 
 extern MyTime myTime;
-extern List<TimeFunction> timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 
 
 
@@ -77,9 +77,9 @@ double GrowthElem3DHex1::computeVolume(bool init)
           param[2] = gausspoints3[gp];
 
           if(init)
-            GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+            GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
           else
-            GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+            GeomData->computeBasisFunctions3D(CONFIG_DEFORMED, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
           dvol = gaussweights[gp]*Jac;
 
@@ -93,10 +93,11 @@ double GrowthElem3DHex1::computeVolume(bool init)
 
 int GrowthElem3DHex1::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 {
+/*
   // mass lumping - row-wise sum
   if(MassLumping)
   {
-      double rho0  = elmDat[5] ;
+      double rho0  = 0.0;
       double fact  = rho0*computeVolume(true)/8.0;
 
       if(Mlocal.rows() != nsize)
@@ -116,7 +117,7 @@ int GrowthElem3DHex1::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
 
     double  fact, dvol, Jac, bb1, cc1, param[3];
 
-    double rho0  = elmDat[5] ;
+    double rho0  = 0.0;
     double rho  = rho0 ;
 
     double xNode[10], yNode[10], zNode[10], xx, yy, zz;
@@ -172,7 +173,7 @@ int GrowthElem3DHex1::calcMassMatrix(MatrixXd& Mlocal, bool MassLumping)
     //cout << " elemVol = " << elemVol << endl;
     //printMatrix(Klocal);  printf("\n\n\n");
   }
-
+*/
     return 0;
 }
 
@@ -437,6 +438,7 @@ int GrowthElem3DHex1::calcStiffnessAndResidual(MatrixXd& Klocal, VectorXd& Floca
 
 int GrowthElem3DHex1::calcStiffnessAndResidual(MatrixXd& Klocal, VectorXd& Flocal, bool firstIter)
 {
+/*
     int   err,  isw,  count,  count1, index, ii, jj, kk, ll, mm, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
 
     VectorXd  N(nlbfU), dN_dx(nlbfU), dN_dy(nlbfU), dN_dz(nlbfU);
@@ -659,7 +661,7 @@ int GrowthElem3DHex1::calcStiffnessAndResidual(MatrixXd& Klocal, VectorXd& Floca
   //cout << " elemVol = " << elemVol << endl;
   printMatrix(Klocal);  //printf("\n\n\n");  printVector(Flocal);
   //printVector(Flocal);
-
+*/
     return 0;
 }
 
@@ -667,6 +669,7 @@ int GrowthElem3DHex1::calcStiffnessAndResidual(MatrixXd& Klocal, VectorXd& Floca
 
 int GrowthElem3DHex1::calcResidual(VectorXd& Flocal)
 {
+/*
     int   err,  isw,  count,  count1, index, ll, ii, jj, gp;
     int   TI, TIp1, TIp2;
 
@@ -766,7 +769,7 @@ int GrowthElem3DHex1::calcResidual(VectorXd& Flocal)
   }//gp
   //cout << " elemVol = " << elemVol << endl;
   //printVector(Flocal);
-
+*/
   return 0;
 }
 
@@ -896,7 +899,7 @@ void GrowthElem3DHex1::projectStress(bool extrapolateFlag, int vartype, int vari
         param[1] = gausspoints2[gp];
         param[2] = gausspoints3[gp];
 
-        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, degree, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &N(0), &dN_dx(0), &dN_dy(0), &dN_dz(0), Jac);
 
         F[0] = computeValueCur(0, dN_dx) + 1.0;
         F[3] = computeValueCur(0, dN_dy);

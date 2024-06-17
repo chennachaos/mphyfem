@@ -72,6 +72,7 @@ enum  {
      ELEM_MAGNMECH_3D_SM_221 = 2053,
      //
      //
+     ELEM_GROWTH_2D_MIXED21  = 6003,
      ELEM_GROWTH_3D_MIXED21  = 6053
 
 };

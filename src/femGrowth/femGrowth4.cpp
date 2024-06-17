@@ -5,7 +5,6 @@
 #include "TimeFunction.h"
 #include "ElementBase.h"
 #include "SolutionData.h"
-#include "Files.h"
 #include <chrono>
 #include "util.h"
 #include "FunctionsProgram.h"
@@ -234,6 +233,7 @@ int femGrowth::solveStepDeflation(int iter_max, double tol1)
 
 int femGrowth::solveStepDeflation()
 {
+/*
     cout << "femGrowth::solveStepDeflation " << endl;
     SolnData.var1Incr.setZero();
 
@@ -409,7 +409,7 @@ int femGrowth::solveStepDeflation()
 
     if( !convergenceflag )
       return -1;
-
+*/
 
     return 0;
 }
@@ -529,6 +529,7 @@ int femGrowth::solveWithNewtonRaphson()
 
 int femGrowth::solveStepArcLengthGrowthModel()
 {
+/*
     cout << "femGrowth::solveStepArcLengthGrowthModel " << endl;
     cout << "SolnData.timeStepCount = " << SolnData.timeStepCount << endl;
 
@@ -656,7 +657,7 @@ int femGrowth::solveStepArcLengthGrowthModel()
       else
         arclenIncr = max(arclenIncr*0.25, arclenIncrMin);
     }
-
+*/
     cout << " arclenIncr = " << arclenIncr << endl;
 
     return 0;
@@ -666,8 +667,9 @@ int femGrowth::solveStepArcLengthGrowthModel()
 
 
 
-void  femGrowth::computerInternalForceDerivativeOfGrowth()
+int  femGrowth::computerInternalForceDerivativeOfGrowth()
 {
+/*
     int  ee, aa, ii, jj, size1;
 
     if (solverEigen->FintDerGrowth.rows() != totalDOF)
@@ -714,8 +716,8 @@ void  femGrowth::computerInternalForceDerivativeOfGrowth()
         }
       }
     }
-
-    return;
+*/
+    return 0;
 }
 
 

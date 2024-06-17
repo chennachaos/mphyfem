@@ -126,8 +126,8 @@ void  SolutionDataSolid::timeUpdate()
 
     //myTime.dtDdtn = 0.0;
 
-    //if(timeStepCount > 2)
-    //disp  = (1.0+myTime.dtDdtn)*dispPrev - myTime.dtDdtn*dispPrev2;
+    if(timeStepCount > 2)
+    disp  = (1.0+myTime.dtDdtn)*dispPrev - myTime.dtDdtn*dispPrev2;
     //pres  = (1.0+myTime.dtDdtn)*presPrev - myTime.dtDdtn*presPrev2;
     //var3  = (1.0+myTime.dtDdtn)*var3Prev - myTime.dtDdtn*var3Prev2;
     //var4  = (1.0+myTime.dtDdtn)*var4Prev - myTime.dtDdtn*var4Prev2;

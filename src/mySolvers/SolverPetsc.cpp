@@ -736,7 +736,7 @@ int SolverPetsc::solveArclengthSystem(int loadStep, VectorXd&  DuFull, double& D
     VecRestoreArray(solnVec, &arrayTemp);
 
 
-    cout << "aaaaaaaaa" << endl;
+    //cout << "aaaaaaaaa" << endl;
     printf("A = %14.10f \t %14.10f \t %14.10f \t %14.10f \n", A, b, a.dot(du2), a.dot(du1));
 
     dl = (a.dot(du2) - A)/(b+a.dot(du1));

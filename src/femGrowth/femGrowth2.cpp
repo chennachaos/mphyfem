@@ -1079,35 +1079,6 @@ int femGrowth::calcStiffnessAndResidual()
 
     solverPetsc->zeroMtx();
 
-    if(COUPLED_PROBLEM)
-    {
-      int mpot_offset = dispDOF+presDOF;
-      // loop over all the elements
-      for(int ee=0;ee<nElem_global;ee++)
-      {
-        //cout << "       elem... : " << (ee+1) << endl;
-
-        try
-        {
-            elems[ee]->calcStiffnessAndResidualMixed(Kuu, Kuf, Kfu, Kff, Kup, Kpu, Kpp, FlocalU, FlocalF, FlocalP);
-            //cout << " AAAAAAAAAAA " << endl;
-        }
-        catch(runtime_error& err)
-        {
-            cerr << err.what() << endl;
-            throw runtime_error("Negative Jacobian encountered");
-        }
-
-        elems[ee]->calcLoadVector(FlocalU);
-
-        //if(firstIteration)
-          //elems[ee]->applyDirichletBCs3field(1, Kuu, Kuf, Kfu, Kff, Kup, Kpu, Kpp, FlocalU, FlocalF, FlocalP, elems[ee]->forAssyVec, elems[ee]->forAssyVecMpot, elems[ee]->forAssyVecPres, SolnData.dispAapplied, SolnData.mpotApplied, SolnData.presApplied);
-
-        solverPetsc->assembleMatrixAndVector3field(dispDOF, mpot_offset, Kuu, Kup, Kpu, Kpp, Kuf, Kfu, Kff, FlocalU, FlocalP, FlocalF, elems[ee]->forAssyVec, elems[ee]->forAssyVecPres, elems[ee]->forAssyVecMpot);
-      }
-    }
-    else
-    {
       if(MIXED_ELEMENT)
       {
         // loop over all the elements
@@ -1137,7 +1108,6 @@ int femGrowth::calcStiffnessAndResidual()
           solverPetsc->assembleMatrixAndVector(0, 0, elems[ee]->forAssyVec, elems[ee]->forAssyVec, Kuu, FlocalU);
         }
       }
-    }
 
     //cout << " BBBBBBBBBBBBB " << endl;
     //printf("\n solverPetsc->rhsVec norm = %12.6E \n", solverPetsc->rhsVec.norm());
@@ -1193,7 +1163,7 @@ int femGrowth::factoriseSolveAndUpdate()
     if(debug) {PetscPrintf(MPI_COMM_WORLD, "     matrix solution DONE \n\n");}
 
     tend = time(0);
-    PetscPrintf(MPI_COMM_WORLD, "It took %8.4f second(s) \n ", difftime(tend, tstart) );
+    //PetscPrintf(MPI_COMM_WORLD, "It took %8.4f second(s) \n ", difftime(tend, tstart) );
 
     //printVector(solverPetsc->soln);
 
