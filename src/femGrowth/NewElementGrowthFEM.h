@@ -13,11 +13,11 @@
 #include "GrowthElem2DQua21P.h"                  // 6006
 
 
-#include "GrowthElem3DHex1.h"                    // 6051
-#include "GrowthElem3DHex10.h"                   // 6052
-#include "GrowthElem3DWedge21.h"                 // 6053
-#include "GrowthElem3DHex21.h"                   // 6054
-#include "GrowthElem3DTet21.h"                   // 6055
+//#include "GrowthElem3DHex1.h"                    // 6051
+//#include "GrowthElem3DHex10.h"                   // 6052
+#include "Elem_Growth_3D_Mixed21.h"                 // 6053
+//#include "GrowthElem3DHex21.h"                   // 6054
+//#include "GrowthElem3DTet21.h"                   // 6055
 
 
 
@@ -38,11 +38,11 @@ inline  ElementBase*  NewElementGrowthFEM(int type)
     //case 6007: return (ElementBase*) new GrowthElem2DTri221;   break;
     //case 6008: return (ElementBase*) new GrowthElem2DQua221;   break;
 
-    case 6051: return (ElementBase*) new GrowthElem3DHex1;       break;
-    case 6052: return (ElementBase*) new GrowthElem3DHex10;      break;
-    case 6053: return (ElementBase*) new GrowthElem3DWedge21;    break;
-    case 6054: return (ElementBase*) new GrowthElem3DHex21;      break;
-    case 6055: return (ElementBase*) new GrowthElem3DTet21;      break;
+    //case 6051: return (ElementBase*) new GrowthElem3DHex1;       break;
+    //case 6052: return (ElementBase*) new GrowthElem3DHex10;      break;
+    case ELEM_GROWTH_3D_MIXED21: return (ElementBase*) new Elem_Growth_3D_Mixed21.h;    break;
+    //case 6054: return (ElementBase*) new GrowthElem3DHex21;      break;
+    //case 6055: return (ElementBase*) new GrowthElem3DTet21;      break;
 
     default: prgError(1,"NewElementGrowthFEM","unknown element type name!"); return NULL;
   }

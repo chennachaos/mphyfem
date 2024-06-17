@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(femMagnetomech)
+#project(femMagnetomech)
 #project(femSolidmechanics)
+project(femGrowth)
 
 message("<< ${CMAKE_PROJECT_NAME} / ${PROJECT_NAME}")
 
@@ -44,7 +45,7 @@ src/femSolidmechanics
 src/femMagnetomech
 #src/thermomechFEM
 #src/gelFEM
-#src/growthFEM
+src/femGrowth
 #src/inversegrowthFEM/
 src/utilities
 src/material
@@ -112,16 +113,16 @@ file(GLOB sources2 src/*/*cpp)
 
 
 file(GLOB sourcesGrowth1
-#src/growthFEM/*h
-src/inversegrowthFEM/*h
+src/femGrowth/*h
+#src/inversegrowthFEM/*h
 src/material/*h
 src/mySolvers/*h
 src/utilities/*h
 )
 
 file(GLOB sourcesGrowth2
-#src/growthFEM/*.cpp
-src/inversegrowthFEM//*.cpp
+src/femGrowth/*.cpp
+#src/inversegrowthFEM/*.cpp
 src/material/*.cpp
 src/mySolvers/*.cpp
 src/utilities/*.cpp
@@ -167,7 +168,8 @@ src/utilities/*.cpp
 #if(${CMAKE_PROJECT_NAME} EQUAL "femSolidmechanics")
 #add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
 #elseif(${CMAKE_PROJECT_NAME} EQUAL "femMagnetomech")
-add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
+#add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
+add_executable(${CMAKE_PROJECT_NAME}  src/femGrowth.cpp ${sourcesGrowth1} ${sourcesGrowth2})
 #endif()
 
 #pardiso600-GNU800-X86-64

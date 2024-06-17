@@ -69,8 +69,10 @@ enum  {
      //
      ELEM_MAGNMECH_3D_HM_10  = 2051,
      ELEM_MAGNMECH_3D_HM_21  = 2052,
-     ELEM_MAGNMECH_3D_SM_221 = 2053
-
+     ELEM_MAGNMECH_3D_SM_221 = 2053,
+     //
+     //
+     ELEM_GROWTH_3D_MIXED21  = 6053
 
 };
 
@@ -107,6 +109,8 @@ inline  int  getElementID_Standard(std::string& matkey)
      {"ELEM_MAGNMECH_3D_HM_21",          ELEM_MAGNMECH_3D_HM_21},
      {"ELEM_MAGNMECH_3D_SM_221",         ELEM_MAGNMECH_3D_SM_221},
      {"dumm2",                           2055},
+     //
+     {"ELEM_GROWTH_3D_MIXED21",          6053}
     };
 
     unordered_map<string,int>::const_iterator got = map_elements.find(matkey);
