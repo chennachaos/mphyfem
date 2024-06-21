@@ -162,7 +162,11 @@ double  HeavisideFunction(double uu, double ee)
 TISFLUID convert2TISFLUID(string& str)
 {
     if(str == "STEADY")        return  TISFLUID::STEADY;
-    else if(str == "BDF1")     return  TISFLUID::BDF1;
+    else if(str == "BDF1")
+    {
+      //cout << " BDF1 " << endl;
+      return  TISFLUID::BDF1;
+    }
     else if(str == "BDF2")     return  TISFLUID::BDF2;
     else if(str == "BDF3")     return  TISFLUID::BDF3;
     else if(str == "BDF4")     return  TISFLUID::BDF4;
@@ -183,6 +187,8 @@ void SetTimeParametersFluid(string& tis, double rho, double dt, VectorXd& td)
   double  alpf, alpm, beta, gamm;
 
   td[0] = dt;
+
+  //cout << " convert2TISFLUID(tis) = " << convert2TISFLUID(tis) << endl;
 
   switch(convert2TISFLUID(tis))
   {

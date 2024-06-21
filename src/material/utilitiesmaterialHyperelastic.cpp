@@ -831,14 +831,14 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
     double am    =  td(3);
     double gamm  =  td(4);
 
-    //cout << af << '\t' << am << '\t' << gamm << endl;
+    //cout << af << '\t' << am << '\t' << gamm << '\t' << dt << endl;
 
     int  numSeries = (int) data_viscoelastic[0];  // number of terms in the Prony series
 
     //cout << "numSeries = " << numSeries << endl;
 
-    MatrixXd  Cmat2(9,9);
-    Cmat2.setZero();
+    //MatrixXd  Cmat2(9,9);
+    //Cmat2.setZero();
 
     for(int seriescount=0; seriescount<numSeries; seriescount++)
     {
@@ -847,10 +847,12 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
         double  mu   = data_viscoelastic[1+jj];    // modulus
         double  tau  = data_viscoelastic[1+jj+1];  // relaxation time
 
-        cout << "mu = " << '\t' << mu << '\t' << tau << endl;
 
         MatrixXd  AnMat = ivar.varPrev[gp];
         //MatrixXd  AdotnMat = ivar.varDotPrev[gp];
+
+        //printMatrix(AnMat);
+        //cout << "mu = " << '\t' << mu << '\t' << tau << endl;
 
         //MatrixXd  AMat = ( (gamm*dt/am/tau)*CbarInv + (1.0 -(1.0-af)*gamm*dt/am/tau)*AnMat - ((gamm-am)*dt/am/gamm)*AdotnMat )/(1.0+af*gamm*dt/am/tau);
         MatrixXd  AMat = ( AnMat + (dt/tau)*CbarInv )/(1.0+dt/tau);
@@ -858,19 +860,19 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
         //printMatrix(AMat);
 
         //MatrixXd  AdotMat = (1.0/gamm/dt)*(AMat-AnMat) + ((gamm-1.0)/gamm)*AdotnMat;
-        //MatrixXd  AdotMat = (1.0/dt)*(AMat-AnMat);
 
         // update the internal variables vector
         ivar.var[gp] = AMat;
-        //ivar.varDot[gp] = AdotMat;
+        ivar.varDot[gp] = (1.0/dt)*(AMat-AnMat);
 
 
         MatrixXd  Atilde = F*AMat*Ft;
-        //MatrixXd  Ahat = Atilde;
-        MatrixXd  Ahat = 0.5*(Atilde+Atilde.transpose());
+        MatrixXd  Ahat = Atilde;
+        //MatrixXd  Ahat = 0.5*(Atilde+Atilde.transpose());
         MatrixXd AC = AMat*C.transpose();
         double  IAC = AC.trace();
 
+        //printMatrix(Ahat);
         //printVector(stre);
 
         /////////////////////////////////
@@ -886,7 +888,7 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
 
         //cout << mu << '\t' << tau << '\t' << fact1 << '\t' << fact2 << endl;
 
-        printMatrix(Ahat);
+        //printMatrix(Ahat);
         //printVector(stre);
         /////////////////////////////////
         // material tangent tensor
@@ -895,7 +897,7 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
         fact2 = fact1*IAC;
         fact3 = (mu/J)*( gamm*dt/(af*gamm*dt+am*tau) );
 
-        cout << fact1 << '\t' << fact2 << '\t' << fact3 << endl;
+        //cout << fact1 << '\t' << fact2 << '\t' << fact3 << endl;
 
         for(i1=0; i1<9; i1++)
         {
@@ -916,14 +918,18 @@ int computeStressAndTangent_Viscoelasticity_Model1(vector<double>& data_viscoela
               dkl = KronDelta(k,l);
 
               // Devioteric term (with stress terms)
-              Cmat2(i1,j1) += (fact1*dik*Ahat(l,j) - fact1*r2d3* (Ahat(i,j)*dkl+dij*Ahat(l,k)) );
-              Cmat2(i1,j1) += (fact2* ( r2d9*dij*dkl + r1d3*dil*djk) );
-              Cmat2(i1,j1) += (fact3*(-dik*djl-dil*djk + r2d3*dij*dkl) );
+              Cmat(i1,j1) += (fact1*dik*Ahat(l,j) - fact1*r2d3* (Ahat(i,j)*dkl+dij*Ahat(l,k)) );
+              Cmat(i1,j1) += (fact2* ( r2d9*dij*dkl + r1d3*dil*djk) );
+              Cmat(i1,j1) += (fact3*(-dik*djl-dil*djk + r2d3*dij*dkl) );
+
+              //Cmat2(i1,j1) += (fact1*dik*Ahat(l,j) - fact1*r2d3* (Ahat(i,j)*dkl+dij*Ahat(l,k)) );
+              //Cmat2(i1,j1) += (fact2* ( r2d9*dij*dkl + r1d3*dil*djk) );
+              //Cmat2(i1,j1) += (fact3*(-dik*djl-dil*djk + r2d3*dij*dkl) );
             }
         }
     }
 
-    printMatrix(Cmat2);
+    //printMatrix(Cmat2);
 
     return err;
 }

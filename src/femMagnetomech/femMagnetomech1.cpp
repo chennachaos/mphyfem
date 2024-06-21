@@ -156,10 +156,17 @@ int femMagnetomech::prepareInputData()
     }
 
     // set the flag for internal variables for elastoplastic materials
-    //if( (elems[0]->nivGP) > 0)
-      //intVarFlag = true;
-    //else
-      intVarFlag = false;
+    vector<int>  matllist_visco = {101,102,103,104,105,106,2006,2007};
+    intVarFlag = false;
+    for(auto& mat : MatlDataList)
+    {
+      int mattypenum = mat->getMaterialTypeNameNumber();
+
+      if( count(matllist_visco.begin(), matllist_visco.end(), mattypenum)>0 )
+      {
+        intVarFlag = true;
+      }
+    }
 
 
     cout << " nElem_global  = " << nElem_global  << endl;
@@ -1374,7 +1381,7 @@ int femMagnetomech::setInitialConditions()
 
       //SolnData.velo[ind]    =    0.0;
       //SolnData.velo[ind+1]  =    0.0;
-      //SolnData.velo[ind+2]  = xx;
+      SolnData.velo[ind+2]  = xx;
     }
 
     //printVector(SolnData.velo);
@@ -1399,6 +1406,7 @@ int femMagnetomech::setInitialConditions()
     }
     */
 
+    SolnData.veloPrev = SolnData.velo;
     //printVector(SolnData.var1);
 
     if(debug) cout <<  " femMagnetomech::setInitialConditions() ... ENDED " <<  endl;
@@ -1772,7 +1780,7 @@ int femMagnetomech::updateIterStep()
 
     SolnData.updateIterStep();
 
-    cout << " aaaaaaaa " << endl;
+    //cout << " aaaaaaaa " << endl;
 
     int  nn, dd, ind;
     for(nn=0; nn<nNode_global; nn++)

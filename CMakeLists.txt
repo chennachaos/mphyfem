@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-#project(femMagnetomech)
+project(femMagnetomech)
 #project(femSolidmechanics)
-project(femGrowth)
+#project(femGrowth)
 
 message("<< ${CMAKE_PROJECT_NAME} / ${PROJECT_NAME}")
 
@@ -168,8 +168,8 @@ src/utilities/*.cpp
 #if(${CMAKE_PROJECT_NAME} EQUAL "femSolidmechanics")
 #add_executable(${CMAKE_PROJECT_NAME}  src/femSolidmechanics.cpp ${sourcesSolidmechanics1} ${sourcesSolidmechanics2})
 #elseif(${CMAKE_PROJECT_NAME} EQUAL "femMagnetomech")
-#add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
-add_executable(${CMAKE_PROJECT_NAME}  src/femGrowth.cpp ${sourcesGrowth1} ${sourcesGrowth2})
+add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
+#add_executable(${CMAKE_PROJECT_NAME}  src/femGrowth.cpp ${sourcesGrowth1} ${sourcesGrowth2})
 #endif()
 
 #pardiso600-GNU800-X86-64

@@ -74,9 +74,9 @@ int Matl_MagnMech_NeoHookean_Viscoelastic::computeStressAndTangent(bool tangFlag
     tis = "BDF1";
     SetTimeParametersFluid(tis, spectralRadius, dt, td);
 
-    printMatrix(Cmat);
+    //printMatrix(Cmat);
     err = computeStressAndTangent_Viscoelasticity_Model1(data_viscoelastic, gp, F, td, ivar, dt, stre, Cmat);
-    printMatrix(Cmat);
+    //printMatrix(Cmat);
 
     return err;
 }
