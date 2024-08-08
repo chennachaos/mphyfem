@@ -111,6 +111,8 @@ class femSolidmechanics : public femBase
 
         int  setInitialConditions();
 
+        int  InfSupNumber();
+
         int  ModalAnalysis(int nn=10, bool flag=true, double fact=1.0);
 
         ///////////////////////////////////////////////////////////

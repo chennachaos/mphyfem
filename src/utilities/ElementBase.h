@@ -186,8 +186,11 @@ class ElementBase
     virtual int  solveForPressureMixed(VectorXd& matK1, double beta, double dt, VectorXd& Flocal)
     { cout << "   'solveForPressureMixed' is not defined for this element!\n\n"; return 0; }
 
-    virtual int  toComputeInfSupCondition(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp)
-    { cout << "   'toComputeInfSupCondition' is not defined for this element!\n\n"; return 0; }
+    virtual int  toComputeInfSupCondition(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp);
+    //{ cout << "   'toComputeInfSupCondition' is not defined for this element!\n\n"; return 0; }
+
+    int  toComputeInfSupCondition2D(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp);
+    int  toComputeInfSupCondition3D(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp);
 
     virtual int  applyDirichletBCs(MatrixXd& Klocal, VectorXd& Flocal);
 
@@ -235,9 +238,11 @@ class ElementBase
     virtual  void  RhsToPostprocess(int, int, int, VectorXd& Flocal)
       { cout << "  'RhsToPostprocess' is not available for this element!\n\n"; return; }
 
-    virtual  int calcError2D(int index);
+    virtual  int calcError(int index, double* val);
 
-    virtual  int calcError3D(int index);
+    virtual  int calcError2D(int index, double* val);
+
+    virtual  int calcError3D(int index, double* val);
 
     double  computeGeomOrig(int dir, VectorXd& NN);
     double  computeGeomNew(int dir, VectorXd& NN);

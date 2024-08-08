@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
 
 
 
+
     femSolidmechanics  solidfem;
 
     solidfem.readInput(inputfile);
@@ -65,17 +66,12 @@ int main(int argc, char* argv[])
     double timerStart, timerEnd;
 
     timerStart = MPI_Wtime();
-
     solidfem.setSolver(2);
-
-    solidfem.solveFullyImplicit();
-
     timerEnd = MPI_Wtime();
 
-    printf("\n\n Elapsed time = %f seconds \n\n", timerEnd - timerStart );
+    solidfem.InfSupNumber();
 
-    //solidfem.computeElementErrors(0);
-    //solidfem.printComputerTimes();
+    printf("\n\n Elapsed time = %f seconds \n\n", timerEnd - timerStart );
 
     printf("\n\n\n Program is successful \n\n\n ");
 

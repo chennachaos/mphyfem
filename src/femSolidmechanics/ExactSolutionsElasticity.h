@@ -555,7 +555,7 @@ class  ThickCylinderComposite
     {
       E1 = 200.0;
       E2 =  20.0;
-      nu1 = 0.5;
+      nu1 = nu_;
       nu2 = nu1;
 
       ri = 100.0;

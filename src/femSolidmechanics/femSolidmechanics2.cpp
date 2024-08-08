@@ -1224,7 +1224,8 @@ int femSolidmechanics::factoriseSolveAndUpdate()
 
 int  femSolidmechanics::computeElementErrors(int ind)
 {
-    int  ii, ee, count=0, dd, domTemp;
+  int  ii, ee, count=0, dd, domTemp;
+  double numer=0.0, denom=0.0, data[10], absError, relError;
 
   for(int index=0; index<3; index++)
   {
@@ -1232,19 +1233,8 @@ int  femSolidmechanics::computeElementErrors(int ind)
 
     if(index < 4) // L2 or H1 norm based errors
     {
-      if(ndim == 2)
-      {
-        totalError = 0.0;
-        for(int ee=0;ee<nElem_global;ee++)  // loop over all the elements
-        {
-          elems[ee]->calcError2D(index);
-
-          totalError += elems[ee]->getError();
-        }
-      }
-      else
-      {
-        totalError = 0.0;
+        numer=0.0;
+        denom=0.0;
         for(int ee=0;ee<nElem_global;ee++)  // loop over all the elements
         {
           //cout << " ee = " << ee << endl;
@@ -1252,24 +1242,35 @@ int  femSolidmechanics::computeElementErrors(int ind)
           //printVector(elems[ee]->nodeNums);
           //printVector(elems[ee]->forAssyVec);
 
-          elems[ee]->calcError3D(index);
-          //cout << " ee = " << ee << endl;
+          elems[ee]->calcError(index, data);
 
-          totalError += elems[ee]->getError();
+          numer += data[0];
+          denom += data[1];
         }
-      }
 
-
-      totalError = sqrt(totalError);
+        absError = sqrt(numer);
+        relError = sqrt(numer/denom);
 
         if(index == 0)
-          printf(" \n\n \t Displacement Error = %12.6E \n\n " , totalError);
+        {
+          printf(" \n\n \t Displacement absolute Error = %12.6E \n\n " , absError);
+          printf(" \n\n \t Displacement relative Error = %12.6E \n\n " , relError);
+        }
         else if(index == 1)
-          printf(" \n\n \t Pressure Error     = %12.6E \n\n " , totalError);
+        {
+          printf(" \n\n \t Pressure absolute Error     = %12.6E \n\n " , absError);
+          printf(" \n\n \t Pressure relative Error     = %12.6E \n\n " , relError);
+        }
         else if(index == 2)
-          printf(" \n\n \t Stress Error       = %12.6E \n\n " , totalError);
+        {
+          printf(" \n\n \t Stress absolute Error       = %12.6E \n\n " , absError);
+          printf(" \n\n \t Stress relative Error       = %12.6E \n\n " , relError);
+        }
         else
-          printf(" \n\n \t H1 Error = %12.6E \n\n " , totalError);
+        {
+          printf(" \n\n \t H1 absolute Error = %12.6E \n\n " , absError);
+          printf(" \n\n \t H1 relative Error = %12.6E \n\n " , relError);
+        }
     }
     else if(index == 10) // total energy
     {
@@ -1756,24 +1757,28 @@ int  femSolidmechanics::ModalAnalysis(int nModes, bool flag, double fact)
 
 
 
-//
-int  femSolidmechanics::ModalAnalysis(int nModes, bool flag, double fact)
-{
-    cout << " femSolidmechanics::ModalAnalysis() ... STARTED " << endl;
 
+int  femSolidmechanics::InfSupNumber()
+{
+    cout << " femSolidmechanics::InfSupNumber() ... STARTED " << endl;
     // to compute inf-sup number
+
+    //Eigen::initParallel();
+    Eigen::setNbThreads(0);
 
     int ee, ii, jj, nn, rr, cc, size1, size2;
 
     MatrixXf  Kglobal, Mglobal, eigen_vectors;
-    MatrixXd  Kuu(12,12), Kup(12,1), Kpp(1,1);
+    MatrixXd  Kuu, Kup, Kpp;
     VectorXf  eigen_values, eigvec, Flocal, vecTemp;
     MatrixXf  Vmat, Qmat, Bmat;
 
-    int idd = 0;//SolnData.ElemProp[0]->id;
+    int  idd = ElementTypeDataList[0]->getElemTypeNameNum();
+
     cout <<  "idd = " <<  idd <<  endl;
 
-    if( (idd == 204) || (idd == 208) )
+    if( (idd == ELEM_SOLID_2D_MIXED0)    ||
+        (idd == ELEM_SOLID_3D_MIXED0)  )
     {
       Vmat.resize(dispDOF, dispDOF);
       Bmat.resize(dispDOF, nElem_global);
@@ -1832,7 +1837,7 @@ int  femSolidmechanics::ModalAnalysis(int nModes, bool flag, double fact)
         Mglobal(ee,ee) += Kpp(0,0);
       }
     }
-    else if( (idd == 215) || (idd == 216) )
+    else if( (idd == 2151111111) || (idd == 216111111111) )
     {
       presDOF = 2*nElem_global;
 
@@ -1935,7 +1940,7 @@ int  femSolidmechanics::ModalAnalysis(int nModes, bool flag, double fact)
         //printVector(elems[ee]->forAssyVec);
         size1 = elems[ee]->forAssyVec.size();
         //size2 = elems[ee]->forAssyVecPres.size();
-        size2 = 2;
+        size2 = elems[ee]->forAssyVecPres.size();
 
         // Kuu
         for(ii=0; ii<size1; ii++)
@@ -2016,12 +2021,307 @@ int  femSolidmechanics::ModalAnalysis(int nModes, bool flag, double fact)
 
     cout << " The first " << min(20, (int) eigen_values.rows()) << " eigenvalues are ... " << endl;
 
-    for(int ii=0;ii<min(20, (int) eigen_values.rows());ii++)
+    for(int ii=0;ii<min(40, (int) eigen_values.rows());ii++)
       printf("\t %5d \t %12.10f \t %12.10f \n", (ii+1), eigen_values(ii), sqrt(abs(eigen_values(ii))));
 
     return 0;
 }
 //
+
+
+
+/*
+//Using the coupled block matrix with zeroes for the (1,1) matrix for mass.
+// Works but slow.
+
+int  femSolidmechanics::InfSupNumber()
+{
+    cout << " femSolidmechanics::InfSupNumber() ... STARTED " << endl;
+
+    // to compute inf-sup number
+
+    int ee, ii, jj, nn, rr, cc, size1, size2;
+
+    //MatrixXf  Kglobal, Mglobal;
+    SparseMatrixXf  Kglobal, Mglobal;
+
+    MatrixXd  Kuu, Kup, Kpp;
+    VectorXf  eigvec, Flocal, vecTemp;
+    MatrixXf  Vmat, Qmat, Bmat;
+
+    int  idd = ElementTypeDataList[0]->getElemTypeNameNum();
+
+    cout <<  "idd = " <<  idd <<  endl;
+
+    if( (idd == ELEM_SOLID_2D_MIXED0)    ||
+        (idd == ELEM_SOLID_3D_MIXED0)  )
+    {
+      Vmat.resize(dispDOF, dispDOF);
+      Bmat.resize(dispDOF, nElem_global);
+      Qmat.resize(dispDOF, dispDOF);
+
+      Kglobal.resize(dispDOF, dispDOF);
+      Mglobal.resize(nElem_global, nElem_global);
+
+      Kglobal.setZero();
+      Mglobal.setZero();
+      Vmat.setZero();
+      Bmat.setZero();
+      Qmat.setZero();
+
+      /////////////////////////////////////////
+      // compute and assemble matrices
+      /////////////////////////////////////////
+
+      for(ee=0;ee<nElem_global;ee++)                               // loop over all the elements
+      {
+        //cout << "       elem... : " << (e+1) << endl;
+
+        elems[ee]->toComputeInfSupCondition(Kuu, Kup, Kpp);
+
+        //printVector(elems[ee]->forAssyVec);
+        size1=elems[ee]->forAssyVec.size();
+
+        // Kuu
+        for(ii=0; ii<size1; ii++)
+        {
+          rr = elems[ee]->forAssyVec[ii];
+          if( rr != -1 )
+          {
+            for(jj=0; jj<size1; jj++)
+            {
+              cc = elems[ee]->forAssyVec[jj];
+              if( cc != -1 )
+              {
+                 //Kglobal(rr, cc) += Kuu(ii,jj);
+              }
+            }
+          }
+        }
+
+        // Kup
+        for(ii=0; ii<size1; ii++)
+        {
+          rr = elems[ee]->forAssyVec[ii];
+          if( rr != -1 )
+          {
+            Bmat(rr,ee) += Kup(ii,0);
+          }
+        }
+
+        // Kpp
+        //Mglobal(ee,ee) += Kpp(0,0);
+      }
+    }
+    else
+    {
+
+      Kglobal.resize(ntotdofs_global, ntotdofs_global);
+      Mglobal.resize(ntotdofs_global, ntotdofs_global);
+
+      VectorXi  nnzVec(ntotdofs_global);
+
+      for(ii=0; ii<ntotdofs_global; ii++)
+        nnzVec(ii) = 500;
+
+      Kglobal.reserve(nnzVec);
+      Mglobal.reserve(nnzVec);
+
+      for(ee=0; ee<nElem_global; ee++)
+      {
+        size1 = elems[ee]->forAssyVec.size();
+        size2 = elems[ee]->forAssyVecPres.size();
+
+        for(ii=0; ii<size1; ii++)
+        {
+          rr = elems[ee]->forAssyVec[ii];
+
+          if(rr != -1)
+          {
+            for(jj=0; jj<size1; jj++)
+            {
+              cc = elems[ee]->forAssyVec[jj];
+
+              if(cc != -1)
+              {
+                Kglobal.coeffRef(rr, cc) = 0.0;
+              }
+            }
+
+            for(jj=0; jj<size2; jj++)
+            {
+              cc = elems[ee]->forAssyVecPres[jj];
+
+              if(cc != -1)
+              {
+                Kglobal.coeffRef(rr, dispDOF+cc) = 0.0;
+                Kglobal.coeffRef(dispDOF+cc,rr)  = 0.0;
+              }
+            }
+          }//if(row != -1)
+        } //for(ii=0;)
+
+        // Kpp
+        for(ii=0; ii<size2; ii++)
+        {
+          rr = elems[ee]->forAssyVecPres[ii];
+
+          if(rr != -1)
+          {
+            for(jj=0; jj<size2; jj++)
+            {
+              cc = elems[ee]->forAssyVecPres[jj];
+
+              if(cc != -1)
+              {
+                Mglobal.coeffRef(dispDOF+rr, dispDOF+cc) = 0.0;
+              }
+            }
+          }//if(row != -1)
+        } //for(ii=0;)
+
+      } //for(ee=0;)
+
+      Kglobal.makeCompressed();
+      Mglobal.makeCompressed();
+
+      Kglobal *= 0.0;
+      Mglobal *= 0.0;
+
+      /////////////////////////////////////////
+      // compute and assemble matrices
+      /////////////////////////////////////////
+
+      for(ee=0;ee<nElem_global;ee++)                               // loop over all the elements
+      {
+        //cout << "       elem... : " << (ee+1) << endl;
+
+        elems[ee]->toComputeInfSupCondition(Kuu, Kup, Kpp);
+
+        //printMatrix(Kuu);
+        //printf("\n\n");
+        //printMatrix(Kup);
+        //printf("\n\n");
+        //printMatrix(Kpp);
+        //printf("\n\n");
+
+        //printVector(elems[ee]->forAssyVec);
+        size1 = elems[ee]->forAssyVec.size();
+        //size2 = elems[ee]->forAssyVecPres.size();
+        size2 = elems[ee]->forAssyVecPres.size();
+
+        // Kuu
+        for(ii=0; ii<size1; ii++)
+        {
+          rr = elems[ee]->forAssyVec[ii];
+          if( rr != -1 )
+          {
+            for(jj=0; jj<size1; jj++)
+            {
+              cc = elems[ee]->forAssyVec[jj];
+              if( cc != -1 )
+              {
+                Kglobal.coeffRef(rr, cc) += Kuu(ii,jj);
+              }
+            }
+
+            for(jj=0; jj<size2; jj++)
+            {
+              cc = elems[ee]->forAssyVecPres[jj];
+
+              if(cc != -1)
+              {
+                Kglobal.coeffRef(rr, dispDOF+cc) += Kup(ii, jj);
+                Kglobal.coeffRef(dispDOF+cc,rr)  += Kup(ii, jj);
+              }
+            }
+          }
+        }
+
+        // Kpp
+        for(ii=0; ii<size2; ii++)
+        {
+          rr = elems[ee]->forAssyVecPres[ii];
+
+          if(rr != -1)
+          {
+            for(jj=0; jj<size2; jj++)
+            {
+              cc = elems[ee]->forAssyVecPres[jj];
+
+              if(cc != -1)
+              {
+                Mglobal.coeffRef(dispDOF+rr, dispDOF+cc) -= Kpp(ii,jj);
+              }
+            }
+          }//if(row != -1)
+        } //for(ii=0;)
+      }
+    }
+
+
+    cout << "  Computing the matrix ... " << endl;
+
+    //SparseMatrixXf  Kglobal_sp = Kglobal.sparseView();
+    //SparseMatrixXf  Mglobal_sp = Mglobal.sparseView();
+
+    //Kglobal = Kglobal.inverse();
+    //Kglobal_sp = Kglobal_sp.inverse();
+    //printMatrix(Vmat);
+    //printf("\n\n");
+    //printMatrix(globalK);
+    //printf("\n\n");
+    //printMatrix(globalM);
+    //printf("\n\n");
+    //Kglobal = (Bmat.transpose()*Kglobal)*Bmat;
+
+    cout << "  Solving eigenvalue problem ... " << endl;
+
+    GeneralizedEigenSolver<MatrixXf> es(Kglobal, Mglobal, false);
+    //GeneralizedSelfAdjointEigenSolver<MatrixXf> es(Kglobal, Mglobal, EigenvaluesOnly);
+    //GeneralizedSelfAdjointEigenSolver<SparseMatrixXf> es(Kglobal_sp, Mglobal_sp, EigenvaluesOnly);
+
+    cout << "  Eigen analysis successfully completed ... " << endl;
+
+    //VectorXf  eigen_values = es.alphas();
+    //Vector<complex> eigen_values = es.alphas();
+
+    auto  eigen_values = es.eigenvalues();
+
+    vector<double>  evals;
+
+    for(int ii=0; ii<eigen_values.rows(); ii++)
+    {
+      //cout << eigen_values[ii].real() << endl;
+
+      if(!isinf(eigen_values[ii].real()))
+        evals.push_back( eigen_values[ii].real() );
+    }
+    findUnique(evals);
+    //printVector(evals);
+
+
+    //eigen_vectors = es.eigenvectors();
+
+    //EigenSolver<MatrixXd>  es(Kglobal, EigenvaluesOnly);
+    //cout << "The eigenvalues of A are:" << endl << es.eigenvalues() << endl;
+    //eigen_values = es.eigenvalues().col(0);
+
+    //cout << "The (complex) numerators of the generalzied eigenvalues are: " << es.alphas() << endl;
+    //cout << "The (complex) generalzied eigenvalues are (alphas./beta): " << es.eigenvalues() << endl;
+
+    cout << " The first " << min(20, (int) evals.size()) << " eigenvalues are ... " << endl;
+
+    for(int ii=0;ii<min(20, (int) evals.size());ii++)
+      printf("\t %5d \t %12.10f \t %12.10f \n", (ii+1), evals[ii], sqrt(abs(evals[ii])));
+
+
+    return 0;
+}
+*/
+
+
+
 
 
 int femSolidmechanics::elementDiffStiffTest(double ddd, int elnum, int dig, int dig2, bool gfrmt)

@@ -928,15 +928,25 @@ int  ElementBase::applyDirichletBCsElecField(MatrixXd& Kff, VectorXd& FlocalF)
 
 
 
+int  ElementBase::calcError(int index, double* val)
+{
+  if(ndim == 2)
+    calcError2D(index, val);
+  else
+    calcError3D(index, val);
+
+  return 0;
+}
 
 
-int  ElementBase::calcError2D(int index)
+
+int  ElementBase::calcError2D(int index, double* errordata)
 {
   int   ii, jj, kk, gp;
 
   double  param[2], Jac, dvol0, dvol, rad, theta, val, fact;
   double  dispExact[2], dispNum[2], streDev[4], pNum, pExact;
-  double  detF, streExact[4], streNum[4], Np[nlbfP];
+  double  detF, streExact[4], streNum[4], Np[nlbfP], error, numer, denom;
 
   VectorXd  N(nlbfU), dNu_dx(nlbfU), dNu_dy(nlbfU), stre(9);
   MatrixXd  F(3,3);
@@ -964,7 +974,9 @@ int  ElementBase::calcError2D(int index)
   vector<double>  gausspoints1, gausspoints2, gaussweights;
   nGP = getGaussPoints2D(npElem, gausspoints1, gausspoints2, gaussweights);
 
-  elemError = 0.0;
+  errordata[0] = 0.0;
+  errordata[1] = 0.0;
+
   if(index == 0) // L2 norm
   {
     for(gp=0;gp<nGP;gp++)
@@ -996,16 +1008,28 @@ int  ElementBase::calcError2D(int index)
           dispExact[0] = analy.dispX(rad, theta);
           dispExact[1] = analy.dispY(rad, theta);
 
-          cout << rad << '\t' << theta << endl;
+          //cout << rad << '\t' << theta << endl;
           //cout << dispExact[0] << '\t' << dispNum[0] << endl;
           //cout << dispExact[1] << '\t' << dispNum[1] << endl; cout << endl;
 
-          dispExact[0] -= dispNum[0];
-          dispExact[1] -= dispNum[1];
+          numer = 0.0;
+          denom = 0.0;
+          for(ii=0; ii<ndim; ii++)
+          {
+            error = dispExact[ii] - dispNum[ii];
+            numer += error*error;
 
-          fact = dispExact[0]*dispExact[0] + dispExact[1]*dispExact[1];
+            denom += (dispExact[ii]*dispExact[ii]);
+          }
 
-          elemError += ( fact * dvol );
+          // absolute error
+          fact = numer;
+
+          // relative error
+          fact = numer/denom;
+
+          errordata[0] += ( numer * dvol );
+          errordata[1] += ( denom * dvol );
     }//gp
   }
   else if(index == 1) // pressure
@@ -1049,10 +1073,19 @@ int  ElementBase::calcError2D(int index)
 
         pExact = analy.pressure(rad, theta);
 
-        val = pres - pExact;
-        fact = val*val;
+        error = pExact-pres;
 
-        elemError += ( fact * dvol );
+        numer = error*error;
+        denom = pExact*pExact;
+
+        // absolute error
+        fact = numer;
+
+        // relative error
+        fact = numer/denom;
+
+        errordata[0] += ( numer * dvol );
+        errordata[1] += ( denom * dvol );
     }//gp
   }
   else if(index == 2)
@@ -1111,15 +1144,25 @@ int  ElementBase::calcError2D(int index)
           //streExact[1] = analy.stressYY(rad, theta);
           //streExact[2] = analy.stressXY(rad, theta);
 
-          fact=0.0;
+          numer = 0.0;
+          denom = 0.0;
           for(ii=0; ii<4; ii++)
           {
             //cout << ii << '\t' << streExact[ii] << '\t' << streNum[ii] << endl;
-            streExact[ii] -= streNum[ii];
-            fact += (streExact[ii]*streExact[ii]);
+            error = streExact[ii] - streNum[ii];
+            numer += error*error;
+
+            denom += (streExact[ii]*streExact[ii]);
           }
 
-          elemError += ( fact * dvol );
+          // absolute error
+          fact = numer;
+
+          // relative error
+          fact = numer/denom;
+
+          errordata[0] += ( numer * dvol );
+          errordata[1] += ( denom * dvol );
     }//gp
   }
 
@@ -1129,7 +1172,7 @@ int  ElementBase::calcError2D(int index)
 
 
 
-int  ElementBase::calcError3D(int index)
+int  ElementBase::calcError3D(int index, double* errordata)
 {
   int   err,  isw,  count,  count1, ll, ii, jj, kk, gp;
 
@@ -1137,7 +1180,7 @@ int  ElementBase::calcError3D(int index)
 
   double  param[3], Jac, dvol0, dvol, rad, theta, phi, val, fact;
   double  dispExact[3], dispNum[3], pNum, pExact;
-  double  detF, streExact[6], streNum[6], Np[nlbfP];
+  double  detF, streExact[6], streNum[6], Np[nlbfP], error, numer, denom;
 
   double xNode[nlbfU], yNode[nlbfU], zNode[nlbfU], geom[3];
   for(ii=0;ii<nlbfU;ii++)
@@ -1160,9 +1203,10 @@ int  ElementBase::calcError3D(int index)
 
   vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
   nGP = getGaussPoints3D(npElem, gausspoints1, gausspoints2, gausspoints3, gaussweights);
-  //cout << " index = " << index << endl;
 
-  elemError = 0.0;
+  errordata[0] = 0.0;
+  errordata[1] = 0.0;
+
   if(index == 0) // L2 norm
   {
     for(gp=0;gp<nGP;gp++)
@@ -1200,13 +1244,24 @@ int  ElementBase::calcError3D(int index)
           //cout << dispExact[1] << '\t' << dispNum[1] << endl;
           //cout << dispExact[2] << '\t' << dispNum[2] << endl;
 
-          dispExact[0] -= dispNum[0];
-          dispExact[1] -= dispNum[1];
-          dispExact[2] -= dispNum[2];
+          numer = 0.0;
+          denom = 0.0;
+          for(ii=0; ii<ndim; ii++)
+          {
+            error = dispExact[ii] - dispNum[ii];
+            numer += error*error;
 
-          fact = dispExact[0]*dispExact[0] + dispExact[1]*dispExact[1] + dispExact[2]*dispExact[2];
+            denom += (dispExact[ii]*dispExact[ii]);
+          }
 
-          elemError += ( fact * dvol );
+          // absolute error
+          fact = numer;
+
+          // relative error
+          fact = numer/denom;
+
+          errordata[0] += ( numer * dvol );
+          errordata[1] += ( denom * dvol );
     }//gp
   }
   else if(index == 1)
@@ -1254,10 +1309,21 @@ int  ElementBase::calcError3D(int index)
 
         pExact = analy.pressure(rad, theta, phi);
 
-        val = pres - pExact;
-        fact = val*val;
+        //cout << "pExact =    " << pExact << '\t' << pres << endl;
 
-        elemError += ( fact * dvol );
+        error = pExact-pres;
+
+        numer = error*error;
+        denom = pExact*pExact;
+
+        // absolute error
+        fact = numer;
+
+        // relative error
+        fact = numer/denom;
+
+        errordata[0] += ( numer * dvol );
+        errordata[1] += ( denom * dvol );
     }//gp
   }
   else if(index == 2)
@@ -1320,15 +1386,25 @@ int  ElementBase::calcError3D(int index)
           streNum[4] = stre[5]; //yz
           streNum[5] = stre[2]; //xz
 
-          fact = 0.0;
+          numer = 0.0;
+          denom = 0.0;
           for(ii=0; ii<6; ii++)
           {
             //cout << ii << '\t' << streExact[ii] << '\t' << streNum[ii] << endl;
-            streExact[ii] -= streNum[ii];
-            fact += streExact[ii]*streExact[ii];
+            error = streExact[ii] - streNum[ii];
+            numer += error*error;
+
+            denom += (streExact[ii]*streExact[ii]);
           }
 
-          elemError += ( fact * dvol );
+          // absolute error
+          fact = numer;
+
+          // relative error
+          fact = numer/denom;
+
+          errordata[0] += ( numer * dvol );
+          errordata[1] += ( denom * dvol );
     }//gp
   }
 

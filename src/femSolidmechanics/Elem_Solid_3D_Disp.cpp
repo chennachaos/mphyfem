@@ -568,11 +568,11 @@ void Elem_Solid_3D_Disp::projectStrain(bool extrapolateFlag, int vartype, int va
 
 void Elem_Solid_3D_Disp::projectInternalVariable(bool extrapolateFlag, int vartype, int varindex, int index, double* outval)
 {
-    assert( (ivar.var.rows() > 0) && (varindex < nivGP) );
+    assert( (ivar.var.size() > 0) && (varindex < nivGP) );
 
     for(int gp=0; gp<nGP; gp++)
     {
-       outval[gp] = ivar.var(varindex, gp);
+       //outval[gp] = ivar.var(varindex, gp);
     }//gp
 
     //cout << varindex << '\t' << outval[0] << '\t' << outval[1] << '\t' << outval[2] << endl;

@@ -293,6 +293,7 @@ void  femSolidmechanics::postProcess()
     vtkSmartPointer<vtkFloatArray>           presVTK       =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           scaVTK2      =  vtkSmartPointer<vtkFloatArray>::New();
 
+    vtkSmartPointer<vtkFloatArray>           presVTKcell  =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           matlIdVTKcell  =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           elemIdVTKcell =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           strainVTK    =  vtkSmartPointer<vtkFloatArray>::New();
@@ -596,18 +597,23 @@ void  femSolidmechanics::postProcess()
     uGridVTK->GetCellData()->AddArray(elemIdVTKcell);
     uGridVTK->GetCellData()->AddArray(matlIdVTKcell);
 
-    //cellDataVTK->SetName("pres");
-    //cellDataVTK->SetNumberOfTuples(nElem_global);
-    /*
-    for(ee=0;ee<nElem_global;ee++)
+    presVTKcell->SetName("pressure");
+    presVTKcell->SetNumberOfTuples(nElem_global);
+
+    if( (idd == ELEM_SOLID_2D_MIXED0) ||
+        (idd == ELEM_SOLID_3D_MIXED0) )
     {
-      elems[ee]->elementContourplot(vartype, varindex, index);
+      for(ee=0;ee<nElem_global;ee++)
+      {
+        //elems[ee]->elementContourplot(vartype, varindex, index);
 
-      cellDataVTK->InsertTuple1(ee, elems[ee]->vals2project[0]);
+        //cellDataVTK->InsertTuple1(ee, elems[ee]->vals2project[0]);
+        presVTKcell->InsertTuple1(ee, elems[ee]->presDOF[0]);
 
-      //maxstress = max(maxstress, elems[ee]->vals2project[0]);
+        //maxstress = max(maxstress, elems[ee]->vals2project[0]);
+      }
+      uGridVTK->GetCellData()->AddArray(presVTKcell);
     }
-    */
 
     if(intVarFlag)
     {

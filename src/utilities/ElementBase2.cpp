@@ -551,10 +551,241 @@ int  ElementBase::calcStiffnessAndResidualMixed3D(MatrixXd& Kuu, MatrixXd& Kup, 
     return 0;
 }
 
+int ElementBase::toComputeInfSupCondition(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp)
+{
+  if(ndim == 2)
+    ElementBase::toComputeInfSupCondition2D(Kuu, Kup, Kpp);
+  else
+    ElementBase::toComputeInfSupCondition3D(Kuu, Kup, Kpp);
+
+  return 0;
+}
 
 
 
 
+int ElementBase::toComputeInfSupCondition2D(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp)
+{
+    // to compute the inf-sup constant
+
+    int   err, index, ii, jj, gp, TI, TIp1, TJ, TJp1;
+
+    VectorXd  Nu(nlbfU), dNu_dx(nlbfU), dNu_dy(nlbfU), Np(nlbfP);
+
+    double  fact, fact1, dvol, dvol0, Jac;
+    double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5;
+    double  param[2];
+
+    double xNode[nlbfU], yNode[nlbfU], geom[2];
+    for(ii=0;ii<npElem;ii++)
+    {
+      xNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][0];
+      yNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][1];
+    }
+
+    // resize local matrices and initialise them to zero
+    if(Kuu.rows() != nsize)
+    {
+      Kuu.resize(nsize, nsize);
+      Kup.resize(nsize, nlbfP);
+      Kpp.resize(nlbfP, nlbfP);
+    }
+    Kuu.setZero();
+    Kup.setZero();
+    Kpp.setZero();
+
+
+    vector<double>  gausspoints1, gausspoints2, gaussweights;
+    nGP = getGaussPoints2D(npElem, gausspoints1, gausspoints2, gaussweights);
+
+    for(gp=0; gp<nGP; gp++)
+    {
+        param[0] = gausspoints1[gp];
+        param[1] = gausspoints2[gp];
+
+        GeomData->computeBasisFunctions2D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &Nu(0), &dNu_dx(0), &dNu_dy(0), Jac);
+
+        dvol0 = gaussweights[gp]*Jac;
+        dvol  = dvol0;
+
+        // evaluate pressure at the quadrature points
+
+        if(nlbfP == 1)
+        {
+          Np[0] = 1.0;
+          pres = presDOF[0];
+        }
+        else
+        {
+          if(nlbfP == 3)
+            LagrangeBasisFunsTria(nlbfP, param[0], param[1], &Np(0));
+          else if(nlbfP == 4)
+            LagrangeBasisFunsQuad(nlbfP, param[0], param[1], &Np(0));
+        }
+
+        // Calculate Stiffness and Residual
+        //==============================================
+
+        for(ii=0;ii<nlbfU;ii++)
+        {
+          bb1 = dvol*dNu_dx[ii];
+          bb2 = dvol*dNu_dy[ii];
+
+          TI   = 2*ii;
+          TIp1 = TI+1;
+
+          for(jj=0; jj<nlbfU; jj++)
+          {
+            cc1 = dNu_dx[jj];
+            cc2 = dNu_dy[jj];
+            cc3 = Nu[jj];
+
+            TJ   = 2*jj;
+            TJp1 = TJ+1;
+
+            fact = bb1*dNu_dx[jj] + bb2*dNu_dy[jj] ;
+
+            Kuu(TI,   TJ)    += fact ;
+            Kuu(TIp1, TJp1)  += fact ;
+          }
+
+          for(jj=0; jj<nlbfP; jj++)
+          {
+            Kup(TI,   jj)  += (bb1*Np[jj]);
+            Kup(TIp1, jj)  += (bb2*Np[jj]);
+          }
+        }
+
+        for(ii=0; ii<nlbfP; ii++)
+        {
+          bb4 = dvol*Np[ii];
+
+          for(jj=0; jj<nlbfP; jj++)
+          {
+            Kpp(ii, jj)  += bb4*Np[jj];
+          }
+        }
+    }//gp
+
+    return 0;
+}
+
+
+
+
+int ElementBase::toComputeInfSupCondition3D(MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp)
+{
+    // to compute the inf-sup constant
+
+    int   err, index, ii, jj, gp, TI, TIp1, TIp2, TJ, TJp1, TJp2;
+
+    VectorXd  Nu(nlbfU), dNu_dx(nlbfU), dNu_dy(nlbfU), dNu_dz(nlbfU), Np(nlbfP);
+
+    double  fact, fact1, dvol, dvol0, Jac;
+    double  bb1, bb2, bb3, bb4, bb5, cc1, cc2, cc3, cc4, cc5;
+    double  param[3];
+
+    double xNode[nlbfU], yNode[nlbfU], zNode[nlbfU];
+    for(ii=0;ii<npElem;ii++)
+    {
+      xNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][0];
+      yNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][1];
+      zNode[ii] = GeomData->NodePosOrig[nodeNums[ii]][2];
+    }
+
+    // resize local matrices and initialise them to zero
+    if(Kuu.rows() != nsize)
+    {
+      Kuu.resize(nsize, nsize);
+      Kup.resize(nsize, nlbfP);
+      Kpp.resize(nlbfP, nlbfP);
+    }
+    Kuu.setZero();
+    Kup.setZero();
+    Kpp.setZero();
+
+
+    vector<double>  gausspoints1, gausspoints2, gausspoints3, gaussweights;
+    nGP = getGaussPoints3D(npElem, gausspoints1, gausspoints2, gausspoints3, gaussweights);
+
+    for(gp=0; gp<nGP; gp++)
+    {
+        param[0] = gausspoints1[gp];
+        param[1] = gausspoints2[gp];
+        param[2] = gausspoints3[gp];
+
+        GeomData->computeBasisFunctions3D(CONFIG_ORIGINAL, ELEM_SHAPE, param, nodeNums, &Nu(0), &dNu_dx(0), &dNu_dy(0), &dNu_dz(0), Jac);
+
+        dvol0 = gaussweights[gp]*Jac;
+        dvol  = dvol0;
+
+        // evaluate pressure at the quadrature points
+
+        if(nlbfP == 1)
+        {
+          Np[0] = 1.0;
+          pres = presDOF[0];
+        }
+        else
+        {
+          if(nlbfP == 4)
+            LagrangeBasisFunsTetra(nlbfP, param[0], param[1], param[2], &Np(0));
+          else if(nlbfP == 8)
+            LagrangeBasisFunsHexa(nlbfP, param[0], param[1], param[2], &Np(0));
+        }
+
+        // Calculate Stiffness and Residual
+        //==============================================
+
+        for(ii=0;ii<nlbfU;ii++)
+        {
+          bb1 = dvol*dNu_dx[ii];
+          bb2 = dvol*dNu_dy[ii];
+          bb3 = dvol*dNu_dz[ii];
+
+          TI   = 3*ii;
+          TIp1 = TI+1;
+          TIp2 = TI+2;
+
+          for(jj=0; jj<nlbfU; jj++)
+          {
+            cc1 = dNu_dx[jj];
+            cc2 = dNu_dy[jj];
+            cc3 = dNu_dz[jj];
+            cc4 = Nu[jj];
+
+            TJ   = 3*jj;
+            TJp1 = TJ+1;
+            TJp2 = TJ+2;
+
+            fact = bb1*dNu_dx[jj] + bb2*dNu_dy[jj] + bb3*dNu_dz[jj] ;
+
+            Kuu(TI,   TJ)    += fact ;
+            Kuu(TIp1, TJp1)  += fact ;
+            Kuu(TIp2, TJp2)  += fact ;
+          }
+
+          for(jj=0; jj<nlbfP; jj++)
+          {
+            Kup(TI,   jj)  += (bb1*Np[jj]);
+            Kup(TIp1, jj)  += (bb2*Np[jj]);
+            Kup(TIp2, jj)  += (bb3*Np[jj]);
+          }
+        }
+
+        for(ii=0; ii<nlbfP; ii++)
+        {
+          bb4 = dvol*Np[ii];
+
+          for(jj=0; jj<nlbfP; jj++)
+          {
+            Kpp(ii, jj)  += bb4*Np[jj];
+          }
+        }
+    }//gp
+
+    return 0;
+}
 
 
 

@@ -395,7 +395,7 @@ void femBase::readInput(string& fname)
         {
             //std::cout << line << std::endl;
 
-            if(line.compare(string("files")) == 0)
+            if(line.compare(string("Files")) == 0)
             {
                 cout << "files" << endl;
                 readFiles(infile, line);
@@ -454,13 +454,10 @@ void femBase::readInput(string& fname)
             {
                 cout << "Output" << endl;
                 readOutputDetails(infile, line);
-
-                printVector(outputlist_nodal);
-                printVector(outputlist_elemental);
             }
             else if(line.compare(string("Nodal Data Output")) == 0)
             {
-                cout << "Output" << endl;
+                cout << "Nodal Output" << endl;
                 readNodalDataOutputDetails(infile, line);
             }
             else
@@ -1013,7 +1010,7 @@ void femBase::readSolverDetails(ifstream& infile, string& line)
 
         if( isActiveLine(line) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
 
             cout << stringlist[0] << '\t' << stringlist[1] << endl;
@@ -1051,7 +1048,7 @@ void femBase::readSolverDetails(ifstream& infile, string& line)
             else if(stringlist[0] == "timeStep")  // time step
             {
                 line = stringlist[1];
-                boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+                boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
                 for(auto& str: stringlist)  boost::trim(str);
 
                 cout << "time step " << stringlist.size() << endl;
