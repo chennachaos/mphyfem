@@ -65,9 +65,9 @@ femBase::femBase()
     loadFactor = loadFactorPrev = loadFactorPrev2 = 0.0;
     loadFactorVec.push_back(loadFactor);
 
-    dispDegree = 0;
-    presDegree = 0;
-    mpotDegree = 0;
+    dispDegree = -1;
+    presDegree = -1;
+    mpotDegree = -1;
 
     outputfrequency = 1;
     outputfreq_vtk  = 1;
@@ -367,12 +367,11 @@ void femBase::readInputGMSH(string& fname)
 
 
 
-void femBase::readInput(string& fname)
+void femBase::readInput(string& configfname)
 {
     cout << " femBase::readInput " << endl;
 
-    string  configfname = "./inputs/config";
-
+    //string  configfname = "./inputs/config";
     ifstream  infile(configfname);
 
     if(infile.fail())

@@ -372,6 +372,53 @@ int femMagnetomech::prepareMatrixPattern()
           }
     }
 
+    if(mpotDOF > 0)
+    {
+          cout << "Adding matrix entries for the displacement-manelectricpotential coupling " << endl;
+
+          int  *ttF,  *ttU;
+          int  sizeF, sizeU, row, col, offset=dispDOF+presDOF;
+
+          for(ee=0;ee<nElem_global;ee++)
+          {
+            sizeF = elems[ee]->forAssyVecMpot.size();
+            ttF   = &(elems[ee]->forAssyVecMpot[0]);
+
+            sizeU = elems[ee]->forAssyVec.size();
+            ttU   = &(elems[ee]->forAssyVec[0]);
+
+            for(ii=0; ii<sizeF; ii++)
+            {
+              row = ttF[ii];
+
+              if(row != -1)
+              {
+                row += offset;
+
+                // Kfu and Kuf
+                for(jj=0; jj<sizeU; jj++)
+                {
+                  col = ttU[jj];
+                  if(col != -1)
+                  {
+                    forAssyMat[row].push_back(col);
+                    forAssyMat[col].push_back(row);
+                  }
+                }
+
+                // Kff
+                for(jj=0; jj<sizeF; jj++)
+                {
+                  col = ttF[jj];
+                  if(col != -1)
+                  {
+                    forAssyMat[row].push_back(col+offset);
+                  }
+                }
+              }
+            }
+          }
+    }
 
     PetscPrintf(MPI_COMM_WORLD, "\n\n Preparing matrix pattern DONE \n\n");
 
@@ -471,120 +518,6 @@ int femMagnetomech::prepareMatrixPattern()
     errpetsc  = PetscFree(arrayTemp);   CHKERRQ(errpetsc);
 
     PetscPrintf(MPI_COMM_WORLD, "\n     femMagnetomech::prepareMatrixPattern()  .... FINISHED ...\n\n");
-
-/*
-    prepareDataForPressure();
-    prepareDataForMagneticPotential();
-    //prepareDataForTemperature();
-
-    ntotdofs_global = dispDOF + presDOF + mpotDOF + tempDOF;
-
-    cout << " nElem_global    = " << nElem_global    << endl;
-    cout << " nNode    = " << nNode    << endl;
-    cout << " npElem   = " << npElem   << endl;
-    cout << " ndof     = " << ndof     << endl;
-    cout << " dispDOF  = " << dispDOF  << endl;
-    cout << " presDOF  = " << presDOF  << endl;
-    cout << " mpotDOF  = " << mpotDOF  << endl;
-    cout << " tempDOF  = " << tempDOF  << endl;
-    cout << " ntotdofs_global = " << ntotdofs_global << endl;
-
-        if(mpotDOF > 0)
-        {
-          cout << "Adding matrix entries for the displacement-electricpotential coupling " << endl;
-
-          int  *ttF,  *ttU;
-          int  sizeF, sizeU, row, col, offset=dispDOF+presDOF;
-
-          for(ee=0;ee<nElem_global;ee++)
-          {
-            sizeF = elems[ee]->forAssyVecMpot.size();
-            ttF   = &(elems[ee]->forAssyVecMpot[0]);
-
-            sizeU = elems[ee]->forAssyVec.size();
-            ttU   = &(elems[ee]->forAssyVec[0]);
-
-            for(ii=0; ii<sizeF; ii++)
-            {
-              row = ttF[ii];
-
-              if(row != -1)
-              {
-                row += offset;
-
-                // Kfu and Kuf
-                for(jj=0; jj<sizeU; jj++)
-                {
-                  col = ttU[jj];
-                  if(col != -1)
-                  {
-                    forAssyMat[row].push_back(col);
-                    forAssyMat[col].push_back(row);
-                  }
-                }
-
-                // Kff
-                for(jj=0; jj<sizeF; jj++)
-                {
-                  col = ttF[jj];
-                  if(col != -1)
-                  {
-                    forAssyMat[row].push_back(col+offset);
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        if(tempDOF > 0)
-        {
-          cout << "Adding matrix entries for the displacement-temperature coupling " << endl;
-
-          int  *ttT,  *ttU;
-          int  sizeT, sizeU, row, col, offset=dispDOF+presDOF+mpotDOF;
-
-          for(ee=0;ee<nElem_global;ee++)
-          {
-            sizeT = elems[ee]->forAssyVecTemp.size();
-            ttT   = &(elems[ee]->forAssyVecTemp[0]);
-
-            sizeU = elems[ee]->forAssyVec.size();
-            ttU   = &(elems[ee]->forAssyVec[0]);
-
-            for(ii=0; ii<sizeT; ii++)
-            {
-              row = ttT[ii];
-
-              if(row != -1)
-              {
-                row += offset;
-
-                // Ktu and Kut
-                for(jj=0; jj<sizeU; jj++)
-                {
-                  col = ttU[jj];
-                  if(col != -1)
-                  {
-                    forAssyMat[row].push_back(col);
-                    forAssyMat[col].push_back(row);
-                  }
-                }
-
-                // Ktt
-                for(jj=0; jj<sizeT; jj++)
-                {
-                  col = ttT[jj];
-                  if(col != -1)
-                  {
-                    forAssyMat[row].push_back(col+offset);
-                  }
-                }
-              }
-            }
-          }
-        }
-*/
 
     return 0;
 }

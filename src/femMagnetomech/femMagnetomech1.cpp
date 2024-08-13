@@ -72,16 +72,10 @@ int femMagnetomech::prepareInputData()
     // ndof = ndim for continuum elements
     ndof = ndim;
 
-    if( idd == ELEM_TRUSS_2D_NODES2 )
-      ndof = 2;
-    else if( idd == ELEM_TRUSS_3D_NODES2 )
-      ndof = 3;
-    if( (idd == ELEM_BEAM_2D_NODES2) || (idd == ELEM_BEAM_2D_NODES3) )
-      ndof = 3;
-    if( (idd == ELEM_BEAM_3D_NODES2) || (idd == ELEM_BEAM_3D_NODES3) )
-      ndof = 6;
-    else if( idd == ELEM_SHELL_FLAT_QUAD4 )
-      ndof = 6;
+    if( (idd == ELEM_MAGNMECH_2D_SM_221)          ||
+        (idd == ELEM_MAGNMECH_3D_SM_221)          )
+      ndof = ndim+1;
+
 
     if(this_mpi_proc == 0)
     {
@@ -139,7 +133,9 @@ int femMagnetomech::prepareInputData()
     MIXED_STAB_ELEMENT = false;
 
     if( (idd == ELEM_MAGNMECH_2D_HM_21)          ||
-        (idd == ELEM_MAGNMECH_3D_HM_21)          )
+        (idd == ELEM_MAGNMECH_3D_HM_21)          ||
+        (idd == ELEM_MAGNMECH_2D_SM_221)         ||
+        (idd == ELEM_MAGNMECH_3D_SM_221)          )
     {
       MIXED_ELEMENT = true;
 
@@ -147,7 +143,10 @@ int femMagnetomech::prepareInputData()
         mat->MIXED_ELEMENT = true;
     }
 
-    if( (idd == ELEM_MAGNMECH_2D_HM_10) || (idd == ELEM_MAGNMECH_3D_HM_10) )
+    if( (idd == ELEM_MAGNMECH_2D_HM_10)     ||
+        (idd == ELEM_MAGNMECH_3D_HM_10)     ||
+        (idd == ELEM_MAGNMECH_2D_SM_110)    ||
+        (idd == ELEM_MAGNMECH_3D_SM_110)     )
     {
       MIXED_ELEMENT_P0 = true;
 
@@ -168,15 +167,49 @@ int femMagnetomech::prepareInputData()
       }
     }
 
+    // Hardmagnetic MAP problems
+    if( (idd == ELEM_MAGNMECH_2D_HM_21)     ||
+        (idd == ELEM_MAGNMECH_3D_HM_21)     )
+    {
+      dispDegree = 2;
+      presDegree = 1;
+    }
+    if( (idd == ELEM_MAGNMECH_2D_HM_10)     ||
+        (idd == ELEM_MAGNMECH_3D_HM_10)     )
+    {
+      dispDegree = 1;
+      presDegree = 0;
+    }
 
-    cout << " nElem_global  = " << nElem_global  << endl;
-    cout << " nNode_global  = " << nNode_global  << endl;
-    cout << " ndim   = " << ndim << endl;
-    cout << " ndof   = " << ndof << endl;
-    cout << " intVarFlag   " << intVarFlag << endl;
+
+    // Softmagnetic MAP problems
+    if( (idd == ELEM_MAGNMECH_2D_SM_221)     ||
+        (idd == ELEM_MAGNMECH_3D_SM_221)      )
+    {
+      dispDegree = 2;
+      presDegree = 1;
+      mpotDegree = 2;
+    }
+    if( (idd == ELEM_MAGNMECH_2D_SM_110)     ||
+        (idd == ELEM_MAGNMECH_3D_SM_110)      )
+    {
+      dispDegree = 1;
+      presDegree = 0;
+      mpotDegree = 1;
+    }
+
+
+    cout << " ndim               = " << ndim << endl;
+    cout << " nElem_global       = " << nElem_global  << endl;
+    cout << " nNode_global       = " << nNode_global  << endl;
+    cout << " ndof per node      = " << ndof << endl;
+    cout << " intVarFlag         = " << intVarFlag << endl;
     cout << " MIXED_ELEMENT      = " << MIXED_ELEMENT << endl;
     cout << " MIXED_ELEMENT_P0   = " << MIXED_ELEMENT_P0   << endl;
     cout << " MIXED_STAB_ELEMENT = " << MIXED_STAB_ELEMENT << endl;
+    cout << " dispDegree         = " << dispDegree << endl;
+    cout << " presDegree         = " << presDegree << endl;
+    cout << " mpotDegree         = " << mpotDegree << endl;
 
     ///////////////////////////////////////////////////////////////////
     //
@@ -190,7 +223,7 @@ int femMagnetomech::prepareInputData()
 
     for(ee=0;ee<nElem_global;ee++)
     {
-      printVector(elemConn[ee]);
+      //printVector(elemConn[ee]);
 
       npElem = elemConn[ee].size()-5;
       nodeNums.resize(npElem);
@@ -287,11 +320,6 @@ int femMagnetomech::prepareInputData()
       //processForBernsteinElem_globalents();
     }
 
-    cout << " MIXED_ELEMENT = " << MIXED_ELEMENT << endl;
-
-    cout << " dispDegree  = " << dispDegree << endl;
-    cout << " presDegree  = " << presDegree << endl;
-    cout << " mpotDegree  = " << mpotDegree << endl;
 
 
     if(debug) PetscPrintf(PETSC_COMM_WORLD, "     femMagnetomech::prepareInputData()  .... FINISHED ...\n\n");
@@ -1025,23 +1053,22 @@ void  femMagnetomech::prepareDataForPressure()
 
 int  femMagnetomech::prepareDataForMagneticPotential()
 {
-/*
     if( mpotDegree == -1)
-        return;
+        return 0;
 
-    SolnData.var3.resize(nNode);
-    SolnData.var3.setZero();
-    SolnData.var3Cur     = SolnData.var3;
-    SolnData.var3Prev    = SolnData.var3;
-    SolnData.var3Prev2   = SolnData.var3;
-    SolnData.var3applied = SolnData.var3;
+    SolnData.mpot.resize(nNode_global);
+    SolnData.mpot.setZero();
+    SolnData.mpotCur     = SolnData.mpot;
+    SolnData.mpotPrev    = SolnData.mpot;
+    SolnData.mpotPrev2   = SolnData.mpot;
+    SolnData.mpotApplied = SolnData.mpot;
 
 
     int  ee, ii, jj;
-    int  idd = SolnData.ElemProp[elemConn[0][0]]->id;
+    int  idd = ElementTypeDataList[0]->getElemTypeNameNum();
 
-    vector<bool>  NodeType_mpot(nNode,false); // all free
-    vector<int>   ID_mpot(nNode,-1);
+    vector<bool>  NodeType_mpot(nNode_global,false); // all free
+    vector<int>   ID_mpot(nNode_global,-1);
 
     // gather all the magnetic potential field nodes
     //
@@ -1049,18 +1076,18 @@ int  femMagnetomech::prepareDataForMagneticPotential()
 
     if( mpotDegree == dispDegree )
     {
-      nNode_Mpot = nNode;
+      nNode_Mpot = nNode_global;
 
-      magnpote_nodes.resize(nNode);
-      for(ii=0; ii<nNode; ii++)
+      magnpote_nodes.resize(nNode_global);
+      for(ii=0; ii<nNode_global; ii++)
         magnpote_nodes[ii] = ii;
 
-      for(ee=0; ee<nElem; ++ee)
+      for(ee=0; ee<nElem_global; ++ee)
       {
         elems[ee]->forAssyVecMpot = elems[ee]->nodeNums;
       }
 
-      // specified/fixed electric potential DOF
+      // specified/fixed magnetic potential DOF
       for(ii=0;ii<DirichletBCs_Mpot.size();ii++)
       {
         NodeType_mpot[DirichletBCs_Mpot[ii][0]] = true;
@@ -1068,47 +1095,13 @@ int  femMagnetomech::prepareDataForMagneticPotential()
     }
     else
     {
-      for(ee=0; ee<nElem; ++ee)
-      {
-        elems[ee]->forAssyVecMpot.clear();
-
-        for(ii=0; ii<=ndim; ii++)
-        {
-          jj = elems[ee]->nodeNums[ii];
-
-          magnpote_nodes.push_back(jj);
-
-          elems[ee]->forAssyVecMpot.push_back(jj);
-        }
-      }
-
-      //printVector(magnpote_nodes);
-
-      findUnique(magnpote_nodes);
-      nNode_Mpot = magnpote_nodes.size();
-      //printVector(magnpote_nodes);
-
-      // fix mid nodes
-      for(ii=0;ii<nNode;ii++)
-      {
-        if(midnodeData[ii][0])
-        {
-          NodeType_mpot[ii] = true;
-        }
-      }
-
-      // specified/fixed electric potential DOF
-      for(ii=0;ii<DirichletBCs_Mpot.size();ii++)
-      {
-        if(!midnodeData[DirichletBCs_Mpot[ii][0]][0])
-        {
-          NodeType_mpot[DirichletBCs_Mpot[ii][0]] = true;
-        }
-      }
+      cerr << "\n\n\n ERROR... Current functionality is available only for the same degree for Displacement and Magnetic field \n\n\n" << endl;
+      exit(-2);
     }
 
+
     cout << " nNode_Mpot = " << nNode_Mpot << endl;
-    magnpote_nodes_map_g2l.resize(nNode,-1);
+    magnpote_nodes_map_g2l.resize(nNode_global,-1);
     for(ii=0; ii<nNode_Mpot; ii++)
     {
       magnpote_nodes_map_g2l[magnpote_nodes[ii]] = ii;
@@ -1123,7 +1116,7 @@ int  femMagnetomech::prepareDataForMagneticPotential()
       //cout << ii << '\t' << NodeType_mpot[ii] << endl;
 
     mpotDOF = 0;
-    for(ii=0;ii<nNode;ii++)
+    for(ii=0;ii<nNode_global;ii++)
     {
       if(!NodeType_mpot[ii])
         ID_mpot[ii] = mpotDOF++;
@@ -1134,7 +1127,7 @@ int  femMagnetomech::prepareDataForMagneticPotential()
 
     assyForSolnMpot.resize(mpotDOF);
     int count = 0;
-    for(ii=0;ii<nNode;ii++)
+    for(ii=0;ii<nNode_global;ii++)
     {
       if( ID_mpot[ii] != -1)
         assyForSolnMpot[count++] = ii;
@@ -1144,7 +1137,7 @@ int  femMagnetomech::prepareDataForMagneticPotential()
     //printVector(assyForSolnMpot);
 
     // reassign the pressure nodes
-    for(ee=0; ee<nElem; ee++)
+    for(ee=0; ee<nElem_global; ee++)
     {
       //printVector(elems[ee]->forAssyVecMpot);
       jj = elems[ee]->forAssyVecMpot.size();
@@ -1155,7 +1148,7 @@ int  femMagnetomech::prepareDataForMagneticPotential()
       }
       //printVector(elems[ee]->forAssyVecMpot);
     }
-*/
+
     return 0;
 }
 

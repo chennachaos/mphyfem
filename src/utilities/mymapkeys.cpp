@@ -27,6 +27,9 @@ int  getDOFfromString(string& matkey)
                         {"UX",              0},
                         {"UY",              1},
                         {"UZ",              2},
+                        {"EP",              3}, // Electric potential
+                        {"MP",              3}, // Magnetic potential
+                        {"TEMP",            3}, // Temperature
                         };
 
     unordered_map<string,int>::const_iterator got = map_keys_dofs.find(matkey);
