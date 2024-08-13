@@ -1,0 +1,165 @@
+
+
+files
+{
+  mesh : cookmembrane2d-Q1-nelem2.msh
+}
+
+Model Type
+{
+  dimension     : 2
+  behaviour     : pstrain
+  thickness     : 1
+}
+
+
+Domains
+{
+  solid
+  {
+    Material   : 1
+    Element    : 1
+  }
+}
+
+
+
+
+Material
+{
+  id               : 1
+  name             : Matl_LinearElastic
+  density          : 1.0
+  data             : 240.565  0.3
+}
+
+
+
+Material
+{
+  id               : 2
+  name             : Matl_NeoHookean
+  density          : 1.0
+  data_deviatoric :  92.525
+  data_volumetric :  3  0.0049883
+}
+
+
+
+
+Material
+{
+  id               : 3
+  name             : Matl_NeoHookean
+  density          : 1.0
+  data_deviatoric :  80.19367957863858
+  data_volumetric :  3  0.000002494128406043830
+}
+
+
+
+Material
+{
+  id               : 4
+  name             : Matl_NeoHookean
+  density          : 1.0
+  data_deviatoric :  80.188
+  data_volumetric :  -1  0.0049883
+}
+
+
+
+Element
+{
+  id            : 1
+!  type          : ELEM_SOLID_2D_DISP
+  type          : ELEM_SOLID_2D_MIXED0
+!  type          : ELEM_SOLID_2D_MIXED1
+!  type          : ELEM_SOLID_2D_TRIA7_MIXED1
+!  type          : ELEM_SOLID_2D_TRIA10_MIXED1
+
+}
+
+
+
+Body Force
+{
+    value        :  0  0  0
+    TimeFunction :  1
+}
+
+
+
+Boundary Conditions
+{
+    leftedge
+    {
+        type   :  fixed
+    }
+
+}
+
+
+
+
+Tractions
+{
+    rightedge
+    {
+        type          : traction
+        value         : 0.0  6.25  0.0
+        timefunction  : 1
+    }
+}
+
+
+
+
+Time Functions
+{
+
+! lam(t) = p1 + p2*t + p3*sin(p4*t+p5) + p6*cos(p7*t+p8)
+!
+! id   t0    t1    p1   p2     p3    p4    p5    p6    p7    p8
+
+!   1   0.0   1000.0  -1000.0  0.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+   1   0.0   1000.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+!   1   0.0      1.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+!   1   1.0   1000.0  1.0  0.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+}
+
+
+
+Solver
+{
+
+!formulation        IMPLICIT
+
+solvertype         newton
+
+!timescheme         BDF1
+timescheme         STEADY
+
+spectralRadius     0.0
+
+finalTime          1.0
+
+timeStep           1.0
+
+maximumSteps       1
+
+maximumIterations  2
+
+tolerance          1.0e-7
+
+debug              1
+
+}
+
+
+
+
+
