@@ -16,7 +16,9 @@
 #include "headersBasic.h"
 #include "elementutilitiescfd.h"
 #include "BasisFunctionsBernstein.h"
+#include <algorithm>
 
+using namespace std;
 
 int  pointInsideTria3Node(double* xNode, double* yNode, double* target)
 {

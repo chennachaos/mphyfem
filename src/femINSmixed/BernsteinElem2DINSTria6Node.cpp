@@ -15,9 +15,9 @@
 #include "headersBasic.h"
 #include "KimMoinFlow.h"
 #include "elementutilitiescfd.h"
-#include "KimMoinFlow.h"
 #include "ViscoElasticModels.h"
 #include "BasisFunctionsLagrange.h"
+#include "QuadratureUtil.h"
 
 
 using namespace std;
@@ -25,7 +25,7 @@ using namespace std;
 
 BernsteinElem2DINSTria6Node::BernsteinElem2DINSTria6Node()
 {
-  ELEM_TYPE = 1;
+  ELEM_SHAPE = ELEM_SHAPE_TRIA_BERNSTEIN;
 
   degree  = 2;
   npElem  = 6;
@@ -77,7 +77,7 @@ void BernsteinElem2DINSTria6Node::prepareElemData(vector<myPoint>& node_coords)
 
     int   ii, gp;
 
-    double xNode[npElem], yNode[npElem], xx, yy;
+    double xNode[6], yNode[6], xx, yy;
     for(ii=0;ii<npElem;ii++)
     {
       //xNode[ii] = GeomData->NodePosOrig[SolnData->node_map_new_to_old[nodeNums[ii]]][0];
@@ -89,9 +89,10 @@ void BernsteinElem2DINSTria6Node::prepareElemData(vector<myPoint>& node_coords)
 
     // Gauss point coordinates and weights
     vector<double>  gpts1(nGP), gpts2(nGP), gwts(nGP);
-    gpts1[0] = 1.0/6.0;        gpts2[0] = 1.0/6.0;        gwts[0] = 1.0/6.0;
-    gpts1[1] = 4.0/6.0;        gpts2[1] = 1.0/6.0;        gwts[1] = 1.0/6.0;
-    gpts1[2] = 1.0/6.0;        gpts2[2] = 4.0/6.0;        gwts[2] = 1.0/6.0;
+    //gpts1[0] = 1.0/6.0;        gpts2[0] = 1.0/6.0;        gwts[0] = 1.0/6.0;
+    //gpts1[1] = 4.0/6.0;        gpts2[1] = 1.0/6.0;        gwts[1] = 1.0/6.0;
+    //gpts1[2] = 1.0/6.0;        gpts2[2] = 4.0/6.0;        gwts[2] = 1.0/6.0;
+    getGaussPointsTriangle(nGP, gpts1, gpts2, gwts);
 
     Nv.resize(nGP);
     dNvdx.resize(nGP);
@@ -130,7 +131,7 @@ void BernsteinElem2DINSTria6Node::prepareElemData(vector<myPoint>& node_coords)
       param[0] = gpts1[gp];
       param[1] = gpts2[gp];
 
-      computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv[gp][0], &dNvdx[gp][0], &dNvdy[gp][0], Jac);
+      computeBasisFunctions2D(false, ELEM_SHAPE, nlbfU, param, xNode, yNode, &Nv[gp][0], &dNvdx[gp][0], &dNvdy[gp][0], Jac);
 
       //cout << " Jac = " << Jac << endl;
       if(Jac < 0.0)
@@ -147,7 +148,7 @@ void BernsteinElem2DINSTria6Node::prepareElemData(vector<myPoint>& node_coords)
 
       Np[gp][0] = 1.0-param[0]-param[1];  Np[gp][1] = param[0];  Np[gp][2] = param[1];
 
-      //computeBasisFunctions2D(false, ELEM_TYPE, 1, param, xNode, yNode, &Np[gp][0], &dNpdx[gp][0], &dNpdy[gp][0], Jac);
+      //computeBasisFunctions2D(false, ELEM_SHAPE, nlbfP, param, xNode, yNode, &Np[gp][0], &dNpdx[gp][0], &dNpdy[gp][0], Jac);
     }//gp
 
     //charlen = sqrt(4.0*elemVol/PI);
@@ -321,7 +322,7 @@ double  BernsteinElem2DINSTria6Node::ResidualIncNavStokesAlgo1(vector<myPoint>& 
 
 
 
-double  BernsteinElem2DINSTria6Node::ResidualIncNavStokesSemiImpl(vector<myPoint>& node_coods, double* elemData, double* timeData, VectorXd& veloVec, VectorXd& veloVecPrev, VectorXd& veloDotVec, VectorXd& veloDotVecPrev, VectorXd& presVec, VectorXd& presVecPrev, VectorXd&  FlocalVelo, VectorXd&  FlocalPres, double timeCur)
+double  BernsteinElem2DINSTria6Node::ResidualIncNavStokesSemiImpl(vector<myPoint>& node_coods, double* elemData, double* timeData, VectorXd& veloVec, VectorXd& veloVecPrev, VectorXd& veloDotVec, VectorXd& veloDotVecPrev, VectorXd& presVec, VectorXd& presVecPrev, VectorXd&  FlocalVelo, VectorXd&  FlocalPres)
 {
     double  b1, b2, b3, b4;
     double  velo[2], veloPrev[2], resi[2], gradTvel[2], pres;
@@ -389,7 +390,7 @@ double  BernsteinElem2DINSTria6Node::ResidualIncNavStokesSemiImpl(vector<myPoint
           for(ii=0; ii<3; ii++)
           {
             //pres += (1.5*presVec[nodeNums[ii]]-0.5*presVecPrev[nodeNums[ii]])*Np[gp][ii];
-            b1 = presVec[nodeNums[ii]];
+            b1 = presVec[nodeNumsPres[ii]];
 
             pres  += b1*Np[gp][ii];
           }
@@ -399,7 +400,7 @@ double  BernsteinElem2DINSTria6Node::ResidualIncNavStokesSemiImpl(vector<myPoint
           //stress[1][0] = stress[0][1];
           //stress[1][1] = mu*(grad[1][1]+grad[1][1]) - pres;
 
-          mu  = compute_viscosity_CarreauYasuda(grad);
+          //mu  = compute_viscosity_CarreauYasuda(grad);
 
           stress[0][0] = mu*grad[0][0] - pres;
           stress[0][1] = mu*grad[0][1];
@@ -968,7 +969,7 @@ int  BernsteinElem2DINSTria6Node::StiffnessAndResidualFullyImplicit(vector<myPoi
 
 
 //
-int  BernsteinElem2DINSTria6Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloPrev2, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur)
+int  BernsteinElem2DINSTria6Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloPrev2, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp)
 {
     // Semi-implicit formulation - type B
 
@@ -1008,9 +1009,6 @@ int  BernsteinElem2DINSTria6Node::StiffnessAndResidualFullyImplicit(vector<myPoi
     Fp.setZero();
 
     //KimMoinFlowUnsteadyNavierStokes  analy(rho, mu, 1.0);
-
-    double  tCur  = timeCur;
-    double  tPrev = tCur - dt;
 
     //cout << " AAAAAAAAAA " << rho << '\t' << mu << '\t' << tPrev << '\t' << tCur << endl;
     //cout << nGP << endl;
@@ -1199,8 +1197,8 @@ int  BernsteinElem2DINSTria6Node::StiffnessForSemiImpl(double* elemData, double*
             for(jj=0; jj<3; jj++)
             {
               // pressure term
-              Kup(TI,   jj) -= (b1*Np[gp][jj]);
-              Kup(TIp1, jj) -= (b2*Np[gp][jj]);
+              Kup(TI,   jj) += (b1*Np[gp][jj]);
+              Kup(TIp1, jj) += (b2*Np[gp][jj]);
             }
           }
     }//gp
@@ -1226,7 +1224,8 @@ int BernsteinElem2DINSTria6Node::MassMatrices(vector<myPoint>& node_coords, doub
 
     for(ii=0; ii<6; ii++)
     {
-      Mlocal1[ii] = fact;
+      Mlocal1[ii*2]   = fact;
+      Mlocal1[ii*2+1] = fact;
     }
 
     // Mass Matrix for the Pressure DOF
@@ -1591,7 +1590,7 @@ int  BernsteinElem2DINSTria6Node::CalculateForces(int side, vector<myPoint>& nod
 
         pointInverseTria6node(xNode, yNode, tarpoint, param);
 
-        computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv[0], &dNvdx[0], &dNvdy[0], Jac);
+        computeBasisFunctions2D(false, ELEM_SHAPE, degree, param, xNode, yNode, &Nv[0], &dNvdx[0], &dNvdy[0], Jac);
 
         Np[0] = 1.0-param[0]-param[1];  Np[1] = param[0];  Np[2] = param[1];
 

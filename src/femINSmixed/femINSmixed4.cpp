@@ -6,7 +6,7 @@
 #include "MyTime.h"
 #include "TimeFunction.h"
 
-extern   std::vector<unique_ptr<TimeFunction> > timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime                 myTime;
 
 
@@ -804,12 +804,12 @@ int  femINSmixed::writeReadResult(int index, string& filename, int stride)
         infile >> stringVal;
         infile >> valInt;
         cout << "valInt=" << valInt << endl;
-        assert(nNode ==  valInt);
+        assert(nNode_global ==  valInt);
 
         // read the number of nodes
         infile >> stringVal;
         infile >> valInt;
-        assert(nElem ==  valInt);
+        assert(nElem_global ==  valInt);
 
         // read the Time instant
         infile >> stringVal;

@@ -8,8 +8,9 @@
 #include "MyTime.h"
 #include "TimeFunction.h"
 
-extern   std::vector<unique_ptr<TimeFunction> > timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime                 myTime;
+extern  bool  debug;
 
 
 int femINSmixed::setSolver(int slv)
@@ -61,41 +62,23 @@ int femINSmixed::prepareMatrixPattern()
     cout << " nDBC_Velo      = " << '\t' << nDBC_Velo  << endl;
     cout << " nDBC_Pres      = " << '\t' << nDBC_Pres  << endl;
 
-    vector<vector<int> >  IDvelo;
-    vector<vector<bool> >  NodeTypeVelo;
 
+    vector<vector<int> >  NodeDofArray(nNode_Velo, vector<int>(ndim, -1)), LM;
+    vector<vector<bool> >  NodeDofType(nNode_Velo, vector<bool>(ndim, false));
 
-    NodeTypeVelo.resize(nNode_Velo);
-    IDvelo.resize(nNode_Velo);
+    setSpecifiedDOFs_Velocity(NodeDofType);
+
 
     int  ee, ii, jj, kk, nn, dof, ind;
-
-    for(ii=0;ii<nNode_Velo;++ii)
-    {
-      NodeTypeVelo[ii].resize(ndim);
-      IDvelo[ii].resize(ndim);
-
-      for(jj=0;jj<ndim;++jj)
-      {
-        NodeTypeVelo[ii][jj] = false;
-        IDvelo[ii][jj] = -1;
-      }
-    }
-
-    // fix the specified Dirichlet BCs
-    for(ii=0; ii<nDBC_Velo; ++ii)
-    {
-      NodeTypeVelo[DirichletBCsVelo[ii][0]][DirichletBCsVelo[ii][1]] = true;
-    }
 
     totalDOF_Velo = 0;
     for(ii=0;ii<nNode_global;++ii)
     {
       for(jj=0;jj<ndim;++jj)
       {
-        if(!NodeTypeVelo[ii][jj])
+        if(!NodeDofType[ii][jj])
         {
-          IDvelo[ii][jj] = totalDOF_Velo++;
+          NodeDofArray[ii][jj] = totalDOF_Velo++;
           assyForSolnVelo.push_back(ii*ndim+jj);
         }
       }
@@ -185,7 +168,7 @@ int femINSmixed::prepareMatrixPattern()
 
         for(jj=0;jj<ndim;++jj)
         {
-          elems[ee]->forAssyVecVelo[ind+jj] = IDvelo[kk][jj];
+          elems[ee]->forAssyVecVelo[ind+jj] = NodeDofArray[kk][jj];
         }
       }
 
@@ -223,7 +206,7 @@ int femINSmixed::prepareMatrixPattern()
        for(ii=0;ii<nNode_global;++ii)
        {
           for(jj=0;jj<ndim;++jj)
-            cout << '\t' << IDvelo[ii][jj];
+            cout << '\t' << NodeDofArray[ii][jj];
           cout << endl;
        }
        printf("\n\n\n");
@@ -437,14 +420,16 @@ int  femINSmixed::solveFullyImplicit()
     ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////
 
-    int  stepsCompleted=0;
+    int  stepsCompleted=1;
     int  nsize_velo = rhsVecVelo.rows();
     int  nsize_pres = rhsVecPres.rows();
     int  aa, bb, ee, ii, jj, kk, count, row, col, ind, n1, n2, size1, size2;
+    bool convergedFlagPrev = false, convergedFlag=false;
 
     double  fact, fact1, fact2;
 
-    VectorXd  td(100), reacVec(nNode_Velo*ndim+nNode_Pres);
+    td.resize(100), reacVec.resize(nNode_Velo*ndim+nNode_Pres);
+
     VectorXd  TotalForce(3);
     VectorXd  FlocalVelo(30), FlocalPres(10);
     ind = npElemVelo*ndim;
@@ -454,43 +439,32 @@ int  femINSmixed::solveFullyImplicit()
 
     cout << " timeIntegrationScheme = " << timeIntegrationScheme << '\t' << spectralRadius << endl;
  
-    SetTimeParametersFluid(timeIntegrationScheme, spectralRadius, dt, td);
+    SetTimeParametersFluid(timeIntegrationScheme, spectralRadius, myTime.dt, td);
 
-    KimMoinFlowUnsteadyNavierStokes  analy(elemData[0], elemData[1], 1.0);
+    KimMoinFlowUnsteadyNavierStokes  analy(fluidProperties[0], fluidProperties[1], 1.0);
 
     double tstart = 0.0;// omp_get_wtime();
 
     timeNow=0.0;
 
     //setInitialConditions();
+
     //Time loop
-    for(int tstep=0; tstep<stepsMax; tstep++)
+    while( (myTime.cur <= (timeFinal-EPSILON)) && (stepsCompleted <= stepsMax) )
     {
-        timeNow = timeNow + dt;
- 
-        cout << " Time = " << timeNow << endl;
- 
-        if(timeNow > timeFinal)
-          break;
- 
-        //
-        if(timeNow <= 1.0)
-        {
-          loadFactor = timeNow;
-          //loadFactor = stepsCompleted/5000.0;
-        }
-        else
-        {
-          loadFactor = 1.0;
-        }
-        //
-        //loadFactor = 1.0;
+        // do a time update: reset variables and flags, and prediction step of fields
+        timeUpdate();
 
-        // set boundary conditions
-        assignBoundaryConditions();
+        printf(" ==================================================================== \n");
+        printf(" Time step number     =  %d  \n", stepsCompleted);
+        printf(" Time step size       =  %f  \n", myTime.dt);
+        printf(" Current time         =  %f  \n", myTime.cur);
+        printf(" ==================================================================== \n");
 
-        // add boundary conditions
-        //addBoundaryConditions();
+        convergedFlagPrev = convergedFlag;
+        convergedFlag = false;
+
+        rhsNormPrev = rhsNorm = -1.0;
 
         // update Immersed Solids
         //updateImmersedSolid();
@@ -504,17 +478,15 @@ int  femINSmixed::solveFullyImplicit()
 
         cout << " Iteration loop " << endl;
 
-        for(int iter=0; iter<iterationsMax; iter++)
+        for(int iter=1; iter<=iterationsMax; iter++)
         {
             cout << " Iteration ... " << iter << endl;
 
-            veloDot    = td[9]*velo + td[10]*veloPrev + td[15]*veloDotPrev ;
+            firstIteration = (iter == 1);
 
-            veloCur    = td[2]*velo    + (1.0-td[2])*veloPrev; // velocity
-            presCur    = td[2]*pres    + (1.0-td[2])*presPrev; // pressure
-            lambdasCur = td[2]*lambdas + (1.0-td[2])*lambdasPrev; // Lagrange multipliers
-            veloDotCur = td[1]*veloDot + (1.0-td[1])*veloDotPrev;
-
+            // Compute the velocity and acceleration and the respective values at n+af, n+am
+            updateIterStep();
+            //errpetsc = MPI_Barrier(MPI_COMM_WORLD);
 
             matK *= 0.0;
             rhsVec.setZero();
@@ -525,7 +497,7 @@ int  femINSmixed::solveFullyImplicit()
             // loop over elements and compute matrix and residual
             for(ee=0; ee<nElem_global; ee++)
             {
-                //elems[ee]->StiffnessAndResidualFullyImplicit(nodeCoords, elemData, &td[0], veloPrev, veloPrev2, veloCur, veloDotCur, presCur, Kuu,  Kup, FlocalVelo, FlocalPres, dt, timeNow);
+                elems[ee]->StiffnessAndResidualFullyImplicit(nodeCoords, fluidProperties, &td[0], veloPrev, veloPrev2, veloCur, veloDotCur, presCur, Kuu,  Kup, FlocalVelo, FlocalPres);
 
                 //printMatrix(Kuu);
                 //printMatrix(Kup);
@@ -536,17 +508,15 @@ int  femINSmixed::solveFullyImplicit()
                 size2 = elems[ee]->forAssyVecPres.size();
 
                 //cout << "Applying boundary conditions " << ee << endl;
-                if(iter == 0)
+                if(firstIteration)
                 {
-                    // apply boundary conditions
+                    //printVector(elems[ee]->forAssyVecVelo);
+                    //printVector(elems[ee]->forAssyVecPres);
+                    //printVector(elems[ee]->globalDOFnums);
 
                     // applied velocity dof
                     for(ii=0; ii<size1; ii++)
                     {
-                        //printVector(elems[ee]->forAssyVecVelo);
-                        //printVector(elems[ee]->forAssyVecPres);
-                        //printVector(elems[ee]->globalDOFnums);
-
                         aa = elems[ee]->forAssyVecVelo[ii];
 
                         if(aa == -1) // this DOF has a prescibed value
@@ -588,9 +558,11 @@ int  femINSmixed::solveFullyImplicit()
                             }
                         }
                     }
-                } // if(iter == 0)
+                } // if(firstIteration)
                 //cout << "Applying boundary conditions " << ee << endl;
 
+                //printVector(FlocalVelo);
+                //printVector(FlocalPres);
                 //cout << "Assembling matrices and vectors " << ee << endl;
 
                 // assemble matrices and vectors
@@ -648,7 +620,7 @@ int  femINSmixed::solveFullyImplicit()
                 //cout << "ccccccccccccccc.... " << ee << endl;
             } //Element Loop
 
-            
+
             cout << "Adding Lagrange multipliers " << endl;
 
             if(totalDOF_Lambda > 0)
@@ -657,8 +629,10 @@ int  femINSmixed::solveFullyImplicit()
             cout << "Adding boundary conditions " << endl;
 
             // add boundary conditions
-            if(iter == 0)
+            if(firstIteration)
               addBoundaryConditions();
+
+            //printVector(rhsVec);
 
             rhsNorm = rhsVec.norm();
 
@@ -669,6 +643,7 @@ int  femINSmixed::solveFullyImplicit()
             if(rhsNorm < 1.0e-8)
             {
                 //cout << " Solution converged below the specified tolerance " << endl;
+                convergedFlag = true;
                 break;
             }
             else
@@ -711,63 +686,39 @@ int  femINSmixed::solveFullyImplicit()
             }
         } //Iteration Loop
 
-        cout << "Postprocessing " << endl;
-        postProcess();
-        cout << "aaaaaaaaaaaaaaaaa " << endl;
-
-        double TotalForce[2] = {0.0, 0.0};
-        for(ii=0; ii<nOutputFaceLoads; ++ii)
+        // if the residual is converged, then save the DOFs vectors
+        if( convergedFlag )
         {
-          TotalForce[0] +=  reacVec[outputEdges[ii][0]*2];
-          TotalForce[1] +=  reacVec[outputEdges[ii][0]*2+1];
+            if( stepsCompleted%outputFreq == 0 )
+              postProcess();
+
+            writeNodalData();
+
+            writeOutputDataPatches();
+
+            saveSolution();
+
+            myTime.stck();
+
+            stepsCompleted++;
+
+            fileCount++;
+        }
+        else
+        {
+            myTime.cut();
+
+            reset();
         }
 
-        //fout_convdata <<  timeNow << '\t' << TotalForce[0] << '\t' << TotalForce[1] << endl;
         cout << endl; cout << endl;
 
-        cout << "bbbbbbbbbbbbbbbb " << endl;
-
-        veloPrev2    =  veloPrev;
-        veloPrev     =  velo;
-        veloDotPrev  =  veloDot;
-        presPrev     =  pres;
-        lambdasPrev  =  lambdas;
-
-        cout << "aaaaaaaaaaaaaaaaa " << endl;
     } //Time loop
 
     //double tend = omp_get_wtime(), duration=tend-tstart;
     double tend = 0.0, duration=tend-tstart;
 
     cout << " \n \n Total time taken = " << duration << " seconds \n\n" << endl;
-
-
-    /*
-    cout << " Computing errors \n " << endl;
-    double totalError = 0.0;
-    //cout << " index = " << index << endl;
-    for(int index=0; index<4; index++)
-    {
-      totalError = 0.0;
-      for(ee=0; ee<nElem; ee++)
-      {
-        //Compute the element force vector, including residual force
-        totalError += elems[ee]->CalculateError(nodeCoords, elemData, timeData, velo, veloDot, pres, 5.0, index);
-      }
-
-      totalError = sqrt(totalError);
-
-      if(index == 0)
-        printf(" \n\n \t L2 Error in X-velocity = %12.6E \n\n " , totalError);
-      else if(index == 1)
-        printf(" \n\n \t L2 Error in Y-velocity = %12.6E \n\n " , totalError);
-      else if(index == 2)
-        printf(" \n\n \t L2 Error in pressure   = %12.6E \n\n " , totalError);
-      else
-        printf(" \n\n \t H1 Error in velocity   = %12.6E \n\n " , totalError);
-    }
-    */
-
 
     return 0;
 }
@@ -1044,758 +995,6 @@ int femINSmixed::solveStep(int max_iters)
 
 
 
-int femINSmixed::calcMassMatrixForExplicitDynamics()
-{
-    cout << " femINSmixed::calcMassMatrixForExplicitDynamics() STARTED " << endl;
-
-    int  dd, ee, ii, jj;
-
-    VectorXd  Flocal1(npElemVelo*ndim), Flocal2(npElemPres);
-
-    // Compute global mass matrices
-    //The Mass is assumed to be lumped so that the mass matrix is diagonal
-
-    globalMassVelo.setZero();
-    globalMassPres.setZero();
-
-    for(ee=0; ee<nElem_global; ++ee)
-    {
-        // compute mass matrix and assemble it
-        //elems[ee]->MassMatrices(nodeCoords, elemData, Flocal1, Flocal2);
-
-        //Assemble the element mass to the global mass
-        for(ii=0; ii<npElemVelo; ++ii)
-        {
-            jj = elemConn[ee][ii]*ndim ;
-
-            for(dd=0; dd<ndim; dd++)
-              globalMassVelo(jj+dd)   +=  Flocal1(ii);
-        }
-
-        for(ii=0; ii<npElemPres; ++ii)
-        {
-            globalMassPres(elemConn[ee][ii]) += Flocal2(ii);
-        }
-    }
-
-    //printVector(globalMassVelo);
-    //printVector(globalMassPres);
-
-    cout << " femINSmixed::calcMassMatrixForExplicitDynamics() FINISHED " << endl;
-
-    return 0;
-}
-
-
-
-
-int femINSmixed::setSolverDataForSemiImplicit()
-{
-    cout << " setSolverDataForSemiImplicit() ... STARTED " << endl;
-
-
-    int  ee, ii, jj, size1, size2, row, col;
-    vector<int>  vecIntTemp(10);
-
-    // inverse of Kuu matrix
-    matMuuInv.setZero();
-    matMuuInv.resize(totalDOF_Velo, totalDOF_Velo);
-    matMuuInv.reserve(totalDOF_Velo);
-
-    for(ii=0; ii<totalDOF_Velo; ii++)
-    {
-      matMuuInv.coeffRef(ii,ii) = 0.0;
-    }
-
-    VectorXi  nnzVec(totalDOF_Velo);
-
-    // Kup matrix
-    matKup.setZero();
-    matKup.resize(totalDOF_Velo, totalDOF_Pres+totalDOF_Lambda);
-    matKup.reserve(ceil(totalDOF_Pres*totalDOF_Velo*0.1));
-    jj = ceil(totalDOF_Pres*0.12);
-    cout << " jj = " << jj << endl;
-
-    for(ii=0; ii<totalDOF_Velo; ii++)
-      nnzVec(ii) = jj;
-    matKup.reserve(nnzVec);
-
-    // Kpu matrix
-    matKpu.setZero();
-    matKpu.resize(totalDOF_Pres+totalDOF_Lambda, totalDOF_Velo);
-    matKpu.reserve(ceil(totalDOF_Pres*totalDOF_Velo*0.1));
-    matKpu.reserve(nnzVec);
-
-    // Schur complement matrix
-    matSchur.setZero();
-    matSchur.resize(totalDOF_Pres+totalDOF_Lambda, totalDOF_Pres+totalDOF_Lambda);
-    matSchur.reserve(ceil(totalDOF_Pres*totalDOF_Pres*0.2));
-    matSchur.reserve(nnzVec);
-
-
-    for(ee=0; ee<nElem_global; ee++)
-    {
-        size1 = elems[ee]->forAssyVecVelo.size();
-        size2 = elems[ee]->forAssyVecPres.size();
-
-        for(ii=0; ii<size2; ii++)
-        {
-          row = elems[ee]->forAssyVecPres[ii];
-
-          if(row != -1)
-          {
-            for(jj=0; jj<size1; jj++)
-            {
-              col = elems[ee]->forAssyVecVelo[jj];
-
-              if(col != -1)
-              {
-                matKup.coeffRef(col, row) = 0.0;
-                matKpu.coeffRef(row, col) = 0.0;
-              }
-            }
-            for(jj=0; jj<size2; jj++)
-            {
-              col = elems[ee]->forAssyVecPres[jj];
-
-              if(col != -1)
-              {
-                matSchur.coeffRef(row, col) = 0.0;
-              }
-            }
-          }//if(row != -1)
-        } //for(ii=0;)
-    } //for(ee=0;)
-
-
-    cout << " setSolverDataForSemiImplicit () ... adding matrix entries for Lambdas " << endl;
-
-    ImmersedIntegrationElement *lme;
-
-    for(int bb=0;bb<ImmersedBodyObjects.size();bb++)
-    {
-      for(int iie=0; iie<ImmersedBodyObjects[bb]->getNumberOfElements(); iie++)
-      {
-        lme = ImmersedBodyObjects[bb]->ImmIntgElems[iie];
-
-        size1 = lme->forAssyVec.size();
-
-        ee = ImmersedElements[iie]->elemNums[0];
-
-        size2 = elems[ee]->forAssyVecVelo.size();
-
-        cout << " Lambdas " << iie << '\t' << size1 << '\t' << size2 << endl;
-
-        printVector(ImmersedElements[iie]->forAssyVec);
-        printVector(elems[ee]->forAssyVecVelo);
-
-        for(ii=0; ii<size1; ii++)
-        {
-          row = ImmersedElements[iie]->forAssyVec[ii];
-
-          if(row != -1)
-          {
-            row += totalDOF_Pres;
-
-            for(jj=0; jj<size2; jj++)
-            {
-              col = elems[ee]->forAssyVecVelo[jj];
-
-              if(col != -1)
-              {
-                matKpu.coeffRef(row, col) = 0.0;
-                matKup.coeffRef(col, row) = 0.0;
-              }
-            }
-
-            for(jj=0; jj<size1; jj++)
-            {
-              col = ImmersedElements[iie]->forAssyVec[jj];
-              if(col != -1)
-              {
-                col += totalDOF_Pres;
-
-                matSchur.coeffRef(row, col) = 0.0;
-              }
-            }
-
-          }//if(row != -1)
-        } //for(ii=0;)
-      }
-    } //for(ee=0;)
-
-
-    matMuuInv.makeCompressed();
-    matKup.makeCompressed();
-    matKpu.makeCompressed();
-    matSchur.makeCompressed();
-
-    cout << " setSolverDataForSemiImplicit() ... ENDED " << endl;
-
-    return 0;
-}
-
-
-
-
-int femINSmixed::updateMatricesSemiImplicit()
-{
-    int ii, jj, row, col, size1, size2;
-
-    MatrixXd  Kup(npElemVelo*ndof, 4);
-
-    matKup *= 0.0;
-    matKpu *= 0.0;
-
-    for(int ee=0; ee<nElem_global; ee++)
-    {
-        //elems[ee]->StiffnessForSemiImpl(elemData, timeData, Kup);
-
-        //printMatrix(Kup);
-
-        //Assemble the matrix
-
-        size1 = elems[ee]->forAssyVecVelo.size();
-        size2 = elems[ee]->forAssyVecPres.size();
-
-        for(ii=0; ii<size1; ii++)
-        {
-            row = elems[ee]->forAssyVecVelo[ii];
-            if( row != -1 )
-            {
-                for(jj=0; jj<size2; jj++)
-                {
-                    col = elems[ee]->forAssyVecPres[jj];
-                    if( col != -1 )
-                    {
-                        matKup.coeffRef(row, col) += Kup(ii,jj);
-                        matKpu.coeffRef(col, row) -= Kup(ii,jj);
-                    }
-                }
-            }
-        }
-    } //LoopElem
-
-    cout << " adding matrix entries for Lambdas " << endl;
-
-    myPoint coords_global, coords_local;
-    vector<double>  Nf(9), dNf_du1(9), dNf_du2(9);
-    MatrixXd  Khorz(2, 18);
-    Khorz.setZero();
-
-    for(int ime=0; ime<nImmersedElems; ime++)
-    {
-        size1 = ImmersedElements[ime]->forAssyVec.size();
-
-        int elnum = ImmersedElements[ime]->elemNums[0];
-
-        size2 = elems[elnum]->forAssyVecVelo.size();
-
-        //cout << " Lambdas " << ime << '\t' << size1 << '\t' << size2 << endl;
-
-        //elems[elnum]->findLocalCoordinates(nodeCoords, ImmersedElements[ime]->coords, coords_local);
-
-        BernsteinBasisFunsQuad(2, coords_local(0), coords_local(1), &Nf[0], &dNf_du1[0], &dNf_du2[0]);
-
-        for(ii=0; ii<9; ii++)
-        {
-            Khorz(0, ii*2)   = Nf[ii];
-            Khorz(1, ii*2+1) = Nf[ii];
-        }
-
-        //printMatrix(Khorz);
-
-        for(ii=0; ii<size1; ii++)
-        {
-          row = ImmersedElements[ime]->forAssyVec[ii];
-
-          if(row != -1)
-          {
-            row += totalDOF_Pres;
-
-            //cout << "row = " << ii << '\t' << row << endl;
-
-            for(jj=0; jj<size2; jj++)
-            {
-              col = elems[elnum]->forAssyVecVelo[jj];
-
-              if(col != -1)
-              {
-                matKpu.coeffRef(row, col) += Khorz(ii, jj);
-                matKup.coeffRef(col, row) += Khorz(ii, jj);
-              }
-            }
-          }//if(row != -1)
-        } //for(ii=0;)
-    } //for(ee=0;)
-
-
-
-    return 0;
-}
-
-
-//
-int  femINSmixed::solveSchurComplementProblem()
-{
-    //cout << " SolverEigen::solverSchurExplicitDirect() ... STARTED " << endl;
-    //  Kuu*x1 + Kup*x2 = f1
-    //  Kpu*x1 + Kpp*x2 = f2
-    //
-    //  Kuu*x1 = f1 - Kup*x2
-    //  S*x2 = f2 - Kpu*KuuInv*f1
-    //
-    //  S = Kpp - Kpu*KuuInv*Kup,  Schur complement
-
-    // compute the Schur complement
-    //if( (count % frequency) == 0 )
-    //{
-      //cout <<  "Updating the Schur complement solver " <<  endl;
-//       matSchur = matKpp - matKpu*(matMuuInv*matKup);
-//       matSchur.makeCompressed();
-// 
-//       solverSchur.compute(matSchur);
-    //}
-
-    //cout << matS << endl;
-
-    //auto  time1 = chrono::steady_clock::now();
-
-//     printVector(rhsVecVelo);
-//     printVector(rhsVecPres);
-
-    VectorXd  r2 = -amDgammaDt*rhsVecPres + matKpu*(matMuuInv*rhsVecVelo);
-    //printVector(r2);
-    //solverSchur.compute(matSchur);
-    presIncr = solverSchur.solve(r2);
-    //presIncr = solverSchur.solveWithGuess(r2, presIncr);
-    //printVector(presIncr);
-
-    for(int ii=0; ii<totalDOF_Lambda; ii++)
-    {
-        lambdasIncr[ii] = presIncr[totalDOF_Pres+ii];
-    }
-
-    veloIncr = (matMuuInv/amDgammaDt)*(rhsVecVelo - matKup*presIncr);
-//     printVector(veloIncr);
-
-    //cout << solverSchur.info() << '\t' << solverSchur.error() << '\t' << solverSchur.iterations() << endl;
-
-    //cout << " SolverEigen::solverSchurExplicitDirect() ... FINISHED " << endl;
-
-    return 0;
-}
-//
-
-
-
-/*
-int  femINSmixed::solveSchurComplementProblem()
-{
-    cout << " SolverEigen::solverSchurExplicitDirect() ... STARTED " << endl;
-
-    //printf("\n \t   Number of Velocity DOF    =  %5d\n\n", totalDOF_Velo);
-    //printf("\n \t   Number of Pressure DOF    =  %5d\n\n", totalDOF_Pres);
-    //printf("\n \t   Number of Immersed DOF    =  %5d\n\n", totalDOF_Lambda);
-    //printf("\n \t   Number of Solid DOF       =  %5d\n\n", totalDOF_Solid);
-    //printf("\n \t   Total number of DOF       =  %5d\n\n", totalDOF);
-
-    int  ii, jj, k;
-
-    //SparseMatrixXd  matK;
-
-    matK.resize(totalDOF, totalDOF);                        //    matK.reserve(totalDOF*totalDOF*0.2);
-
-    VectorXi  nnzVec(totalDOF);
-
-    jj = ceil(totalDOF_Velo*0.1);
-    //cout << " jj = " << jj << endl;
-
-    for(ii=0; ii<totalDOF; ii++)
-      nnzVec(ii) = jj;
-
-    matK.reserve(nnzVec);
-
-    for(k=0; k<matMuuInv.outerSize(); ++k)
-    {
-      for(SparseMatrixXd::InnerIterator it(matMuuInv,k); it; ++it)
-      {
-        ii = it.row();
-        jj = it.col();
-
-        matK.coeffRef(ii, jj) = amDgammaDt/it.value();
-      }
-    }
-
-
-    for(k=0; k<matKpu.outerSize(); ++k)
-    {
-      for(SparseMatrixXd::InnerIterator it(matKpu,k); it; ++it)
-      {
-        ii = it.row()+totalDOF_Velo;
-        jj = it.col();
-
-        matK.coeffRef(ii, jj) = it.value();
-        matK.coeffRef(jj, ii) = it.value();
-      }
-    }
-    matK.makeCompressed();
-
-    //cout << "bbbbbbbbbbbbbbbb" << endl;
-
-    //VectorXd  rhsTemp(totalDOF),  solnTemp(totalDOF);
-    rhsVec.resize(totalDOF),  soln.resize(totalDOF);
-
-    for(ii=0; ii<totalDOF_Velo; ii++)
-      rhsVec(ii) = rhsVecVelo(ii);
-
-    for(ii=0; ii<totalDOF_Pres+totalDOF_Lambda; ii++)
-      rhsVec(totalDOF_Velo+ii) = rhsVecPres(ii);
-
-    //cout << "ccccccccccccccccc" << endl;
-
-    //SuperLU<SparseMatrixXd > solverSchur;
-    //SparseLU<SparseMatrix<double> > solverSchur;
-    //solverSchur.compute(matK);
-
-    //solnTemp = solverSchur.solve(rhsTemp);
-
-    initialise_pardiso();
-    factoriseAndSolve_pardiso();
-
-    //cout << "ccccccccccccccccc" << endl;
-
-    if (veloIncr.rows() != totalDOF_Velo)
-        veloIncr.resize(totalDOF_Velo);
-
-    if (presIncr.rows() != totalDOF_Pres)
-        presIncr.resize(totalDOF_Pres);
-
-    if (lambdasIncr.rows() != totalDOF_Lambda)
-        lambdasIncr.resize(totalDOF_Lambda);
-
-    for(ii=0; ii<totalDOF_Velo; ii++)
-    {
-      veloIncr[ii] = soln[ii];
-    }
-
-    //cout << "bbbbbbbbbbbbbbbb" << endl;
-
-    for(ii=0; ii<totalDOF_Pres; ii++)
-    {
-      presIncr[ii] = soln[totalDOF_Velo+ii];
-    }
-
-    for(ii=0; ii<totalDOF_Lambda; ii++)
-    {
-        lambdasIncr[ii] = soln[totalDOF_Velo+totalDOF_Pres+ii];
-    }
-
-    //printVector(veloIncr);
-    //printVector(presIncr);
-    //printVector(lambdasIncr);
-
-
-    //cout << " SolverEigen::solverSchurExplicitDirect() ... FINISHED " << endl;
-
-    return 0;
-}
-*/
-
-
-
-
-
-
-int  femINSmixed::solveSemiImplicit()
-{
-    cout << " Solving with the Semi-Implicit Scheme " << endl;
-
-    ///////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////
-
-    velo.setZero();      veloPrev.setZero();      veloCur.setZero();
-    veloDot.setZero();   veloDotPrev.setZero();   veloDotCur.setZero();
-    pres.setZero();      presPrev.setZero();      presCur.setZero();
-    presDot.setZero();   presDotPrev.setZero();   presDotCur.setZero();
-
-    int  stepsCompleted=1;
-    int  nsize_velo = rhsVecVelo.rows();
-    int  nsize_pres = rhsVecPres.rows();
-    int  aa, bb, dd, ee, ii, jj, kk, count, row, col, ind, n1, n2;
-
-    double  norm_velo=1.0, norm_pres=1.0;
-    double  dtCrit=1.0e10, fact, fact1, fact2;
-    double  dtgamma11, dtgamma12, norm_velo_diff, norm_pres_diff;
-    double  am = 1.0;
-    double  gamma = 0.5+am;
-
-
-    VectorXd  FlocalVelo(npElemVelo*ndof), FlocalPres(npElemPres);
-    VectorXd  TotalForce(3);
-
-    rhsVecVeloTemp.resize(nsize_velo), rhsVecPresTemp.resize(nsize_pres);
-
-    rhsVecVelo.resize(totalDOF_Velo);
-    rhsVecPres.resize(totalDOF_Pres+totalDOF_Lambda);
-
-
-    double tstart = 0.0;//omp_get_wtime();
-
-    matMuuInv *= 0.0;
-    for(ii=0; ii<totalDOF_Velo; ii++)
-    {
-        matMuuInv.coeffRef(ii,ii) = 1.0/globalMassVelo[assyForSolnVelo[ii]];
-    }
-    matMuuInv.makeCompressed();
-
-    updateMatricesSemiImplicit();
-
-    matSchur = matKpu*(matMuuInv*matKup);
-    matSchur.makeCompressed();
-
-    //cout << matKpu << endl;
-    //cout << endl;    cout << endl;    cout << endl;
-    //cout << matKup << endl;
-    //cout << endl;    cout << endl;    cout << endl;
-    //cout << matSchur << endl;
-    //cout << endl;    cout << endl;    cout << endl;
-
-    cout << "matSchur.rows()" << '\t' << "matSchur.cols()" << endl;
-    cout << matSchur.rows() << '\t' << matSchur.cols() << endl;
-
-    //solverSchur.preconditioner().setDroptol(1.0e-2);
-    //solverSchur.preconditioner().setFillfactor(2);
-    //solverSchur.setTolerance(1.0e-8);
-
-
-    solverSchur.compute(matSchur);
-
-
-    //velo=veloApplied;
-    postProcess();
-
-    timeNow=0.0, loadFactor=0.0;
-
-    //setInitialConditions();
-    //loadFactor = 1.0;
-    //Time loop
-    while( (stepsCompleted < stepsMax ) && (timeNow < timeFinal) )
-    {
-        //
-        if(stepsCompleted < 1000)
-        {
-          loadFactor = 0.5*(1-cos(PI*stepsCompleted/1000));
-          //loadFactor = stepsCompleted/5000.0;
-        }
-        else
-        {
-          loadFactor = 1.0;
-        }
-        //
-        loadFactor = 1.0;
-
-        //double  time1 = omp_get_wtime();
-
-        rhsVecVeloTemp.setZero();
-        rhsVecPresTemp.setZero();
-
-        //#pragma omp parallel private(ee, ii, jj, kk, dd) default(shared)
-        //{
-          //Loop over elements and compute the RHS and time step
-          dtCrit=1.0e10;
-          //#pragma omp for reduction(min : dtCrit) schedule(dynamic,100) //shared(ndim, nElem, rhsVecVelo, rhsVecPres, elemConn)
-          for(ee=0; ee<nElem_global; ee++)
-          {
-            fact = timeNow - dt;
-
-            //dtCrit = min(dtCrit, elems[ee]->ResidualIncNavStokesSemiImpl(nodeCoords, elemData, timeData, velo, veloPrev, veloDot, veloDotPrev, pres, presPrev, FlocalVelo, FlocalPres, fact) );
-
-            //printVector(FlocalVelo);
-            //printVector(FlocalPres);
-            //int ii, jj, kk, dd;
-            //Assemble the element vector
-            //#pragma omp critical
-            {
-              for(ii=0; ii<npElemVelo; ii++)
-              {
-                jj = ndim*ii;
-                kk = ndim*elemConn[ee][ii];
-
-                for(dd=0; dd<ndim; dd++)
-                  rhsVecVeloTemp(kk+dd) += FlocalVelo(jj+dd);
-              }
-              for(ii=0; ii<npElemPres; ii++)
-              {
-                rhsVecPresTemp(elemConn[ee][ii])   += FlocalPres(ii);
-              }
-            }
-          } //LoopElem
-          dt = dtCrit*CFL;
-
-          amDgammaDt = am/(gamma*dt);
-
-          applyInterfaceTerms2D();
-
-          // Add specified nodal force 
-          //addExternalForces(loadFactor);
-
-          //rhsVecVelo.setZero();
-          //rhsVecPres.setZero();
-
-          fact = am/gamma - 1.0;
-          for(ii=0; ii<totalDOF_Velo; ii++)
-          {
-            jj = assyForSolnVelo[ii];
-
-            rhsVecVelo[ii]   =  rhsVecVeloTemp[jj];
-            rhsVecVelo[ii]  +=  (fact*globalMassVelo[jj])*veloDotPrev[jj];
-          }
-
-          for(ii=0; ii<totalDOF_Pres; ii++)
-          {
-            rhsVecPres[ii]  =  rhsVecPresTemp[assyForSolnPres[ii]];
-          }
-
-          for(ii=0; ii<totalDOF_Lambda; ii++)
-          {
-            rhsVecPres[totalDOF_Pres+ii]  =  rhsVecPresTemp[totalDOF_Pres+ii];
-          }
-
-
-          solveSchurComplementProblem();
-
-          // compute the solution at t_{n+1}
-
-          for(ii=0; ii<totalDOF_Velo; ii++)
-          {
-            velo[assyForSolnVelo[ii]]   +=  veloIncr[ii];
-          }
-
-          for(ii=0; ii<totalDOF_Pres; ii++)
-          {
-            pres[assyForSolnPres[ii]]   +=  presIncr[ii];
-          }
-
-          for(ii=0; ii<totalDOF_Lambda; ii++)
-          {
-            lambdas[ii]   +=  lambdasIncr[ii];
-          }
-
-          // apply boundary conditions
-          for(ii=0; ii<nDBC_Velo; ++ii)
-          {
-            n1 = DirichletBCsVelo[ii][0];
-            n2 = DirichletBCsVelo[ii][1];
-
-            jj = n1*ndim+n2;
-
-            velo[jj]    = veloApplied[jj] * loadFactor;
-          }
-
-          for(ii=0; ii<nDBC_Pres; ++ii)
-          {
-            jj = DirichletBCsPres[ii][0];
-
-            pres[jj]    = DirichletBCsPres[ii][2] * loadFactor;
-          }
-
-          double  fact1 = 1.0/(gamma*dt), fact2 = (gamma-1.0)/gamma;
-
-          veloDot = fact1*(velo-veloPrev) + fact2*veloDotPrev;
-
-          // compute the norms and store the variables
-          norm_velo = 0.0;
-          norm_velo_diff = 0.0;
-          for(ii=0; ii<nsize_velo; ii++)
-          {
-            norm_velo += velo[ii]*velo[ii];
-
-            fact1 = velo[ii]-veloPrev[ii];
-            norm_velo_diff += fact1*fact1;
-
-            // store the variables
-            //veloPrev3  = veloPrev2;
-            veloPrev2[ii]  = veloPrev[ii];
-            veloPrev[ii]  = velo[ii];
-            veloDotPrev[ii]  = veloDot[ii];
-          }
-
-          norm_pres = 0.0;
-          norm_pres_diff = 0.0;
-          for(ii=0; ii<nsize_pres; ii++)
-          {
-            norm_pres += pres[ii]*pres[ii];
-
-            fact1 = pres[ii]-presPrev[ii];
-            norm_pres_diff += fact1*fact1;
-
-            //presPrev3  = presPrev2;
-            presPrev2[ii]  = presPrev[ii];
-            presPrev[ii]     = pres[ii];
-          }
-        //}
-
-        if( std::isnan(norm_velo) || std::isnan(norm_pres) )
-        {
-          cerr << " NAN encountered in the solution ... " << endl;
-          cerr << " Program has been terminated ... " << endl;
-          exit(-1);
-        }
-
-        norm_velo = sqrt(norm_velo_diff/norm_velo);
-        norm_pres = sqrt(norm_pres_diff/norm_pres);
-        if(stepsCompleted == 1)
-        {
-          norm_velo = 1.0;
-          norm_pres = 1.0;
-        }
-
-        if( (stepsCompleted%outputFreq == 0) || (norm_velo < conv_tol) )
-        {
-            cout << " stepsCompleted = " << stepsCompleted << '\t' << " timeNow = " << timeNow << endl;
-            cout << " velocity difference norm = " << '\t' << norm_velo << endl;
-
-            postProcess();
-
-            TotalForce.setZero();
-            for(ii=0; ii<outputEdges.size(); ii++)
-            {
-              //cout << ii << '\t' << outputEdges[ii][0] << '\t' << outputEdges[ii][1] << endl;
-              //elems[outputEdges[ii][0]]->CalculateForces(outputEdges[ii][1], nodeCoords, elemData, timeData, velo, pres, TotalForce);
-              int nn = outputEdges[ii][0];
-              TotalForce[0] += rhsVecVeloTemp[nn*2];
-              TotalForce[1] += rhsVecVeloTemp[nn*2+1];
-            }
-
-            //fout_convdata << timeNow << '\t' << stepsCompleted << '\t' << norm_velo << '\t' << norm_pres ;
-            //fout_convdata << '\t' << TotalForce(0) << '\t' << TotalForce(1) << '\t' << TotalForce(2) << endl;
-        }
-
-        if(norm_velo < conv_tol)
-        {
-          cout << " Solution convdataged below the specified tolerance " << endl;
-          break;
-        }
-
-        stepsCompleted = stepsCompleted + 1;
-        timeNow = timeNow + dt;
-    } //Time loop
-
-
-    postProcess();
-
-    //double tend = omp_get_wtime(), duration=tend-tstart;
-    double tend = 0.0, duration=tend-tstart;
-
-    cout << " \n \n Total time taken = " << duration << " seconds \n\n" << endl;
-
-    return 0;
-}
-
-
-
 
 
 
@@ -1836,6 +1035,33 @@ int femINSmixed::computeElementErrors(int ind)
       else
         printf(" \n\n \t H1 Error in velocity   = %12.6E \n\n " , totalError);
     }
+
+
+    /*
+    cout << " Computing errors \n " << endl;
+    double totalError = 0.0;
+    //cout << " index = " << index << endl;
+    for(int index=0; index<4; index++)
+    {
+      totalError = 0.0;
+      for(ee=0; ee<nElem; ee++)
+      {
+        //Compute the element force vector, including residual force
+        totalError += elems[ee]->CalculateError(nodeCoords, elemData, timeData, velo, veloDot, pres, 5.0, index);
+      }
+
+      totalError = sqrt(totalError);
+
+      if(index == 0)
+        printf(" \n\n \t L2 Error in X-velocity = %12.6E \n\n " , totalError);
+      else if(index == 1)
+        printf(" \n\n \t L2 Error in Y-velocity = %12.6E \n\n " , totalError);
+      else if(index == 2)
+        printf(" \n\n \t L2 Error in pressure   = %12.6E \n\n " , totalError);
+      else
+        printf(" \n\n \t H1 Error in velocity   = %12.6E \n\n " , totalError);
+    }
+    */
 
     return 0;
 }

@@ -23,12 +23,15 @@
 #include "TimeFunction.h"
 
 
-extern  std::vector<unique_ptr<TimeFunction> > timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern  MyTime                 myTime;
 extern  bool  debug;
 
 
 using namespace std;
+
+
+int ElementBase::elemcount = 0;
 
 
 femINSmixed::femINSmixed()
@@ -37,9 +40,16 @@ femINSmixed::femINSmixed()
     totalDOF_Velo = 0; totalDOF_Pres = 0; totalDOF_Lambda = 0; totalDOF_Solid=0;
 
     dispDOF  = 0;  presDOF = 0;  lambdaDOF = 0;  totalDOF = 0;
+
+    nImmersedElems = 0;
+
+    nDBC_Velo = 0;
+    nDBC_Pres = 0;
+
+    outputFreq = 1;
     
     GRID_CHANGED = false; IB_MOVED = false;
-    DEBUG = false;
+    debug = true;
     
     SCHEME_TYPE = IMPLICIT;
 
@@ -190,6 +200,7 @@ int  femINSmixed::readInputGMSH(string& fname)
       }
 
       if(ndim == 1)  ndim = 2;
+      ndof = ndim;
 
       // nodes
       //
@@ -208,11 +219,11 @@ int  femINSmixed::readInputGMSH(string& fname)
           getline(infile,line);
           //cout << line << endl;
           boost::trim(line);
-          boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+          boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
 
-          nodeCoords[ii][0] = stof(stringlist[1]);
-          nodeCoords[ii][1] = stof(stringlist[2]);
-          nodeCoords[ii][2] = stof(stringlist[3]);
+          nodeCoords[ii][0] = stod(stringlist[1]);
+          nodeCoords[ii][1] = stod(stringlist[2]);
+          nodeCoords[ii][2] = stod(stringlist[3]);
         }
 
         getline(infile,line);
@@ -223,7 +234,7 @@ int  femINSmixed::readInputGMSH(string& fname)
         getline(infile,line);
         cout << line << endl;
         boost::trim(line);
-        boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+        boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
 
         count = stoi(stringlist[0]);
         cout << " count = " << count << endl;
@@ -241,7 +252,7 @@ int  femINSmixed::readInputGMSH(string& fname)
           //strip_spaces(line, stringlist);
 
           boost::trim(line);
-          boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+          boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
 
           ind = stringlist.size();
           //cout << "ind = " << ind << endl;
@@ -345,8 +356,8 @@ int femINSmixed::readConfiguration(string& fname)
             else if(line.compare(string("Fluid Properties")) == 0)
             {
                 cout << "Fluid Properties" << endl;
-                //readFluidProperties(infile, line);
-                readFluidProps(infile, line);
+                readFluidProperties(infile, line);
+                //readFluidProps(infile, line);
             }
             else if(line.compare(string("Body Force")) == 0)
             {
@@ -400,6 +411,11 @@ int femINSmixed::readConfiguration(string& fname)
                 cout << "Output" << endl;
                 //readOutputDetails(infile, line);
             }
+            else if(line.compare(string("Patch Output")) == 0)
+            {
+                cout << "\n\n Reading Patch Output \n\n" << endl;
+                readOutputDetailsPatch(infile, line);
+            }
             else
             {
                 cout << "key =  " <<  line << endl;
@@ -437,14 +453,14 @@ int femINSmixed::readFluidProperties(ifstream& infile, string& line)
 
         if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
 
-            if(stringlist[0] == "density")
+            if( (stringlist[0] == "density") || (stringlist[0] == "rho") )
             {
                 fluidProperties[0] = stod(stringlist[1]);
             }
-            else if(stringlist[0] == "viscosity")
+            else if( (stringlist[0] == "viscosity") || (stringlist[0] == "mu") )
             {
                 fluidProperties[1] = stod(stringlist[1]);
             }
@@ -570,16 +586,16 @@ int femINSmixed::readElementProps(ifstream& infile, string& line)
 
         if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
 
-            if(stringlist[0] == "eltype")
+            if(stringlist[0] == "type")
             {
                 ELEMENT_TYPE = stringlist[1];
             }
             else
             {
-                throw runtime_error("Option not available in femINSmixed::readFluidProperties");
+                throw runtime_error("Option not available in femINSmixed::readElementProps");
             }
         }
     }
@@ -675,174 +691,6 @@ int femINSmixed::readOutputDetails(ifstream& infile, string& line)
 
 
 
-/*
-int femINSmixed::readSolverDetails(string& fname)
-{
-    std::ifstream  infile(fname);
-
-    if(infile.fail())
-    {
-       cout << " Could not open input file " << endl;
-       exit(-1);
-    }
-
-
-    string line;
-    vector<string>  stringlist;
-
-    unordered_map<string,int>   map_keys = {
-                        {"formulation",        1},
-                        {"timescheme",         2},
-                        {"spectralRadius",     3},
-                        {"timeStep",           4},
-                        {"finalTime",          5},
-                        {"maximumSteps",       6},
-                        {"maximumIterations",  7},
-                        {"tolerance",          8},
-                        {"debug",              9},
-                        {"masslumping",       10}
-                        };
-
-
-    // read {
-    getline(infile,line);    boost::trim(line);
-
-    while( infile )
-    {
-        getline(infile,line);    boost::trim(line);
-
-        cout << line << endl;
-
-        if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
-        {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
-            for(auto& str: stringlist)  boost::trim(str);
-
-            unordered_map<string,int>::const_iterator got = map_keys.find(stringlist[0]);
-
-            if( got == map_keys.end() )
-            {
-                throw runtime_error("Key not found in femINSmixed::readSolverDetails ...");
-                //return -1;
-            }
-
-            cout << " got->first  = " << got->first  << endl;
-            cout << " got->second = " << got->second << endl;
-
-            switch(got->second)
-            {
-                case 1:                                     // formulation
-
-                    if( stringlist[1] == "IMPLICIT" )
-                    {
-                      SCHEME_TYPE = 0;
-                    }
-                    else if( stringlist[1] == "SEMI_IMPLICIT" )
-                    {
-                      SCHEME_TYPE = 1;
-                    }
-                    else if( stringlist[1] == "EXPLICIT" )
-                    {
-                      SCHEME_TYPE = 2;
-                    }
-                    else
-                    {
-                        throw runtime_error("Scheme option not available in femINSmixed::readSolverDetails");
-                    }
-
-                break;
-
-                case 2:    // time integration scheme
-
-                    SolnData.setTimeIncrementType(stringlist[1]);
-
-                break;
-
-
-                case 3:    // spectral radius at infinity
-
-                    spectralRadius = stod(stringlist[1]);
-                    SolnData.setSpectralRadius(spectralRadius);
-
-                break;
-
-
-                case 4:    // time step
-
-                    //printVector(stringlist);
-
-                    dt = stod(stringlist[1]);
-
-                    if(dt <= 1.0e-7)
-                    {
-                        throw runtime_error("Time step size cannot be negative or too small in femINSmixed::readSolverDetails");
-                    }
-
-                break;
-
-
-                case 5:    // final time
-
-                    timeFinal = stod(stringlist[1]);
-
-                break;
-
-
-                case 6:   // maximum number of steps
-
-                    stepsMax = stoi(stringlist[1]);
-
-                break;
-
-
-                case 7:    // maximum iterations
-
-                    itersMax = stoi(stringlist[1]);
-
-                    if(itersMax < 0)
-                    {
-                        throw runtime_error("Maximum number of iterations cannot be negative in femINSmixed::readSolverDetails");
-                    }
-
-                break;
-
-                case 8:    // convergence tolerance
-
-                    conv_tol = stod(stringlist[1]);
-
-                    if(conv_tol < 0.0)
-                    {
-                        throw runtime_error("Tolerance cannot be negative in femINSmixed::readSolverDetails");
-                    }
-
-                break;
-
-                case 9:                                    // mass lumping
-
-                    DEBUG = ( stoi(stringlist[1]) == 1);
-
-                break;
-
-                case 10:   // mass lumping
-
-                    SolnData.MassLumping = ( stoi(stringlist[1]) == 1);
-
-                break;
-
-                default:
-
-                break;
-
-            }
-        }
-    }
-
-    return 0;
-}
-*/
-
-
-
 
 
 int  femINSmixed::readBodyForce(ifstream& infile, string& line)
@@ -862,14 +710,18 @@ int  femINSmixed::readBodyForce(ifstream& infile, string& line)
 
         if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
 
             if(stringlist[0] == "value")
             {
-                bodyForce[0] = stod(stringlist[1]);
-                bodyForce[1] = stod(stringlist[2]);
-                bodyForce[2] = stod(stringlist[3]);
+                line = stringlist[1];
+                boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+                for(auto& str: stringlist)  boost::trim(str);
+
+                bodyForce[0] = stod(stringlist[0]);
+                bodyForce[1] = stod(stringlist[1]);
+                bodyForce[2] = stod(stringlist[2]);
             }
             else if( (stringlist[0] == "timefunction") || (stringlist[0] == "TimeFunction") )
             {
@@ -906,16 +758,18 @@ int  femINSmixed::readSolverDetails(ifstream& infile, string& line)
 
         if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
+
+            cout << stringlist[0] << '\t' << stringlist[1] << endl;
 
             if(stringlist[0] == "timescheme")
             {
-                SolnData.timeIntegrationScheme = stringlist[1];
+                timeIntegrationScheme = stringlist[1];
             }
             else if(stringlist[0] == "spectralRadius")
             {
-                SolnData.spectralRadius = stod(stringlist[1]);
+                spectralRadius = stod(stringlist[1]);
             }
             else if(stringlist[0] == "finalTime")
             {
@@ -923,17 +777,21 @@ int  femINSmixed::readSolverDetails(ifstream& infile, string& line)
             }
             else if(stringlist[0] == "timeStep")
             {
-                if(stringlist.size() == 2)
+                line = stringlist[1];
+                boost::algorithm::split(stringlist, line, boost::is_any_of("\t "), boost::token_compress_on);
+                for(auto& str: stringlist)  boost::trim(str);
+
+                if(stringlist.size() == 1)
                 {
-                    myTime.set( stod(stringlist[1]), stod(stringlist[1]), stod(stringlist[1]) );
+                    myTime.set( stod(stringlist[0]), stod(stringlist[0]), stod(stringlist[0]) );
                 }
-                else if(stringlist.size() == 3)
+                else if(stringlist.size() == 1)
                 {
-                    myTime.set( stod(stringlist[1]), stod(stringlist[2]), stod(stringlist[1]) );
+                    myTime.set( stod(stringlist[0]), stod(stringlist[1]), stod(stringlist[0]) );
                 }
                 else
                 {
-                    myTime.set( stod(stringlist[1]), stod(stringlist[2]), stod(stringlist[3]) );
+                    myTime.set( stod(stringlist[0]), stod(stringlist[1]), stod(stringlist[2]) );
                 }
             }
             else if(stringlist[0] == "maximumSteps")
@@ -955,6 +813,10 @@ int  femINSmixed::readSolverDetails(ifstream& infile, string& line)
             else if(stringlist[0] == "outputFrequency")
             {
                 outputFreq = stoi(stringlist[1]);
+            }
+            else if(stringlist[0] == "CFL")
+            {
+                CFL = stod(stringlist[1]);
             }
             else
             {
@@ -1018,16 +880,16 @@ int femINSmixed::readTimeFunctions(ifstream& infile, string& line)
             }
 
             id -= 1;
-            if(id == timeFunction.size())
+            if(id == timeFunctions.size())
             {
-                timeFunction.push_back(make_unique<TimeFunction>());
-                timeFunction[id]->setID(id);
+                timeFunctions.push_back(make_unique<TimeFunction>());
+                timeFunctions[id]->setID(id);
             }
-            timeFunction[id]->addTimeBlock(doublelist);
+            timeFunctions[id]->addTimeBlock(doublelist);
         }
     }
 
-    for(auto& tmf : timeFunction)
+    for(auto& tmf : timeFunctions)
     {
         tmf->printSelf();
         tmf->update();
@@ -1147,7 +1009,7 @@ int  femINSmixed::readBoundaryConditions(ifstream& infile, string& line)
 
                 if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
                 {
-                    boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+                    boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
                     for(auto& str: stringlist)  boost::trim(str);
 
                     cout << "Inside patch ... " << stringlist[0] << endl;
@@ -1309,12 +1171,14 @@ int femINSmixed::readInitialConditions(ifstream& infile, string& line)
 
         if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
         {
-            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
             for(auto& str: stringlist)  boost::trim(str);
 
             label = stringlist[0];
 
             int dof = getDOFfromString(stringlist[0]);
+
+            cout << "dof = " << dof << '\t' << ndof << endl;
 
             if( dof >= ndof)
             {
@@ -1329,6 +1193,50 @@ int femINSmixed::readInitialConditions(ifstream& infile, string& line)
 }
 
 
+
+
+
+
+
+int  femINSmixed::readOutputDetailsPatch(ifstream& infile, string& line)
+{
+    vector<string>  stringlist;
+
+    // read {
+    getline(infile,line);    boost::trim(line);
+
+    while( infile && (line != "}") )
+    {
+        getline(infile,line);    boost::trim(line);
+
+        if(line[0] == '}') break;
+
+
+        if( (line.size() > 1) && !( (line[0] == '!') || (line[0] == '#') || (line[0] == '%') ) )
+        {
+            boost::algorithm::split(stringlist, line, boost::is_any_of(" "), boost::token_compress_on);
+            for(auto& str: stringlist)  boost::trim(str);
+
+            int ind=1;
+            for(auto& bpt : BoundaryPatches)
+            {
+               if( stringlist[0] == bpt->getLabel() )
+               {
+                   bpt->setOutputFlag();
+                   break;
+               }
+               ind++;
+            }
+
+            if(ind > numBoundaryPatches)
+            {
+                throw runtime_error("Patch not available in femINSmixed::readOutputDetailsPatch");
+            }
+        }
+    }
+
+    return 0;
+}
 
 
 
@@ -1351,6 +1259,8 @@ int femINSmixed::prepareInputData()
     //checkInputData();
     
     npElemVelo = elemConn[0].size()-5;
+
+    cout << "ELEMENT_TYPE = " << '\t' << ELEMENT_TYPE << endl;
 
     if( (ELEMENT_TYPE == "P2P1") || (ELEMENT_TYPE == "p2p1") )
     {
@@ -1418,6 +1328,8 @@ int femINSmixed::prepareInputData()
     // create elements and prepare element data
     elems = new ElementBase* [nElem_global];
 
+    vector<int>  nodeNums, nodeNumsPres;
+
     for(ee=0;ee<nElem_global;++ee)
     {
       //elems[ee] = NewLagrangeElement(SolnData.ElemProp[elemConn[ee][0]].id);
@@ -1431,10 +1343,17 @@ int femINSmixed::prepareInputData()
       else if(npElemVelo == 10)
         elems[ee] = new BernsteinElem3DINSTetra10Node;
 
-      elems[ee]->elenum   = ee;
-      elems[ee]->nodeNums = elemConn[ee];
 
-      elems[ee]->FluidMatlData = FluidMatlDataList[0];
+      nodeNums.resize(npElemVelo);
+      for(ii=0; ii<npElemVelo; ii++)
+        nodeNums[ii] = elemConn[ee][5+ii]-1;
+
+      elems[ee]->elenum   = ee;
+      elems[ee]->nodeNums = nodeNums;
+
+      //printVector(elems[ee]->nodeNums);
+
+      //elems[ee]->FluidMatlData = FluidMatlDataList[0];
 
       elems[ee]->prepareElemData(nodeCoords);
     }
@@ -1465,118 +1384,135 @@ int femINSmixed::prepareInputData()
     {
       for(ee=0; ee<nElem_global; ++ee)
       {
-        ii = elemConn[ee][3];
-        midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][0];
-        midNodeData[ii][2] = elemConn[ee][1];
+        nodeNums = elems[ee]->nodeNums;
 
-        ii = elemConn[ee][4];
+        ii = nodeNums[3];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][1];
-        midNodeData[ii][2] = elemConn[ee][2];
+        midNodeData[ii][1] = nodeNums[0];
+        midNodeData[ii][2] = nodeNums[1];
 
-        ii = elemConn[ee][5];
+        ii = nodeNums[4];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][2];
-        midNodeData[ii][2] = elemConn[ee][0];
+        midNodeData[ii][1] = nodeNums[1];
+        midNodeData[ii][2] = nodeNums[2];
 
-        pressure_nodes.push_back(elemConn[ee][0]);
-        pressure_nodes.push_back(elemConn[ee][1]);
-        pressure_nodes.push_back(elemConn[ee][2]);
+        ii = nodeNums[5];
+        midNodeData[ii][0] = 1;
+        midNodeData[ii][1] = nodeNums[2];
+        midNodeData[ii][2] = nodeNums[0];
+
+        nodeNumsPres = elems[ee]->nodeNumsPres;
+
+        pressure_nodes.push_back(nodeNumsPres[0]);
+        pressure_nodes.push_back(nodeNumsPres[1]);
+        pressure_nodes.push_back(nodeNumsPres[2]);
       }
     }
     else if(npElemVelo == 7)
     {
       for(ee=0; ee<nElem_global; ++ee)
       {
-        ii = elemConn[ee][3];
-        midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][0];
-        midNodeData[ii][2] = elemConn[ee][1];
+        nodeNums = elems[ee]->nodeNums;
 
-        ii = elemConn[ee][4];
+        ii = nodeNums[3];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][1];
-        midNodeData[ii][2] = elemConn[ee][2];
+        midNodeData[ii][1] = nodeNums[0];
+        midNodeData[ii][2] = nodeNums[1];
 
-        ii = elemConn[ee][5];
+        ii = nodeNums[4];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][2];
-        midNodeData[ii][2] = elemConn[ee][0];
+        midNodeData[ii][1] = nodeNums[1];
+        midNodeData[ii][2] = nodeNums[2];
 
-        pressure_nodes.push_back(elems[ee]->nodeNumsPres[0]);
-        pressure_nodes.push_back(elems[ee]->nodeNumsPres[1]);
-        pressure_nodes.push_back(elems[ee]->nodeNumsPres[2]);
+        ii = nodeNums[5];
+        midNodeData[ii][0] = 1;
+        midNodeData[ii][1] = nodeNums[2];
+        midNodeData[ii][2] = nodeNums[0];
+
+        nodeNumsPres = elems[ee]->nodeNumsPres;
+
+        pressure_nodes.push_back(nodeNumsPres[0]);
+        pressure_nodes.push_back(nodeNumsPres[1]);
+        pressure_nodes.push_back(nodeNumsPres[2]);
       }
     }
     else if(npElemVelo == 9)
     {
       for(ee=0; ee<nElem_global; ++ee)
       {
-        ii = elemConn[ee][4];
-        midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][0];
-        midNodeData[ii][2] = elemConn[ee][1];
+        nodeNums = elems[ee]->nodeNums;
 
-        ii = elemConn[ee][5];
+        ii = nodeNums[4];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][1];
-        midNodeData[ii][2] = elemConn[ee][2];
+        midNodeData[ii][1] = nodeNums[0];
+        midNodeData[ii][2] = nodeNums[1];
 
-        ii = elemConn[ee][6];
+        ii = nodeNums[5];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][2];
-        midNodeData[ii][2] = elemConn[ee][3];
+        midNodeData[ii][1] = nodeNums[1];
+        midNodeData[ii][2] = nodeNums[2];
 
-        ii = elemConn[ee][7];
+        ii = nodeNums[6];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][3];
-        midNodeData[ii][2] = elemConn[ee][0];
+        midNodeData[ii][1] = nodeNums[2];
+        midNodeData[ii][2] = nodeNums[3];
 
-        pressure_nodes.push_back(elemConn[ee][0]);
-        pressure_nodes.push_back(elemConn[ee][1]);
-        pressure_nodes.push_back(elemConn[ee][2]);
-        pressure_nodes.push_back(elemConn[ee][3]);
+        ii = nodeNums[7];
+        midNodeData[ii][0] = 1;
+        midNodeData[ii][1] = nodeNums[3];
+        midNodeData[ii][2] = nodeNums[0];
+
+        nodeNumsPres = elems[ee]->nodeNumsPres;
+
+        pressure_nodes.push_back(nodeNumsPres[0]);
+        pressure_nodes.push_back(nodeNumsPres[1]);
+        pressure_nodes.push_back(nodeNumsPres[2]);
+        pressure_nodes.push_back(nodeNumsPres[3]);
       }
     }
     else if(npElemVelo == 10)
     {
       for(ee=0; ee<nElem_global; ++ee)
       {
-        ii = elemConn[ee][4];
-        midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][0];
-        midNodeData[ii][2] = elemConn[ee][1];
+        nodeNums = elems[ee]->nodeNums;
 
-        ii = elemConn[ee][5];
+        ii = nodeNums[4];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][1];
-        midNodeData[ii][2] = elemConn[ee][2];
+        midNodeData[ii][1] = nodeNums[0];
+        midNodeData[ii][2] = nodeNums[1];
 
-        ii = elemConn[ee][6];
+        ii = nodeNums[5];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][0];
-        midNodeData[ii][2] = elemConn[ee][2];
+        midNodeData[ii][1] = nodeNums[1];
+        midNodeData[ii][2] = nodeNums[2];
 
-        ii = elemConn[ee][7];
+        ii = nodeNums[6];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][3];
-        midNodeData[ii][2] = elemConn[ee][0];
+        midNodeData[ii][1] = nodeNums[0];
+        midNodeData[ii][2] = nodeNums[2];
 
-        ii = elemConn[ee][8];
+        ii = nodeNums[7];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][1];
-        midNodeData[ii][2] = elemConn[ee][3];
+        midNodeData[ii][1] = nodeNums[3];
+        midNodeData[ii][2] = nodeNums[0];
 
-        ii = elemConn[ee][9];
+        ii = nodeNums[8];
         midNodeData[ii][0] = 1;
-        midNodeData[ii][1] = elemConn[ee][2];
-        midNodeData[ii][2] = elemConn[ee][3];
+        midNodeData[ii][1] = nodeNums[1];
+        midNodeData[ii][2] = nodeNums[3];
 
-        pressure_nodes.push_back(elemConn[ee][0]);
-        pressure_nodes.push_back(elemConn[ee][1]);
-        pressure_nodes.push_back(elemConn[ee][2]);
-        pressure_nodes.push_back(elemConn[ee][3]);
+        ii = nodeNums[9];
+        midNodeData[ii][0] = 1;
+        midNodeData[ii][1] = nodeNums[2];
+        midNodeData[ii][2] = nodeNums[3];
+
+
+        nodeNumsPres = elems[ee]->nodeNumsPres;
+
+        pressure_nodes.push_back(nodeNumsPres[0]);
+        pressure_nodes.push_back(nodeNumsPres[1]);
+        pressure_nodes.push_back(nodeNumsPres[2]);
+        pressure_nodes.push_back(nodeNumsPres[3]);
       }
     }
 
@@ -1599,32 +1535,18 @@ int femINSmixed::prepareInputData()
     ///////////////////////////////////////////////////////////////////
 
     ind = nNode_Velo*ndim;
-    globalMassVelo.resize(ind);
-    rhsVecVelo.resize(ind);
-    rhsVecVelo.setZero();
-    rhsVecVelo2 = rhsVecVelo;
-
-
-    globalMassPres.resize(nNode_Pres);
-    rhsVecPres.resize(nNode_Pres);
-    rhsVecPres.setZero();
-    rhsVecPres2 = rhsVecPres;
-
-
-    ind = nNode_Velo*ndim;
 
     velo.resize(ind);
     velo.setZero();
 
     veloPrev  = velo;
-    //veloCur   = velo;
+    veloCur   = velo;
     veloPrev2 = velo;
-    //veloPrev3 = velo;
     veloApplied = velo;
 
     veloDot     = velo;
     veloDotPrev = veloDot;
-    //veloDotCur  = veloDot;
+    veloDotCur  = veloDot;
 
     if(npElemVelo == 7)
       pres.resize(nNode_Pres);
@@ -1633,15 +1555,12 @@ int femINSmixed::prepareInputData()
 
     pres.setZero();
 
-    presPrev  = pres;
-    presPrev2 = pres;
-    //presPrev3 = pres;
-    //presCur   = pres;
+    presPrev    = pres;
+    presPrev2   = pres;
+    presCur     = pres;
     presApplied = pres;
-
     presDot     = velo;
     presDotPrev = pres;
-    presCur     = pres;
 
     double  xx, yy, zz, fact;
 
@@ -1796,6 +1715,211 @@ int femINSmixed::printInfo()
 }
 
 
+
+
+
+
+
+int femINSmixed::setSpecifiedDOFs_Velocity(vector<vector<bool> >&  NodeDofType)
+{
+  //if(debug)  PetscPrintf(PETSC_COMM_WORLD, "femINSmixed::setSpecifiedDOFs_Velocity() ... STARTED \n");
+  if(debug)  printf("femINSmixed::setSpecifiedDOFs_Velocity() ... STARTED \n");
+
+  vector<int>  nodeNums;
+  int ii, jj, nn, ind, dof;
+
+  dofs_specified_velo.clear();
+
+
+    // set specified DOFs
+    for(auto&  bc : boundaryConitions)
+    {
+        if(debug)
+        {
+        cout << " Patch                 = " << bc->label << endl;
+        cout << " BCType                = " << bc->BCType << endl;
+        cout << " dof_specified_string  = " << bc->dof_specified_string << endl;
+        cout << " dof_specified_int     = " << bc->dof_specified_int << endl;
+        cout << " expression            = " << bc->expression << endl;
+        cout << " timeFunctionNum       = " << bc->timeFunctionNum << endl;
+        cout << endl;  cout << endl;
+        }
+        //cout << " Patch                 = " << bc->bpt->getLabel() << endl;
+
+        // nodeNums contains new node numbers which are used for the solution
+        // nodeCoordsOrig contains coordinates of nodes with numbers before domain decompositions
+
+        nodeNums = bc->bpt->nodeNums;
+
+        if(bc->BCType == "specified")
+        {
+            dof = bc->dof_specified_int;
+
+            for(ii=0; ii<nodeNums.size(); ++ii)
+            {
+                nn = nodeNums[ii];
+
+                NodeDofType[nn][dof] = true;
+                dofs_specified_velo.push_back(nn*ndof+dof);
+            }
+        }
+        else if(bc->BCType == "wall")
+        {
+            for(ii=0; ii<nodeNums.size(); ++ii)
+            {
+              nn = nodeNums[ii];
+              ind = nn*ndof;
+              for(dof=0; dof<ndof; ++dof)
+              {
+                NodeDofType[nn][dof] = true;
+                dofs_specified_velo.push_back(ind+dof);
+              }
+            }
+        }
+        else
+        {
+            throw runtime_error("Patch type not available in femINSmixed::setSpecifiedDOFs_Velocity");
+        }
+    }
+
+    findUnique(dofs_specified_velo);
+    //printVector(dofs_specified_velo);
+
+    //if(debug)  PetscPrintf(PETSC_COMM_WORLD, "femINSmixed::setSpecifiedDOFs_Velocity() ... ENDED \n");
+    if(debug)  printf("femINSmixed::setSpecifiedDOFs_Velocity() ... ENDED \n");
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+int femINSmixed::setBoundaryConditions()
+{
+    //if(debug) {PetscPrintf(MPI_COMM_WORLD, "\n\n femINSmixed::setBoundaryConditions() ... STARTED \n");}
+    if(debug) {printf("\n\n femINSmixed::setBoundaryConditions() ... STARTED \n");}
+
+    int  ii, nn, dof, index=-1, timeFuncNum, ind;
+    double xc, yc, zc, value, loadFactor;
+    vector<int> nodeNums;
+
+    veloApplied.setZero();
+    presApplied.setZero();
+
+    // set boundary conditions
+    for(auto&  bc : boundaryConitions)
+    {
+        //cout << " Patch                 = " << bc->label << endl;
+        //cout << " BCType                = " << bc->BCType << endl;
+        //cout << " dof_specified_string  = " << bc->dof_specified_string << endl;
+        //cout << " dof_specified_int     = " << bc->dof_specified_int << endl;
+        //cout << " expression            = " << bc->expression << endl;
+        //cout << " timeFunctionNum       = " << bc->timeFunctionNum << endl;
+        //cout << endl;  cout << endl;
+
+        // nodeNums contains new node numbers which are used for the solution
+        // nodeCoordsOrig contains coordinates of nodes with numbers before domain decompositions
+
+        nodeNums = bc->bpt->nodeNums;
+
+        //printVector(nodeNums);
+
+        if(bc->BCType == "specified")
+        {
+            timeFuncNum = bc->getTimeFunctionNumber();
+
+            if(timeFuncNum == -1)
+              loadFactor = 1.0;
+            else
+              loadFactor = timeFunctions[timeFuncNum]->getValue();
+
+            //PetscPrintf(MPI_COMM_WORLD, " bc->label = %10s ...  bc->timeFunctionNum = %d ... load Factor = %12.6f \n", bc->label.c_str(), bc->timeFunctionNum,  loadFactor);
+            //printf(" bc->label = %10s ...  bc->timeFunctionNum = %d ... load Factor = %12.6f \n", bc->label.c_str(), bc->timeFunctionNum,  loadFactor);
+
+            myMathFunction  mathfun;
+            mathfun.initialise(bc->expression);
+
+            dof = bc->dof_specified_int;
+
+            for(ii=0; ii<nodeNums.size(); ++ii)
+            {
+                //nn = node_map_get_old[nodeNums[i]];
+                nn = nodeNums[ii];
+
+                xc = nodeCoords[nn][0];
+                yc = nodeCoords[nn][1];
+                zc = nodeCoords[nn][2];
+
+                value = mathfun.getValue(xc, yc, zc, myTime.cur) * loadFactor;
+
+                //cout << xc << '\t' << yc << '\t' << zc << '\t' << loadFactor << '\t' << value << endl;
+
+                veloApplied[nn*ndof+dof] = value;
+            }
+        }
+        else if(bc->BCType == "wall")
+        {
+            for(ii=0; ii<nodeNums.size(); ++ii)
+            {
+              nn = nodeNums[ii];
+              ind = nn*ndof;
+
+              for(dof=0; dof<ndim; ++dof)
+              {
+                veloApplied[ind+dof] = 0.0;
+              }
+            }
+        }
+        else
+        {
+            throw runtime_error("Patch type not available in femSolidmechanics::setBoundaryConditions");
+        }
+    }
+
+    //if(SCHEME_TYPE == IMPLICIT)
+    //{
+      veloApplied -= velo;
+      presApplied -= pres;
+    //}
+    //printVector(veloApplied);
+
+    /*
+    for(ii=0; ii<DirichletBCs.size(); ii++)
+    {
+      nn   = (int) (DirichletBCs[ii][0]);
+      dof  = (int) (DirichletBCs[ii][1]);
+
+      ind = nn*ndof+dof;
+
+      if( midnodeData[nn][0] )
+      {
+        xx = 0.25*solnTemp(midnodeData[nn][1]*ndof+dof) + 0.25*solnTemp(midnodeData[nn][2]*ndof+dof);
+
+        SolnData.dispApplied[ind] = 2.0*(solnTemp(ind) - xx);
+      }
+
+      SolnData.dispApplied[ind] -= SolnData.disp[ind];
+    }
+    */
+
+    //if(debug) {PetscPrintf(MPI_COMM_WORLD, "\n\n femINSmixed::setBoundaryConditions() ... ENDED \n");}
+    if(debug) {printf("\n\n femINSmixed::setBoundaryConditions() ... ENDED \n");}
+
+    return 0;
+}
+
+
+
+
+/*
 int femINSmixed::assignBoundaryConditions()
 {
     int ii, jj, nn, dof;
@@ -1840,7 +1964,7 @@ int femINSmixed::assignBoundaryConditions()
 
     return 0;
 }
-
+*/
 
 /*
 int femINSmixed::applyBoundaryConditions()
@@ -1881,23 +2005,19 @@ int femINSmixed::addBoundaryConditions()
 {
     //cout <<  " applying boundary conditions .... " << endl;
 
-    int ii, jj, n1, n2;
-    for(ii=0; ii<nDBC_Velo; ++ii)
-    {
-        n1 = DirichletBCsVelo[ii][0];
-        n2 = DirichletBCsVelo[ii][1];
+    // add specified Dirichlet boundary conditions if first iteration
+        int ii, dof;
+        for(ii=0; ii<dofs_specified_velo.size(); ii++)
+        {
+            dof = dofs_specified_velo[ii];
+            velo[dof] += veloApplied[dof] ;
+        }
 
-        jj = n1*ndim+n2;
-
-        velo[jj]  += veloApplied[jj];
-    }
-
-    for(ii=0; ii<nDBC_Pres; ++ii)
-    {
-        jj = DirichletBCsPres[ii][0];
-
-        pres[jj]  += presApplied[jj];
-    }
+        for(ii=0; ii<dofs_specified_pres.size(); ii++)
+        {
+            dof = dofs_specified_pres[ii];
+            pres[dof] += presApplied[dof] ;
+        }
 
     return 0;
 }
@@ -1929,6 +2049,7 @@ int femINSmixed::setInitialConditions()
     }
     */
 
+    /*
     for(int ii=0; ii<nNode_Velo; ++ii)
     {
         xx = nodeCoords[ii][0];
@@ -1941,6 +2062,7 @@ int femINSmixed::setInitialConditions()
         //veloPrev(ii*ndim) = 16.0*0.45*yy*zz*(0.41-yy)*(0.41-zz)/0.41/0.41/0.41/0.41;
     }
     velo = veloPrev;
+    */
 
     return 0;
 }
@@ -1962,25 +2084,30 @@ int femINSmixed::setTimeParam()
 
 int femINSmixed::timeUpdate()
 {
-  firstIteration = true;
-  //fileCount++;
+    //if(debug) {PetscPrintf(MPI_COMM_WORLD, " femSolids::timeUpdate() ... STARTED \n");}
+    if(debug) {printf(" femSolids::timeUpdate() ... STARTED \n");}
 
-  //cout << " aaaaaaaaaaaaaaa " << endl;
+    myTime.update();
 
-  //SolnData.timeUpdate();
+    // set parameters for the time integration scheme.
+    // need to be done every time step to account for adaptive time stepping
+    SetTimeParametersFluid(timeIntegrationScheme, spectralRadius, myTime.dt, td);
 
-  assignBoundaryConditions();
-  //printVector(veloApplied);
+    // update time functions
+    for(auto& tmf : timeFunctions)
+      tmf->update();
 
-  //cout << " aaaaaaaaaaaaaaa " << endl;
+    saveSolution();
 
-  updateIterStep();
+    // set Dirichlet boundary conditions
+    setBoundaryConditions();
+    //printVector(veloApplied);
 
-  forceCur   = td[1]*force   + (1.0-td[1])*forcePrev; // force
+    //cout << " aaaaaaaaaaaaaaa " << endl;
 
-  //cout << " aaaaaaaaaaaaaaa " << endl;
+    forceCur   = td[1]*force   + (1.0-td[1])*forcePrev; // force
 
-  return 0;
+    return 0;
 }
 
 
@@ -1988,7 +2115,7 @@ int femINSmixed::timeUpdate()
 int femINSmixed::updateIterStep()
 {
   //SolnData.updateIterStep();
-  veloDot    = td[9]*velo + td[10]*veloPrev + td[15]*veloDotPrev ;
+  veloDot    = td[9]*velo + td[10]*veloPrev + td[11]*veloPrev2 + td[15]*veloDotPrev ;
 
   veloCur    = td[2]*velo    + (1.0-td[2])*veloPrev; // velocity
   presCur    = td[2]*pres    + (1.0-td[2])*presPrev; // pressure
@@ -2011,16 +2138,31 @@ bool femINSmixed::converged()
 
 
 
-int  femINSmixed::storeVariables()
+int  femINSmixed::saveSolution()
 {
+    veloPrev2   = veloPrev;
     veloPrev    = velo;
     veloDotPrev = veloDot;
     presPrev    = pres;
     lambdasPrev = lambdas;
-    
+    forcePrev   = force;
+
     return 0;
 }
 
+
+
+int femINSmixed::reset()
+{
+    velo      = veloPrev;
+    veloPrev  = veloPrev2;
+    veloDot   = veloDotPrev;
+    pres      = presPrev;
+    lambdas   = lambdasPrev;
+    force     = forcePrev;
+
+    return 0;
+}
 
 
 
@@ -2030,6 +2172,132 @@ int femINSmixed::writeNodalData()
   return 0;
 }
 
+
+
+
+int femINSmixed::writeOutputDataPatches()
+{
+    if(debug) printf("femINSmixed::writeOutputDataPatches() ... \n");
+
+    vector<int> nodeNums;
+    int  i, nn, dof, ind, size;
+    double  totalForce[3], totalMoment[3];
+
+    for(auto& bpt : BoundaryPatches)
+    {
+      if(bpt->getOutputFlag())
+      {
+          nodeNums = bpt->nodeNums;
+          size = nodeNums.size();
+
+          totalForce[0] = 0.0;
+          totalForce[1] = 0.0;
+          totalForce[2] = 0.0;
+
+          totalMoment[0] = 0.0;
+          totalMoment[1] = 0.0;
+          totalMoment[2] = 0.0;
+
+          if(ndim == 2)
+          {
+            for(i=0; i<size; ++i)
+            {
+              nn = nodeNums[i];
+              totalForce[0] += reacVec[nn*ndof];
+              totalForce[1] += reacVec[nn*ndof+1];
+            }
+          }
+          else
+          {
+            for(i=0; i<size; ++i)
+            {
+              nn = nodeNums[i];
+              totalForce[0] += reacVec[nn*ndof];
+              totalForce[1] += reacVec[nn*ndof+1];
+              totalForce[2] += reacVec[nn*ndof+2];
+            }
+          }
+
+          bpt->forcedata << myTime.cur << '\t' << totalForce[0]  << '\t' << totalForce[1]  << '\t' << totalForce[2]
+                                       << '\t' << totalMoment[0] << '\t' << totalMoment[1] << '\t' << totalMoment[2] << endl;
+      }
+    }
+
+    if(debug) printf("femINSmixed::writeOutputDataPatches() ... \n");
+
+/*
+    PetscPrintf(MPI_COMM_WORLD, "femINSmixed::writeOutputDataPatches() ... \n");
+
+    PetscScalar *arrayTempReac;
+    Vec            vecseqReac;
+    VecScatter     ctxReac;
+
+    VecScatterCreateToZero(solverPetsc->reacVec, &ctxReac, &vecseqReac);
+
+    VecAssemblyBegin(solverPetsc->reacVec);
+    VecAssemblyEnd(solverPetsc->reacVec);
+
+    VecScatterBegin(ctxReac, solverPetsc->reacVec, vecseqReac, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(ctxReac,   solverPetsc->reacVec, vecseqReac, INSERT_VALUES, SCATTER_FORWARD);
+
+    VecGetArray(vecseqReac, &arrayTempReac);
+
+
+    vector<int> nodeNums;
+    int  i, nn, dof, ind, size;
+    double  totalForce[3], totalMoment[3];
+
+    if(this_mpi_proc == 0)
+    {
+    for(auto& bpt : mesh->BoundaryPatches)
+    {
+      if(bpt->getOutputFlag())
+      {
+          nodeNums = bpt->nodeNums;
+          size = nodeNums.size();
+
+          totalForce[0] = 0.0;
+          totalForce[1] = 0.0;
+          totalForce[2] = 0.0;
+
+          totalMoment[0] = 0.0;
+          totalMoment[1] = 0.0;
+          totalMoment[2] = 0.0;
+
+          if(mesh->getNDIM() == 2)
+          {
+            for(i=0; i<size; ++i)
+            {
+              nn = nodeNums[i];
+              totalForce[0] += arrayTempReac[nn*ndof];
+              totalForce[1] += arrayTempReac[nn*ndof+1];
+            }
+          }
+          else
+          {
+            for(i=0; i<size; ++i)
+            {
+              nn = nodeNums[i];
+              totalForce[0] += arrayTempReac[nn*ndof];
+              totalForce[1] += arrayTempReac[nn*ndof+1];
+              totalForce[2] += arrayTempReac[nn*ndof+2];
+            }
+          }
+
+          bpt->forcedata << myTime.cur << '\t' << totalForce[0]  << '\t' << totalForce[1]  << '\t' << totalForce[2]
+                                       << '\t' << totalMoment[0] << '\t' << totalMoment[1] << '\t' << totalMoment[2] << endl;
+      }
+    }
+    }
+
+    VecRestoreArray(vecseqReac, &arrayTempReac);
+
+    VecScatterDestroy(&ctxReac);
+    VecDestroy(&vecseqReac);
+    PetscFree(arrayTempReac);
+*/
+    return 0;
+}
 
 
 

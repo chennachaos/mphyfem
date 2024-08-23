@@ -2,13 +2,13 @@
 #ifndef incl_BernsteinElem2DINSQuad9Node_h
 #define incl_BernsteinElem2DINSQuad9Node_h
 
-#include "ElementBase.h"
+#include "ElementBaseINSmixed.h"
 #include "headersBasic.h"
 #include "headersEigen.h"
 #include "SolutionData.h"
 
 
-class  BernsteinElem2DINSQuad9Node : public ElementBase
+class  BernsteinElem2DINSQuad9Node : public ElementBaseINSmixed
 {
   public:
 
@@ -16,7 +16,7 @@ class  BernsteinElem2DINSQuad9Node : public ElementBase
 
     virtual ~BernsteinElem2DINSQuad9Node();
 
-    void prepareElemData(vector<myPoint>& nodeCoords);
+    virtual  void prepareElemData(vector<myPoint>& nodeCoords);
 
     //virtual bool isPointInside(myPoint& target_point);
 
@@ -38,7 +38,7 @@ class  BernsteinElem2DINSQuad9Node : public ElementBase
 
     virtual double CalculateError(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloDotPrev, VectorXd& presPrev, double timeCur, int index);
 
-    virtual int  StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur);
+    virtual int  StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp);
 
     virtual int  StiffnessForSemiImpl(double* elemData, double* timeData, MatrixXd& Kup);
 

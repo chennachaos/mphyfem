@@ -5,8 +5,9 @@
 #include "MyTime.h"
 #include "TimeFunction.h"
 
-extern   std::vector<unique_ptr<TimeFunction> > timeFunction;
+extern vector<unique_ptr<TimeFunction> > timeFunctions;
 extern MyTime                 myTime;
+extern  bool  debug;
 
 
 
@@ -45,6 +46,8 @@ int  femINSmixed::findElementNumber(myPoint& target_point)
     }
     else //quadrilateral element
     {
+      // TODO
+      /*
       for(int ee=0; ee<nElem_global; ++ee)
       {
         if( elems[ee]->bbox.within(target_point) )
@@ -56,6 +59,7 @@ int  femINSmixed::findElementNumber(myPoint& target_point)
           break;
         }
       }
+      */
     }
 
 
@@ -68,10 +72,10 @@ int  femINSmixed::findElementNumber(myPoint& target_point)
 
 int  femINSmixed::postProcess()
 {
-    cout << " femINSmixed::postProcess " << endl;
+    if(debug) cout << " femINSmixed::postProcess " << endl;
 
     postProcessVelocity();
-    cout << " postProcessVelocity " << endl;
+    if(debug) cout << " postProcessVelocity " << endl;
 
     postProcessPressure();
     
@@ -89,7 +93,7 @@ int  femINSmixed::postProcess()
 
 int  femINSmixed::postProcessVelocity()
 {
-    cout << " femINSmixed::postProcessVelocity " << endl;
+    if(debug) cout << " femINSmixed::postProcessVelocity " << endl;
 
     //
     // setup and write vtk data
@@ -109,7 +113,7 @@ int  femINSmixed::postProcessVelocity()
     vtkSmartPointer<vtkQuadraticTriangle>    tria6VTK     =  vtkSmartPointer<vtkQuadraticTriangle>::New();
     vtkSmartPointer<vtkBiQuadraticQuad>      quad9VTK     =  vtkSmartPointer<vtkBiQuadraticQuad>::New();
     vtkSmartPointer<vtkQuadraticTetra>       tetra10VTK   =  vtkSmartPointer<vtkQuadraticTetra>::New();
-    vtkSmartPointer<vtkQuadraticHexahedron>  hexa27VTK    =  vtkSmartPointer<vtkQuadraticHexahedron>::New();
+    vtkSmartPointer<vtkTriQuadraticHexahedron>  hexa27VTK    =  vtkSmartPointer<vtkTriQuadraticHexahedron>::New();
 
     vtkSmartPointer<vtkFloatArray>           vecVTK       =  vtkSmartPointer<vtkFloatArray>::New();
     vtkSmartPointer<vtkFloatArray>           scaVTK       =  vtkSmartPointer<vtkFloatArray>::New();
@@ -167,16 +171,17 @@ int  femINSmixed::postProcessVelocity()
         }
       }
       
-      cout << " postProcess ... added points " << endl;
+      vector<int>  nodeNums;
 
       for(ee=0; ee<nElem_global; ee++)
       {
-        npElemVelo = elemConn[ee].size();
+        nodeNums = elems[ee]->nodeNums;
+        npElemVelo = nodeNums.size();
 
         if( (npElemVelo == 6) || (npElemVelo == 7) )
         {
           for(ii=0; ii<6; ii++)
-            tria6VTK->GetPointIds()->SetId(ii, elemConn[ee][ii] );
+            tria6VTK->GetPointIds()->SetId(ii, nodeNums[ii] );
 
           uGridVTK->InsertNextCell(tria6VTK->GetCellType(), tria6VTK->GetPointIds());
         }
@@ -202,7 +207,7 @@ int  femINSmixed::postProcessVelocity()
           uGridVTK->InsertNextCell(quad9VTK->GetCellType(), quad9VTK->GetPointIds());
         }
       }
-      cout << " postProcess ... added elements " << endl;
+      //cout << " postProcess ... added elements " << endl;
     }
     else // (ndim == 3)
     {
@@ -270,7 +275,6 @@ int  femINSmixed::postProcessVelocity()
 
     writerUGridVTK->SetInputData(uGridVTK);
     writerUGridVTK->Write();
-    cout << "iiiiiiiiiiiiiiiiiii " << endl;
 
     return 0;
 }
@@ -282,7 +286,7 @@ int  femINSmixed::postProcessVelocity()
 
 int  femINSmixed::postProcessPressure()
 {
-    cout << " femINSmixed::postProcessPressure " << endl;
+    if(debug) cout << " femINSmixed::postProcessPressure " << endl;
 
     //
     // setup and write vtk data
@@ -302,7 +306,7 @@ int  femINSmixed::postProcessPressure()
     vtkSmartPointer<vtkQuadraticTriangle>    tria6VTK     =  vtkSmartPointer<vtkQuadraticTriangle>::New();
     vtkSmartPointer<vtkBiQuadraticQuad>      quad9VTK     =  vtkSmartPointer<vtkBiQuadraticQuad>::New();
     vtkSmartPointer<vtkQuadraticTetra>       tetra10VTK   =  vtkSmartPointer<vtkQuadraticTetra>::New();
-    vtkSmartPointer<vtkQuadraticHexahedron>  hexa27VTK    =  vtkSmartPointer<vtkQuadraticHexahedron>::New();
+    vtkSmartPointer<vtkTriQuadraticHexahedron>  hexa27VTK    =  vtkSmartPointer<vtkTriQuadraticHexahedron>::New();
 
     vtkSmartPointer<vtkFloatArray>           scaVTK       =  vtkSmartPointer<vtkFloatArray>::New();
 
@@ -320,6 +324,7 @@ int  femINSmixed::postProcessPressure()
     scaVTK->SetName("pressure");
 
     vtkIdType pt[10];
+    vector<int>  nodeNums;
 
     if(ndim == 2)
     {
@@ -359,8 +364,6 @@ int  femINSmixed::postProcessPressure()
           }
           else
           {
-            kk = ii*ndim;
-
             val    = pres[ii];
 
             scaVTK->SetTuple1(ii, val);
@@ -369,12 +372,13 @@ int  femINSmixed::postProcessPressure()
 
         for(ee=0; ee<nElem_global; ee++)
         {
-          npElemVelo = elemConn[ee].size();
+          nodeNums = elems[ee]->nodeNums;
+          npElemVelo = nodeNums.size();
 
           if(npElemVelo == 6)
           {
             for(ii=0; ii<npElemVelo; ii++)
-              tria6VTK->GetPointIds()->SetId(ii, elemConn[ee][ii] );
+              tria6VTK->GetPointIds()->SetId(ii, nodeNums[ii] );
 
             uGridVTK->InsertNextCell(tria6VTK->GetCellType(), tria6VTK->GetPointIds());
           }
@@ -395,6 +399,8 @@ int  femINSmixed::postProcessPressure()
 
     writerUGridVTK->SetInputData(uGridVTK);
     writerUGridVTK->Write();
+
+    if(debug) cout << " femINSmixed::postProcessPressure " << endl;
 
     return 0;
 }

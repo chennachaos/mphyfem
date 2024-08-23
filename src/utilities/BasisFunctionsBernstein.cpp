@@ -12,26 +12,26 @@ using std::vector;
 
 
 
-void Bernstein_BasisFuns1D(int degree, double xi, double* N)
+void Bernstein_BasisFuns1D(int npElem, double xi, double* N)
 {
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
   
             N[0] = 1.0;
   
         break;
   
-        case 1:
+        case 2:
   
             N[0] = 0.5*(1.0 - xi);
             N[1] = 0.5*(1.0 + xi);
   
         break;
   
-        case 2:
+        case 3:
   
-            // In Gauss point degreearameter space [-1, 1]
+            // In Gauss point npElemarameter space [-1, 1]
   
             N[0] = 0.25*(1.0-xi)*(1.0-xi);
             N[1] = 0.25*(1.0+xi)*(1.0+xi);
@@ -46,7 +46,7 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N)
   
         default:
   
-            printf("no basis functions defined for this degree = %5d \n", degree);
+            printf("Bernstein_BasisFuns1D ...1... basis functions not defined for %5d nodes \n", npElem);
   
         break;
     }
@@ -57,11 +57,11 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N)
 
 
 
-void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi)
+void Bernstein_BasisFuns1D(int npElem, double xi, double* N, double* dN_dxi)
 {
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
   
             N[0] = 1.0;
   
@@ -69,7 +69,7 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi)
   
         break;
   
-        case 1:
+        case 2:
   
             N[0] = 0.5*(1.0 - xi);
             N[1] = 0.5*(1.0 + xi);
@@ -79,9 +79,9 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi)
   
         break;
   
-        case 2:
+        case 3:
   
-            // In Gauss point degreearameter space [-1, 1]
+            // In Gauss point npElemarameter space [-1, 1]
   
             N[0] = 0.25*(1.0-xi)*(1.0-xi);
             N[1] = 0.25*(1.0+xi)*(1.0+xi);
@@ -104,8 +104,8 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi)
   
         default:
   
-            printf("no basis functions defined for this degree = %5d \n", degree);
-  
+            printf("Bernstein_BasisFuns1D ...2... basis functions not defined for %5d nodes \n", npElem);
+
         break;
     }
 
@@ -115,11 +115,11 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi)
 
 
 
-void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi, double* d2N_dxi2)
+void Bernstein_BasisFuns1D(int npElem, double xi, double* N, double* dN_dxi, double* d2N_dxi2)
 {
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
   
             N[0] = 1.0;
   
@@ -128,8 +128,8 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi, dou
   
         break;
   
-        case 1:
-            // In Gauss point degreearameter space [-1, 1]
+        case 2:
+            // In Gauss point npElemarameter space [-1, 1]
   
             N[0] = 0.5*(1.0 - xi);
             N[1] = 0.5*(1.0 + xi);
@@ -142,9 +142,9 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi, dou
   
         break;
   
-        case 2:
+        case 3:
   
-            // In Gauss point degreearameter space [-1, 1]
+            // In Gauss point npElemarameter space [-1, 1]
   
             N[0] = 0.25*(1.0-xi)*(1.0-xi);
             N[1] = 0.25*(1.0+xi)*(1.0+xi);
@@ -176,8 +176,8 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi, dou
   
         default:
   
-            printf("no basis functions defined for this degree = %5d \n", degree);
-  
+            printf("Bernstein_BasisFuns1D ...3... basis functions not defined for %5d nodes \n", npElem);
+
         break;
     }
    return;
@@ -185,19 +185,19 @@ void Bernstein_BasisFuns1D(int degree, double xi, double* N, double* dN_dxi, dou
 
 
 
-void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N)
+void BernsteinBasisFunsTria(int npElem, double xi1, double xi2, double* N)
 {
     double  xi3 = 1.0 - xi1 - xi2;
   
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
   
             N[0] = 1.0;
   
         break;
   
-        case 1:
+        case 3:
   
             N[0] = xi3;
             N[1] = xi1;
@@ -205,7 +205,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N)
   
         break;
   
-        case 2:
+        case 6:
   
             N[0] = xi3*xi3;
             N[1] = xi1*xi1;
@@ -218,8 +218,8 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N)
   
         default:
   
-            printf("no basis functions defined for this degree = %5d \n", degree);
-  
+            printf("BernsteinBasisFunsTria ...1... basis functions not defined for %5d nodes \n", npElem);
+
         break;
     }
     return;
@@ -228,13 +228,13 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N)
 
 
 
-void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2)
+void BernsteinBasisFunsTria(int npElem, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2)
 {
     double  xi3 = 1.0 - xi1 - xi2;
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
@@ -243,7 +243,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
         break;
 
-        case 1:
+        case 3:
 
             N[0] = xi3;
             N[1] = xi1;
@@ -259,7 +259,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
         break;
 
-        case 2:
+        case 6:
 
             N[0] = xi3*xi3;
             N[1] = xi1*xi1;
@@ -286,7 +286,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
         default:
 
-            printf("no basis functions defined for this degree = %5d \n", degree);
+            printf("BernsteinBasisFunsTria ...2... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -296,13 +296,13 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
 
 
-void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2, double* d2N_dxi1dxi1, double* d2N_dxi2dxi2, double* d2N_dxi1dxi2)
+void BernsteinBasisFunsTria(int npElem, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2, double* d2N_dxi1dxi1, double* d2N_dxi2dxi2, double* d2N_dxi1dxi2)
 {
   double  xi3 = 1.0 - xi1 - xi2;
 
-  switch(degree)
+  switch(npElem)
   {
-      case 0:
+      case 1:
 
           N[0] = 1.0;
 
@@ -315,7 +315,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
       break;
 
-      case 1:
+      case 3:
 
           N[0] = xi3;
           N[1] = xi1;
@@ -344,7 +344,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
       break;
 
-      case 2:
+      case 6:
 
           N[0] = xi3*xi3;
           N[1] = xi1*xi1;
@@ -393,7 +393,7 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
       default:
 
-          printf("no basis functions defined for this degree = %5d \n", degree);
+          printf("BernsteinBasisFunsTria ...3... basis functions not defined for %5d nodes \n", npElem);
 
       break;
   }
@@ -404,20 +404,20 @@ void BernsteinBasisFunsTria(int degree, double xi1, double xi2, double* N, doubl
 
 
 
-void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N)
+void BernsteinBasisFunsQuad(int npElem, double xi1, double xi2, double* N)
 {
     double  u1, u2, u3, v1, v2, v3;
     double  du1, du2, du3, dv1, dv2, dv3;
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
         break;
 
-        case 1:
+        case 4:
 
             /*
              v2          u1,v2  u2,v2
@@ -438,7 +438,7 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N)
 
         break;
 
-        case 2:
+        case 9:
 
             /*
              v2          u1,v2  u3,v2  u2,v2
@@ -471,7 +471,7 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N)
 
         default:
 
-            printf("no basis functions defined for this degree = %5d \n", degree);
+          printf("BernsteinBasisFunsQuad ...1... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -482,14 +482,14 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N)
 
 
 
-void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2)
+void BernsteinBasisFunsQuad(int npElem, double xi1, double xi2, double* N, double* dN_dxi1, double* dN_dxi2)
 {
     double  u1, u2, u3, v1, v2, v3;
     double  du1, du2, du3, dv1, dv2, dv3;
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
@@ -498,7 +498,7 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N, doubl
 
         break;
 
-        case 1:
+        case 4:
 
             /*
              v2          u1,v2  u2,v2
@@ -535,7 +535,7 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N, doubl
 
         break;
 
-        case 2:
+        case 9:
 
             /*
              v2          u1,v2  u3,v2  u2,v2
@@ -594,7 +594,7 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N, doubl
 
         default:
 
-            printf("no basis functions defined for this degree = %5d \n", degree);
+          printf("BernsteinBasisFunsQuad ...2... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -606,19 +606,19 @@ void BernsteinBasisFunsQuad(int degree, double xi1, double xi2, double* N, doubl
 
 
 
-void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, double* N)
+void BernsteinBasisFunsTetra(int npElem, double xi1, double xi2, double xi3, double* N)
 {
     double  xi4 = 1.0 - xi1 - xi2 - xi3;
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
         break;
 
-        case 1:
+        case 4:
 
             N[0] = xi4;
             N[1] = xi1;
@@ -627,7 +627,7 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
         break;
 
-        case 2:
+        case 10:
 
             N[0] = xi4*xi4;
             N[1] = xi1*xi1;
@@ -644,7 +644,7 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
         default:
 
-            printf("no basis functions defined for this degree = %5d \n", degree);
+          printf("BernsteinBasisFunsTetra ...1... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -654,13 +654,13 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
 
 
-void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi3)
+void BernsteinBasisFunsTetra(int npElem, double xi1, double xi2, double xi3, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi3)
 {
     double  xi4 = 1.0 - xi1 - xi2 - xi3;
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
@@ -670,7 +670,7 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
         break;
 
-        case 1:
+        case 4:
 
             N[0] = xi4;
             N[1] = xi1;
@@ -694,7 +694,7 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
         break;
 
-        case 2:
+        case 10:
 
             N[0] = xi4*xi4;
             N[1] = xi1*xi1;
@@ -744,7 +744,7 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
         default:
 
-            printf("no basis functions defined for this degree = %5d \n", degree);
+          printf("BernsteinBasisFunsTetra ...2... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -755,23 +755,23 @@ void BernsteinBasisFunsTetra(int degree, double xi1, double xi2, double xi3, dou
 
 
 
-void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, double* N)
+void BernsteinBasisFunsHexa(int npElem, double xi1, double xi2, double xi3, double* N)
 {
     double  Nu[3], Nv[3], Nw[3];
 
-    Bernstein_BasisFuns1D(degree, xi1, Nu);
-    Bernstein_BasisFuns1D(degree, xi2, Nv);
-    Bernstein_BasisFuns1D(degree, xi3, Nw);
+    Bernstein_BasisFuns1D(npElem, xi1, Nu);
+    Bernstein_BasisFuns1D(npElem, xi2, Nv);
+    Bernstein_BasisFuns1D(npElem, xi3, Nw);
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
         break;
 
-        case 1:
+        case 8:
 
             N[0] = Nu[0]*Nv[0]*Nw[0];
             N[1] = Nu[1]*Nv[0]*Nw[0];
@@ -784,7 +784,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
         break;
 
-        case 2:
+        case 27:
 
             N[0]  = Nu[0]*Nv[0]*Nw[0];
             N[1]  = Nu[1]*Nv[0]*Nw[0];
@@ -818,7 +818,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
         default:
 
-            printf("no basis functions defined for this degree = %5d in 'BernsteinBasisFunsHexa' \n", degree);
+          printf("BernsteinBasisFunsHexa ...1... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -829,7 +829,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
 
 
-void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi3)
+void BernsteinBasisFunsHexa(int npElem, double xi1, double xi2, double xi3, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi3)
 {
 /*
        v
@@ -846,16 +846,16 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
     4----------5            4----16----5           4----16----5
 */
 
-    int  ind = degree+1;
+    int  ind = npElem+1;
     double  Nu[ind], dNu[ind], Nv[ind], dNv[ind], Nw[ind], dNw[ind];
 
-    Bernstein_BasisFuns1D(degree, xi1, Nu, dNu);
-    Bernstein_BasisFuns1D(degree, xi2, Nv, dNv);
-    Bernstein_BasisFuns1D(degree, xi3, Nw, dNw);
+    Bernstein_BasisFuns1D(npElem, xi1, Nu, dNu);
+    Bernstein_BasisFuns1D(npElem, xi2, Nv, dNv);
+    Bernstein_BasisFuns1D(npElem, xi3, Nw, dNw);
 
-    switch(degree)
+    switch(npElem)
     {
-        case 0:
+        case 1:
 
             N[0] = 1.0;
 
@@ -865,7 +865,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
         break;
 
-        case 1:
+        case 8:
 
             N[0] = Nu[0]*Nv[0]*Nw[0];
             N[1] = Nu[1]*Nv[0]*Nw[0];
@@ -905,7 +905,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
         break;
 
-        case 2:
+        case 27:
 
             N[0]  = Nu[0]*Nv[0]*Nw[0];
             N[1]  = Nu[1]*Nv[0]*Nw[0];
@@ -1023,7 +1023,7 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
         default:
 
-            printf("no basis functions defined for this degree = %5d in 'BernsteinBasisFunsHexa' \n", degree);
+          printf("BernsteinBasisFunsHexa ...2... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -1035,18 +1035,18 @@ void BernsteinBasisFunsHexa(int degree, double xi1, double xi2, double xi3, doub
 
 
 
-void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, double* N)
+void BernsteinBasisFunsWedge(int npElem, double xi1, double xi2, double xi4, double* N)
 {
     // xi1 and xi2 are the parametric coordinates for the triangle, and
     // xi4 is the parametric coordinate in the direction normal to the triangle
     double  Nt[6], Nq[3];
 
-    switch(degree)
+    switch(npElem)
     {
-        case 1:
+        case 6:
 
-            BernsteinBasisFunsTria(degree, xi1, xi2, Nt);
-            Bernstein_BasisFuns1D(degree, xi4, Nq);
+            BernsteinBasisFunsTria(npElem, xi1, xi2, Nt);
+            Bernstein_BasisFuns1D(npElem, xi4, Nq);
 
             N[0] = Nt[0]*Nq[0];
             N[1] = Nt[1]*Nq[0];
@@ -1057,10 +1057,10 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 
         break;
 
-        case 2:
+        case 18:
 
-            BernsteinBasisFunsTria(degree, xi1, xi2, Nt);
-            Bernstein_BasisFuns1D(degree, xi4, Nq);
+            BernsteinBasisFunsTria(npElem, xi1, xi2, Nt);
+            Bernstein_BasisFuns1D(npElem, xi4, Nq);
 
             N[0]  = Nt[0]*Nq[0];
             N[1]  = Nt[1]*Nq[0];
@@ -1085,7 +1085,7 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 
         default:
 
-            printf("no basis functions defined for this degree = %5d in 'BernsteinBasisFunsWedge' \n", degree);
+          printf("BernsteinBasisFunsWedge ...1... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -1096,18 +1096,18 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 
 
 
-void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi4)
+void BernsteinBasisFunsWedge(int npElem, double xi1, double xi2, double xi4, double* N, double* dN_dxi1, double* dN_dxi2, double* dN_dxi4)
 {
     // xi1 and xi2 are the parametric coordinates for the triangle, and
     // xi4 is the parametric coordinate in the direction normal to the triangle
     double  Nt[6], dNt1[6], dNt2[6], Nq[3], dNq[3];
 
-    switch(degree)
+    switch(npElem)
     {
-        case 1:
+        case 6:
 
-            BernsteinBasisFunsTria(degree, xi1, xi2, Nt, dNt1, dNt2);
-            Bernstein_BasisFuns1D(degree, xi4, Nq, dNq);
+            BernsteinBasisFunsTria(npElem, xi1, xi2, Nt, dNt1, dNt2);
+            Bernstein_BasisFuns1D(npElem, xi4, Nq, dNq);
 
             N[0] = Nt[0]*Nq[0];
             N[1] = Nt[1]*Nq[0];
@@ -1139,10 +1139,10 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 
         break;
 
-        case 2:
+        case 18:
 
-            BernsteinBasisFunsTria(degree, xi1, xi2, Nt, dNt1, dNt2);
-            Bernstein_BasisFuns1D(degree, xi4, Nq, dNq);
+            BernsteinBasisFunsTria(npElem, xi1, xi2, Nt, dNt1, dNt2);
+            Bernstein_BasisFuns1D(npElem, xi4, Nq, dNq);
 
             N[0]  = Nt[0]*Nq[0];
             N[1]  = Nt[1]*Nq[0];
@@ -1224,7 +1224,7 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 
         default:
 
-            printf("no basis functions defined for this degree = %5d in 'BernsteinBasisFunsWedge' \n", degree);
+          printf("BernsteinBasisFunsWedge ...2... basis functions not defined for %5d nodes \n", npElem);
 
         break;
     }
@@ -1232,16 +1232,14 @@ void BernsteinBasisFunsWedge(int degree, double xi1, double xi2, double xi4, dou
 }
 
 
-void BernsteinBasisFunsEdge2D(int degree, double* param, double *xNode, double* yNode, double *N, double *dN_dx, double *dN_dy, double *normal, double& curvature, double& J)
+void BernsteinBasisFunsEdge2D(int npElem, double* param, double *xNode, double* yNode, double *N, double *dN_dx, double *dN_dy, double *normal, double& curvature, double& J)
 {
-    int  ii, jj, count, nlbf = degree+1;
-
     double  du_dx, dx, dy, d2x, d2y;
-    vector<double>  dN1(nlbf), dN2(nlbf);
+    vector<double>  dN1(npElem), dN2(npElem);
 
-    Bernstein_BasisFuns1D(degree, param[0], N, &dN1[0], &dN2[0]);
+    Bernstein_BasisFuns1D(npElem, param[0], N, &dN1[0], &dN2[0]);
 
-    if(degree == 0)
+    if(npElem == 0)
     {
       J = 1.0;
     }
@@ -1249,7 +1247,7 @@ void BernsteinBasisFunsEdge2D(int degree, double* param, double *xNode, double* 
     {
       dx = dy = 0.0;
       d2x = d2y = 0.0;
-      for(ii=0; ii<nlbf; ii++)
+      for(int ii=0; ii<npElem; ii++)
       {
         dx +=  (xNode[ii] * dN1[ii]);
         dy +=  (yNode[ii] * dN1[ii]);
@@ -1274,7 +1272,7 @@ void BernsteinBasisFunsEdge2D(int degree, double* param, double *xNode, double* 
     curvature = (dy*d2x - dx*d2y)/J/J/J;
 
     // Compute derivatives of basis functions w.r.t physical coordinates
-    for(ii=0; ii<nlbf; ii++)
+    for(int ii=0; ii<npElem; ii++)
     {
       dN_dx[ii] = dN1[ii] / dx ;
       dN_dy[ii] = dN1[ii] / dy ;
@@ -1285,23 +1283,21 @@ void BernsteinBasisFunsEdge2D(int degree, double* param, double *xNode, double* 
 
 
 
-void BernsteinBasisFunsEdge3D(int degree, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double& Jac)
+void BernsteinBasisFunsEdge3D(int npElem, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double& Jac)
 {
-    int  ii, jj, count, nlbf = degree+1;
-
     double  du_dx, dx, dy, dz ;
-    vector<double>  dN1(nlbf);
+    vector<double>  dN1(npElem);
 
-    Bernstein_BasisFuns1D(degree, param[0], N, &dN1[0]);
+    Bernstein_BasisFuns1D(npElem, param[0], N, &dN1[0]);
 
-    if(degree == 0)
+    if(npElem == 0)
     {
         Jac = 1.0;
     }
     else
     {
         dx = dy = dz = 0.0;
-        for(ii=0; ii<nlbf; ii++)
+        for(int ii=0; ii<npElem; ii++)
         {
             dx +=  (xNode[ii] * dN1[ii]);
             dy +=  (yNode[ii] * dN1[ii]);
@@ -1319,26 +1315,16 @@ void BernsteinBasisFunsEdge3D(int degree, double* param, double *xNode, double* 
 }
 
 
-void BernsteinBasisFunsFaceTria(int degree, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double *tangent1, double *tangent2, double& curvature, double& J)
+void BernsteinBasisFunsFaceTria(int npElem, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double *tangent1, double *tangent2, double& curvature, double& J)
 {
-    int  ii, jj, count, nlbf;
-    if(degree == 1)
-    {
-      nlbf = 3;
-    }
-    else if(degree == 2)
-    {
-      nlbf = 6;
-    }
+    vector<double>  dN1(npElem), dN2(npElem), d2N11(npElem), d2N22(npElem), d2N12(npElem);
 
-    vector<double>  dN1(nlbf), dN2(nlbf), d2N11(nlbf), d2N22(nlbf), d2N12(nlbf);
-
-    BernsteinBasisFunsTria(degree, param[0], param[1], N, &dN1[0], &dN2[0], &d2N11[0], &d2N22[0], &d2N12[0]);
+    BernsteinBasisFunsTria(npElem, param[0], param[1], N, &dN1[0], &dN2[0], &d2N11[0], &d2N22[0], &d2N12[0]);
 
     double  x1=0.0, y1=0.0, z1=0.0, x2=0.0, y2=0.0, z2=0.0;
     double  x11=0.0, y11=0.0, z11=0.0, x22=0.0, y22=0.0, z22=0.0, x21=0.0, y21=0.0, z21=0.0;
 
-    for(ii=0; ii<nlbf; ii++)
+    for(int ii=0; ii<npElem; ii++)
     {
       // dx_dxi1
       x1 += (xNode[ii] * dN1[ii]);
@@ -1418,27 +1404,17 @@ void BernsteinBasisFunsFaceTria(int degree, double* param, double *xNode, double
 }
 
 
-void BernsteinBasisFunsFaceQuad(int degree, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double *tangent1, double *tangent2, double& curvature, double& J)
+void BernsteinBasisFunsFaceQuad(int npElem, double* param, double *xNode, double* yNode, double *zNode, double *N, double *normal, double *tangent1, double *tangent2, double& curvature, double& J)
 {
-    int  ii, jj, count, nlbf;
-    if(degree == 1)
-    {
-      nlbf = 4;
-    }
-    else if(degree == 2)
-    {
-      nlbf = 9;
-    }
+    vector<double>  dN1(npElem), dN2(npElem), d2N11, d2N22, d2N12;
 
-    vector<double>  dN1(nlbf), dN2(nlbf), d2N11, d2N22, d2N12;
-
-    //BernsteinBasisFunsQuad(degree, param[0], param[1], N, &dN1[0], &dN2[0], &d2N11[0], &d2N22[0], &d2N12[0]);
-    BernsteinBasisFunsQuad(degree, param[0], param[1], N, &dN1[0], &dN2[0]);
+    //BernsteinBasisFunsQuad(npElem, param[0], param[1], N, &dN1[0], &dN2[0], &d2N11[0], &d2N22[0], &d2N12[0]);
+    BernsteinBasisFunsQuad(npElem, param[0], param[1], N, &dN1[0], &dN2[0]);
 
     double  x1=0.0, y1=0.0, z1=0.0, x2=0.0, y2=0.0, z2=0.0;
     double  x11=0.0, y11=0.0, z11=0.0, x22=0.0, y22=0.0, z22=0.0, x21=0.0, y21=0.0, z21=0.0;
 
-    for(ii=0; ii<nlbf; ii++)
+    for(int ii=0; ii<npElem; ii++)
     {
       // dx_dxi1
       x1 += (xNode[ii] * dN1[ii]);

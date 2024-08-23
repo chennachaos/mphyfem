@@ -74,7 +74,7 @@ class femINSmixed
 
         VectorXd  td, reacVec;
 
-        vector<int>              assyForSoln, dofs_specified, dofs_specified_pres;
+        vector<int>              assyForSoln, dofs_specified_velo, dofs_specified_pres;
         vector<int>              elem_proc_id, node_proc_id, node_map_get_old, node_map_get_new;
         vector<vector<int> >     elemConn, node_elem_conn;                  //!< element-node connectivity array
         vector<vector<int> >     NodeDofArray, forAssyVecAll, globalDOFnumsAll;
@@ -102,7 +102,7 @@ class femINSmixed
         int  npElemVelo, npElemPres;
         int  AlgoType, nImmersedElems, nImmersedNodes, SCHEME_TYPE;
         
-        bool firstIteration, DEBUG, GRID_CHANGED, IB_MOVED;
+        bool firstIteration, GRID_CHANGED, IB_MOVED;
 
         double  timeNow, loadFactor;
         double  spectralRadius, am, gamm1, gamm2, CFL, dt, amDgammaDt;
@@ -137,14 +137,13 @@ class femINSmixed
         VectorXd  soln, solnInit, ForceVectorExternal;
         VectorXd  totalForce, totalMoment, centroid;
         VectorXd  force, forceCur, forcePrev, forcePrev2;
-        VectorXd  pres, presCur, presPrev, presPrev2, presPrev3;
+        VectorXd  pres, presCur, presPrev, presPrev2, presPrev3, presIncr;
         VectorXd  presDot, presDotPrev, presDotCur, presDiff;
-        VectorXd  velo, veloCur, veloDiff, veloPrev, veloPrev2, veloPrev3;
+        VectorXd  velo, veloCur, veloDiff, veloPrev, veloPrev2, veloPrev3, veloIncr;
         VectorXd  veloDot, veloDotPrev, veloDotCur;
         VectorXd  veloApplied, presApplied;
         VectorXd  globalMassVelo, globalMassPres;
-        VectorXd  rhsVecVelo, rhsVecVelo2, rhsVecPres, rhsVecPres2, rhsVec;
-        VectorXd  var1, var2, veloIncr, presIncr;
+        VectorXd  rhsVecVelo, rhsVecPres, rhsVec;
         VectorXd  lambdas, lambdasPrev, lambdasIncr, lambdasCur;
 
         VectorXd  rhsVecVeloTemp, rhsVecPresTemp;
@@ -217,13 +216,19 @@ class femINSmixed
 
         int  readImmersedSolids(string& fname);
 
+        int  readOutputDetailsPatch(ifstream& infile, string& line);
+
         ///////////////////////////////////////////////////////////
         //
         // PRE-PROCESSOR PHASE member functions
         //
         ///////////////////////////////////////////////////////////
 
-        int  assignBoundaryConditions();
+        int  setSpecifiedDOFs_Velocity(vector<vector<bool> >&  NodeDofType);
+
+        int  setBoundaryConditions();
+
+        int  addBoundaryConditions();
 
         int  prepareInputData();
 
@@ -282,11 +287,9 @@ class femINSmixed
 
         int  reset();
         
-        int  storeVariables();
+        int  saveSolution();
 
         int  addExternalForces();
-
-        int  addBoundaryConditions();
 
         int  computeElementErrors(int);
 
@@ -321,6 +324,8 @@ class femINSmixed
         int  postProcessVelocity();
 
         int  writeReadResult(int index, string& filename, int stride);
+
+        int  writeOutputDataPatches();
 };
 
 

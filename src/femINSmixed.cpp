@@ -27,6 +27,11 @@ int main(int argc, char* argv[])
     string  meshfile       = "./inputs/fluidmesh.msh";
     string  configfile     = "./inputs/config";
 
+    if(argc > 1)
+    {
+        meshfile = "./inputs/" + string(argv[1]);
+    }
+
     cout << " Working dir     : " << get_current_dir_name() << endl;
     cout << " meshfile        : " << meshfile << endl;
     cout << " controlfile     : " << configfile << endl;
@@ -40,11 +45,13 @@ int main(int argc, char* argv[])
     cfdfem.prepareInputData();
 
     cfdfem.setSolver(0);
+    cfdfem.solveFullyImplicit();
 
     //string  restfile = "Result.rst";
     //cfdfem.writeReadResult(0, restfile, 0);
 
-    //cfdfem.solveFullyImplicit();
+    //cfdfem.setSolver(1);
+    //cfdfem.solveSemiImplicit();
 
     cout << " Program is successful \n " << endl;
 

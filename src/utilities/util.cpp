@@ -170,7 +170,7 @@ TISFLUID convert2TISFLUID(string& str)
     else if(str == "BDF2")     return  TISFLUID::BDF2;
     else if(str == "BDF3")     return  TISFLUID::BDF3;
     else if(str == "BDF4")     return  TISFLUID::BDF4;
-    else if(str == "MidPoint") return  TISFLUID::Midpoint;
+    else if(str == "Midpoint") return  TISFLUID::Midpoint;
     else if(str == "Galpha")   return  TISFLUID::Galpha;
     else
     {
@@ -219,7 +219,7 @@ void SetTimeParametersFluid(string& tis, double rho, double dt, VectorXd& td)
             td[5]  = alpf*dt; //af*dt
             td[6]  = alpm/gamm;
             td[7]  = 1.0-alpm/gamm;
-            td[8]  = 0.0;
+            td[8]  = 1.0/dt;
 
             td[9]  = 1.0/dt;  // v_{n+1}
             td[10] = -td[9];  // v_n
@@ -247,8 +247,8 @@ void SetTimeParametersFluid(string& tis, double rho, double dt, VectorXd& td)
 
             td[9]  = 1.0/gamm/dt;     // v_{n+1}
             td[10] = -td[9];          // v_n
-            td[11] = 0.0;     // v_{n-1}
-            td[12] = 0.0;     // v_{n-2}
+            td[11] = 0.0;             // v_{n-1}
+            td[12] = 0.0;             // v_{n-2}
             td[15] = 1.0 - 1.0/gamm;  // a_n
 
          break;

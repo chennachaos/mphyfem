@@ -15,7 +15,7 @@ using namespace std;
 
 BernsteinElem3DINSTetra10Node::BernsteinElem3DINSTetra10Node()
 {
-  ELEM_TYPE = 1;
+  ELEM_SHAPE = ELEM_SHAPE_TETRA_BERNSTEIN;
 
   degree  = 2;
   npElem  = 10;
@@ -122,7 +122,7 @@ void BernsteinElem3DINSTetra10Node::prepareElemData(vector<myPoint>& node_coords
       param[1] = gpts2[gp];
       param[2] = gpts3[gp];
 
-      computeBasisFunctions3D(false, ELEM_TYPE, degree, param, xNode, yNode, zNode, &Nv[gp](0), &dNvdx[gp](0), &dNvdy[gp](0), &dNvdz[gp](0), Jac);
+      computeBasisFunctions3D(false, ELEM_SHAPE, degree, param, xNode, yNode, zNode, &Nv[gp](0), &dNvdx[gp](0), &dNvdy[gp](0), &dNvdz[gp](0), Jac);
 
       //cout << " Jac = " << Jac << endl;
       if(Jac < 0.0)
@@ -139,7 +139,7 @@ void BernsteinElem3DINSTetra10Node::prepareElemData(vector<myPoint>& node_coords
 
       Np[gp][0] = 1.0-param[0]-param[1]-param[2];  Np[gp][1] = param[0];  Np[gp][2] = param[1];  Np[gp][3] = param[2];
 
-      //computeBasisFunctions3D(false, ELEM_TYPE, 1, param, xNode, yNode, zNode, &Np[gp](0), &dNpdx[gp](0), &dNpdy[gp](0), &dNpdz[gp](0), Jac);
+      //computeBasisFunctions3D(false, ELEM_SHAPE, 1, param, xNode, yNode, zNode, &Np[gp](0), &dNpdx[gp](0), &dNpdy[gp](0), &dNpdz[gp](0), Jac);
     }//gp
 
     charlen = pow(3.0*elemVol/PI/4.0, 1.0/3.0);
@@ -435,7 +435,7 @@ int  BernsteinElem3DINSTetra10Node::ResidualIncNavStokesAlgo2(vector<myPoint>& n
 
 
 //
-int  BernsteinElem3DINSTetra10Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur)
+int  BernsteinElem3DINSTetra10Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp)
 {
 /*
     // Fully-implicit formulation
@@ -977,7 +977,7 @@ int  BernsteinElem3DINSTetra10Node::CalculateForces(int side, vector<myPoint>& n
         param[0] = 0.5;  param[1] = 0.5;  param[2] = 0.5;
         pointInverseTetra10node(xNode, yNode, zNode, tarpoint, param);
 
-        computeBasisFunctions3D(false, ELEM_TYPE, degree, param, xNode, yNode, zNode, &Nv(0), &dNvdx(0), &dNvdy(0), &dNvdz(0), Jac);
+        computeBasisFunctions3D(false, ELEM_SHAPE, degree, param, xNode, yNode, zNode, &Nv(0), &dNvdx(0), &dNvdy(0), &dNvdz(0), Jac);
 
         Np[0] = 1.0-param[0]-param[1]-param[2];  Np[1] = param[0];  Np[2] = param[1];  Np[3] = param[2];
 

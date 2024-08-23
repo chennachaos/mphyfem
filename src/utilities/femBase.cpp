@@ -732,7 +732,7 @@ void femBase::readPrescribedBCs(ifstream& infile, string& line)
                     boost::algorithm::split(stringlist, line, boost::is_any_of(":"), boost::token_compress_on);
                     for(auto& str: stringlist)  boost::trim(str);
 
-                    cout << "Inside patch ... " << stringlist[0] << endl;
+                    cout << "Inside patch ... " << stringlist[0] << '\t' << stringlist[1] << endl;
 
                     if(stringlist[0] == "type")
                     {

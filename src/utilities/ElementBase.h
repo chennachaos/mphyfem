@@ -48,7 +48,7 @@ class ElementBase
     vector<double>  vals2project;
     InternalVariables  ivar;
 
-    vector<int>  nodeNums, nodeNumsPres, forAssyVec, forAssyVec2, forAssyVecPres;
+    vector<int>  nodeNums, nodeNumsPres, forAssyVec, forAssyVec2, forAssyVecVelo, forAssyVecPres;
     vector<int>  forAssyVecCpot, forAssyVecMpot, forAssyVecEpot, forAssyVecTemp, globalDOFnums;
 
     SolutionDataSolid  *SolnData;
@@ -116,6 +116,9 @@ class ElementBase
 
     double getVolume()
     { return  elemVol;  }
+
+    virtual void prepareElemData(vector<myPoint>& nodeCoords)
+    { cout << "   'prepareElemData(vector<myPoint>& nodeCoords)' is not defined for this element!\n\n"; return; }
 
     virtual void initialiseDOFvalues()
     { cout << "   'initialiseDOFvalues' is not defined for this element!\n\n"; return; }
@@ -202,6 +205,17 @@ class ElementBase
 
     virtual int  applyDirichletBCsElecField(MatrixXd& Kff, VectorXd& FlocalF);
 
+    virtual int  StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloPrev2, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp)
+      { cout << "   'StiffnessAndResidualFullyImplicit' is not defined for this element!\n\n"; return 0; }
+
+    virtual double  ResidualIncNavStokesSemiImpl(vector<myPoint>& node_coods, double* elemData, double* timeData, VectorXd& veloVec, VectorXd& veloVecPrev, VectorXd& veloDotVec, VectorXd& veloDotVecPrev, VectorXd& presVec, VectorXd& presVecPrev, VectorXd&  Flocal1, VectorXd&  Flocal2)
+      { cout << "   'ResidualIncNavStokesSemiImpl' is not defined for this element!\n\n"; return 0; }
+
+    virtual int MassMatrices(vector<myPoint>& node_coods, double* elemData, VectorXd&  Mlocal1, VectorXd&  Mlocal2)
+      { cout << "   'MassMatrices' is not defined for this element!\n\n"; return 0; }
+
+    virtual int  StiffnessForSemiImpl(double* elemData, double* timeData, MatrixXd& Kup)
+      { cout << "   'StiffnessForSemiImpl' is not defined for this element!\n\n"; return 0; }
 
     virtual void contourplot(int, int, double, double)
       { cout << "   'contourPlot' is not defined for this element!\n\n"; return; }

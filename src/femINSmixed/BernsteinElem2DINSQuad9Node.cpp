@@ -22,8 +22,6 @@ using namespace std;
 
 BernsteinElem2DINSQuad9Node::BernsteinElem2DINSQuad9Node()
 {
-  ELEM_TYPE = 2;
-
   degree  = 2;
   npElem  = 9;
 
@@ -155,7 +153,7 @@ void BernsteinElem2DINSQuad9Node::prepareElemData(vector<myPoint>& node_coords)
       param[0] = gpts1[gp];
       param[1] = gpts2[gp];
 
-      computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv[gp](0), &dNvdx[gp](0), &dNvdy[gp](0), Jac);
+      computeBasisFunctions2D(false, ELEM_SHAPE, degree, param, xNode, yNode, &Nv[gp](0), &dNvdx[gp](0), &dNvdy[gp](0), Jac);
 
       if(Jac < 0.0)
       {
@@ -643,8 +641,8 @@ int  BernsteinElem2DINSQuad9Node::StiffnessForSemiImpl(double* elemData, double*
             for(jj=0; jj<4; jj++)
             {
               // pressure term
-              Kup(TI,   jj) -= (b1*Np[gp][jj]);
-              Kup(TIp1, jj) -= (b2*Np[gp][jj]);
+              Kup(TI,   jj) += (b1*Np[gp][jj]);
+              Kup(TIp1, jj) += (b2*Np[gp][jj]);
             }
           }
     }//gp
@@ -686,7 +684,7 @@ int BernsteinElem2DINSQuad9Node::MassMatrices(vector<myPoint>& node_coords, doub
 
 
 //
-int  BernsteinElem2DINSQuad9Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur)
+int  BernsteinElem2DINSQuad9Node::StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp)
 {
     // Fully-implicit formulation
 
@@ -726,9 +724,6 @@ int  BernsteinElem2DINSQuad9Node::StiffnessAndResidualFullyImplicit(vector<myPoi
     Fp.setZero();
 
     //KimMoinFlowUnsteadyNavierStokes  analy(rho, mu, 1.0);
-
-    double  tCur  = timeCur;
-    double  tPrev = tCur - dt;
 
     //cout << " AAAAAAAAAA " << rho << '\t' << mu << endl;
     //cout << nGP << endl;
@@ -1221,7 +1216,7 @@ int  BernsteinElem2DINSQuad9Node::CalculateForces(int side, vector<myPoint>& nod
 
         pointInverseTria6node(xNode, yNode, tarpoint, param);
 
-        computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv(0), &dNvdx(0), &dNvdy(0), Jac);
+        computeBasisFunctions2D(false, ELEM_SHAPE, degree, param, xNode, yNode, &Nv(0), &dNvdx(0), &dNvdy(0), Jac);
 
         Np[0] = 1.0-param[0]-param[1];  Np[1] = param[0];  Np[2] = param[1];
 

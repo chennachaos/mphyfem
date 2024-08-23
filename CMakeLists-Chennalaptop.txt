@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(femSolidmechanics)
+#project(femSolidmechanics)
 #project(femMagnetomech)
 #project(femGrowth)
+project(femINSmixed)
 
 message("Project name: ${CMAKE_PROJECT_NAME} / ${PROJECT_NAME}")
 
@@ -37,6 +38,7 @@ src/femMagnetomech
 #src/thermomechFEM
 #src/gelFEM
 src/femGrowth
+src/femINSmixed
 #src/inversegrowthFEM/
 src/utilities
 src/material
@@ -153,6 +155,22 @@ src/utilities/*.cpp
 )
 
 
+
+file(GLOB sourcesINSmixed1
+src/femINSmixed/*h
+src/material/*h
+src/mySolvers/*h
+src/utilities/*h
+)
+
+file(GLOB sourcesINSmixed2
+src/femINSmixed/*.cpp
+src/material/*.cpp
+src/mySolvers/*.cpp
+src/utilities/*.cpp
+)
+
+
 ##################################
 ##################################
 
@@ -162,7 +180,10 @@ elseif(${CMAKE_PROJECT_NAME} STREQUAL "femMagnetomech")
   add_executable(${CMAKE_PROJECT_NAME}  src/femMagnetomech.cpp ${sourcesMagneto1} ${sourcesMagneto2})
 elseif(${CMAKE_PROJECT_NAME} STREQUAL "femGrowth")
   add_executable(${CMAKE_PROJECT_NAME}  src/femGrowth.cpp ${sourcesGrowth1} ${sourcesGrowth2})
+elseif(${CMAKE_PROJECT_NAME} STREQUAL "femINSmixed")
+  add_executable(${CMAKE_PROJECT_NAME}  src/femINSmixed.cpp ${sourcesINSmixed1} ${sourcesINSmixed2})
 endif()
+
 
 #pardiso600-GNU800-X86-64
 

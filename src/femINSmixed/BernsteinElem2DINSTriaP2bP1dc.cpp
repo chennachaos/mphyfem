@@ -26,7 +26,7 @@ using namespace std;
 
 BernsteinElem2DINSTriaP2bP1dc::BernsteinElem2DINSTriaP2bP1dc()
 {
-  ELEM_TYPE = ELEM_TRIA_BERNSTEIN_P2bP1dc;
+  //ELEM_SHAPE = ELEM_TRIA_BERNSTEIN_P2bP1dc;
 
   degree  = 2;
   npElem  = 7;
@@ -132,7 +132,7 @@ void BernsteinElem2DINSTriaP2bP1dc::prepareElemData(vector<myPoint>& nodeCoords)
       param[0] = gpts1[gp];
       param[1] = gpts2[gp];
 
-      computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv[gp][0], &dNvdx[gp][0], &dNvdy[gp][0], Jac);
+      computeBasisFunctions2D(false, ELEM_SHAPE, degree, param, xNode, yNode, &Nv[gp][0], &dNvdx[gp][0], &dNvdy[gp][0], Jac);
 
       //cout << " Jac = " << Jac << endl;
       if(Jac < 0.0)
@@ -149,7 +149,7 @@ void BernsteinElem2DINSTriaP2bP1dc::prepareElemData(vector<myPoint>& nodeCoords)
 
       Np[gp][0] = 1.0-param[0]-param[1];  Np[gp][1] = param[0];  Np[gp][2] = param[1];
 
-      //computeBasisFunctions2D(false, ELEM_TYPE, 1, param, xNode, yNode, &Np[gp][0], &dNpdx[gp][0], &dNpdy[gp][0], Jac);
+      //computeBasisFunctions2D(false, ELEM_SHAPE, 1, param, xNode, yNode, &Np[gp][0], &dNpdx[gp][0], &dNpdy[gp][0], Jac);
     }//gp
 
     //cout << " elemVol = " << elemVol << endl;
@@ -977,7 +977,7 @@ int  BernsteinElem2DINSTriaP2bP1dc::StiffnessAndResidualFullyImplicit(vector<myP
 
 
 //
-int  BernsteinElem2DINSTriaP2bP1dc::StiffnessAndResidualFullyImplicit(vector<myPoint>& nodeCoords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloPrev2, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur)
+int  BernsteinElem2DINSTriaP2bP1dc::StiffnessAndResidualFullyImplicit(vector<myPoint>& nodeCoords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& veloPrev2, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp)
 {
     // Semi-implicit formulation - type B
 
@@ -1020,9 +1020,6 @@ int  BernsteinElem2DINSTriaP2bP1dc::StiffnessAndResidualFullyImplicit(vector<myP
     Fp.setZero();
 
     //KimMoinFlowUnsteadyNavierStokes  analy(rho, mu, 1.0);
-
-    double  tCur  = timeCur;
-    double  tPrev = tCur - dt;
 
     //cout << " AAAAAAAAAA " << rho << '\t' << mu << '\t' << am << '\t' << af << '\t' << acceFact << endl;
     //cout << nGP << endl;
@@ -1211,8 +1208,8 @@ int  BernsteinElem2DINSTriaP2bP1dc::StiffnessForSemiImpl(double* elemData, doubl
             for(jj=0; jj<3; jj++)
             {
               // pressure term
-              Kup(TI,   jj) -= (b1*Np[gp][jj]);
-              Kup(TIp1, jj) -= (b2*Np[gp][jj]);
+              Kup(TI,   jj) += (b1*Np[gp][jj]);
+              Kup(TIp1, jj) += (b2*Np[gp][jj]);
             }
           }
     }//gp
@@ -1603,7 +1600,7 @@ int  BernsteinElem2DINSTriaP2bP1dc::CalculateForces(int side, vector<myPoint>& n
 
         pointInverseTria6node(xNode, yNode, tarpoint, param);
 
-        computeBasisFunctions2D(false, ELEM_TYPE, degree, param, xNode, yNode, &Nv[0], &dNvdx[0], &dNvdy[0], Jac);
+        computeBasisFunctions2D(false, ELEM_SHAPE, degree, param, xNode, yNode, &Nv[0], &dNvdx[0], &dNvdy[0], Jac);
 
         Np[0] = 1.0-param[0]-param[1];  Np[1] = param[0];  Np[2] = param[1];
 

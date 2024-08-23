@@ -2,12 +2,12 @@
 #ifndef incl_BernsteinElem3DINSTetra10Node_h
 #define incl_BernsteinElem3DINSTetra10Node_h
 
-#include "ElementBase.h"
+#include "ElementBaseINSmixed.h"
 #include "headersBasic.h"
 #include "headersEigen.h"
 #include "SolutionData.h"
 
-class  BernsteinElem3DINSTetra10Node : public ElementBase
+class  BernsteinElem3DINSTetra10Node : public ElementBaseINSmixed
 {
   public:
 
@@ -31,7 +31,7 @@ class  BernsteinElem3DINSTetra10Node : public ElementBase
 
     virtual double CalculateError(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloPrev, VectorXd& accePrev, VectorXd& presPrev, double timeCur, int index);
 
-    virtual int  StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp, double dt, double timeCur);
+    virtual int  StiffnessAndResidualFullyImplicit(vector<myPoint>& node_coords, double* elemData, double* timeData, VectorXd& veloCur, VectorXd& veloDotCur, VectorXd& presCur, MatrixXd& Kuu, MatrixXd& Kup, VectorXd& Fu, VectorXd& Fp);
 
     virtual int toComputeInfSupCondition(vector<myPoint>& node_coords, double* elemData, MatrixXd& Kuu, MatrixXd& Kup, MatrixXd& Kpp);
 
