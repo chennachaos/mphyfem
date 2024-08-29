@@ -50,8 +50,8 @@ femINSmixed::femINSmixed()
     
     GRID_CHANGED = false; IB_MOVED = false;
     debug = true;
-    
-    SCHEME_TYPE = IMPLICIT;
+
+    SCHEME_TYPE = SCHEME_TYPE_IMPLICIT;
 
     timeIntegrationScheme = "STEADY";
     spectralRadius = 0.0;
@@ -763,7 +763,16 @@ int  femINSmixed::readSolverDetails(ifstream& infile, string& line)
 
             cout << stringlist[0] << '\t' << stringlist[1] << endl;
 
-            if(stringlist[0] == "timescheme")
+            if(stringlist[0] == "schemetype")
+            {
+                if(stoi(stringlist[1]) == 0)
+                  SCHEME_TYPE = SCHEME_TYPE_IMPLICIT;
+                else if(stoi(stringlist[1]) == 1)
+                  SCHEME_TYPE = SCHEME_TYPE_SEMIIMPLICIT;
+                else if(stoi(stringlist[1]) == 2)
+                  SCHEME_TYPE = SCHEME_TYPE_EXPLICIT;
+            }
+            else if(stringlist[0] == "timescheme")
             {
                 timeIntegrationScheme = stringlist[1];
             }

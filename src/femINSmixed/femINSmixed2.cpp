@@ -20,18 +20,17 @@ int femINSmixed::setSolver(int slv)
 
     prepareMatrixPattern();
 
-    cout << " slv = " << slv << endl;
 
-    if(slv == IMPLICIT)
+    if(SCHEME_TYPE == SCHEME_TYPE_IMPLICIT)
     {
       setSolverDataForFullyImplicit();
     }
-    else if(slv ==  SEMI_IMPLICIT)
+    else if(SCHEME_TYPE == SCHEME_TYPE_SEMIIMPLICIT)
     {
       calcMassMatrixForExplicitDynamics();
       setSolverDataForSemiImplicit();
     }
-    else if(slv ==  EXPLICIT)
+    else if(SCHEME_TYPE == SCHEME_TYPE_EXPLICIT)
     {
       calcMassMatrixForExplicitDynamics();
     }
@@ -410,6 +409,25 @@ int femINSmixed::setSolverDataForFullyImplicit()
 
     return 0;
 }
+
+
+
+
+int  femINSmixed::solve()
+{
+  if(SCHEME_TYPE == SCHEME_TYPE_IMPLICIT)
+  {
+    return solveFullyImplicit();
+  }
+  else if(SCHEME_TYPE == SCHEME_TYPE_SEMIIMPLICIT)
+  {
+    return solveSemiImplicit();
+  }
+
+  return -1;
+}
+
+
 
 
 int  femINSmixed::solveFullyImplicit()

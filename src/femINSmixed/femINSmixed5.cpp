@@ -507,7 +507,8 @@ int  femINSmixed::solveSemiImplicit()
     double  dtCrit=1.0e10, fact, fact1, fact2;
     double  dtgamma11, dtgamma12, norm_velo_diff, norm_pres_diff;
     double  am = 1.0;
-    double  gamma = 0.5+am;
+    //double  gamma = 0.5+am;
+    double  gamma = 1.0;
 
     vector<int>  nodeNums, nodeNumsPres, globalDOFnums;
 

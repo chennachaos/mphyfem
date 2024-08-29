@@ -51,7 +51,7 @@ class ElementBase;
 
 enum SchemeType
 {
-  IMPLICIT = 0, SEMI_IMPLICIT = 1, EXPLICIT = 2
+  SCHEME_TYPE_IMPLICIT = 0, SCHEME_TYPE_SEMIIMPLICIT = 1, SCHEME_TYPE_EXPLICIT = 2
 };
 
 
@@ -294,6 +294,8 @@ class femINSmixed
         int  computeElementErrors(int);
 
         int  setInitialConditions();
+
+        int  solve();
 
         int  solveSemiImplicit();
 
