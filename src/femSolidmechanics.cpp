@@ -23,23 +23,18 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    /*
-    //Set the input file name
-    //The file name is specified from the command line
-    if(argc == 0)
+    //Set default config file name
+    string  configfname = "./inputs/config";
+
+    //Update the config file name if specified from the command line
+    if(argc == 2)
     {
-        cerr << " Error in input data " << endl;
-        cerr << " You must enter name of input file" << endl;
-        cerr << " Aborting..." << endl;
+      configfname  = "./inputs/" + string(argv[1]);
     }
 
-    string  inputfile  = argv[1];
+    printf("\n    Config file name ... = %s \n ", configfname.c_str());
 
-    printf("\n    Input file         = %s \n ", inputfile.c_str());
-    */
-
-    string  inputfile;
-
+    // PETSc options file
     string petscoptionsfile = "./inputs/petsc_options.dat";
 
     ifstream fin(petscoptionsfile);
@@ -51,14 +46,13 @@ int main(int argc, char* argv[])
     }
     fin.close();
 
-
     PetscInitialize(NULL, NULL, "./inputs/petsc_options.dat", NULL);
 
 
 
     femSolidmechanics  solidfem;
 
-    solidfem.readInput(inputfile);
+    solidfem.readInput(configfname);
 
     solidfem.prepareInputData();
 
