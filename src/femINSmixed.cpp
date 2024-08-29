@@ -45,15 +45,24 @@ int main(int argc, char* argv[])
     cfdfem.prepareInputData();
 
     cfdfem.setSolver(0);
-    cfdfem.solveFullyImplicit();
+    cfdfem.solve();
 
     //string  restfile = "Result.rst";
     //cfdfem.writeReadResult(0, restfile, 0);
 
-    //cfdfem.setSolver(1);
     //cfdfem.solveSemiImplicit();
 
     cout << " Program is successful \n " << endl;
 
     return 1;
 }
+
+
+
+
+
+
+
+
+
+
