@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Element types &mdash; MPHYFEM  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Material types" href="materials.html" />
+    <link rel="prev" title="Simulation case" href="../inputformat/inputfiles.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            MPHYFEM
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation/installation.html">Installation and Execution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">formulation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../formulation/formulation.html">Formulation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">inputformat:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html">Simulation case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#mesh-file">Mesh file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#config-file">Config file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#comments">Comments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#data-blocks">Data blocks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">options:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Element types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#solid-mechanics">Solid Mechanics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#d-elements">2D elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">3D elements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#magneto-mechanics">Magneto Mechanics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">2D elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">3D elements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#growth-morphoelasticity">Growth (Morphoelasticity)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id4">2D elements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">3D elements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#electro-mechanics">Electro Mechanics</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="materials.html">Material types</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">examples - Solid Mechanics:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example1/example1.html">Example 1 - Cook’s membrane in 2D with linear material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example2/example2.html">Example 2 - Cook’s membrane in 2D with Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example3/example3.html">Example 3 - Cook’s membrane in 2D with incompressible Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example4/example4.html">Example 4 - Block under compression in 3D with nearly incompressible Neo-Hookean material</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPHYFEM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Element types</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/options/elements.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="element-types">
+<h1>Element types<a class="headerlink" href="#element-types" title="Link to this heading"></a></h1>
+<section id="solid-mechanics">
+<h2>Solid Mechanics<a class="headerlink" href="#solid-mechanics" title="Link to this heading"></a></h2>
+<p>The list of available element types is provided below along with a brief descrption and the options for each element.</p>
+<section id="d-elements">
+<h3>2D elements<a class="headerlink" href="#d-elements" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_DISP</strong></dt><dd><ul>
+<li><p>2D element with pure displacement formulation. Full integration is used.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_BBAR</strong></dt><dd><ul>
+<li><p>2D element with Bbar formulation in small strains and Fbar formulation in finite strains.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_MIXED0</strong></dt><dd><ul>
+<li><p>Q1/P0 element.</p></li>
+<li><p>2D element with mixed displacement-pressure formulation with element-wise constant pressure.</p></li>
+<li><p>Only available for 4-noded quadrilateral and 6-noded triangular elements.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_MIXED1</strong></dt><dd><ul>
+<li><p>2D element with mixed displacement-pressure formulation with element-wise linear and continuous pressure.</p></li>
+<li><p>Only available for 6-noded triangular and 9-noded quadrilateral elements.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_TRIA7_MIXED1</strong></dt><dd><ul>
+<li><p>2D element with mixed displacement-pressure formulation.</p></li>
+<li><p>7-noded triangular element (P2b, P2 with a cubic bubble) for displacements and element-wise linear and discontinuous pressure (P1dc).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_2D_TRIA10_MIXED1</strong></dt><dd><ul>
+<li><p>2D element with mixed displacement-pressure formulation.</p></li>
+<li><p>10-noded triangular element (P3, cubic element) for displacements and element-wise linear and discontinuous pressure (P1dc).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="id1">
+<h3>3D elements<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_DISP</strong></dt><dd><ul>
+<li><p>3D element with pure displacement formulation. Full integration is used.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_BBAR</strong></dt><dd><ul>
+<li><p>3D element with Bbar formulation in small strains and Fbar formulation in finite strains.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_MIXED0</strong></dt><dd><ul>
+<li><p>Q1/P0 element.</p></li>
+<li><p>3D element with mixed displacement-pressure formulation with element-wise constant pressure.</p></li>
+<li><p>Only available for 8-noded hexahedral and 10-noded tetrahedral elements.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_MIXED1</strong></dt><dd><ul>
+<li><p>3D element with mixed displacement-pressure formulation with element-wise linear and continuous pressure.</p></li>
+<li><p>Only available for 10-noded tetrahedral (P2/P1), 18-noded wedge (W2/W1) and 27-noded hexahedral (Q2/Q1) elements.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_TETRA11_MIXED1</strong></dt><dd><ul>
+<li><p>3D element with mixed displacement-pressure formulation.</p></li>
+<li><p>11-noded tetrahedral element (P2b, P2 with a cubic bubble) for displacements and element-wise linear and discontinuous pressure (P1dc).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_SOLID_3D_TETRA20_MIXED1</strong></dt><dd><ul>
+<li><p>3D element with mixed displacement-pressure formulation.</p></li>
+<li><p>20-noded tetrahedral element (P3, cubic element) for displacements and element-wise linear and discontinuous pressure (P1dc).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+<section id="magneto-mechanics">
+<h2>Magneto Mechanics<a class="headerlink" href="#magneto-mechanics" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Hard magnetic (HM) materials: the magnetic field is specified as the residual and applied magnetic fields in the input.</p></li>
+<li><p>Soft magnetic (SM) materials: the magnetic field is solved as the solution along with the displacements.</p></li>
+</ul>
+<section id="id2">
+<h3>2D elements<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_2D_HM_10</strong></dt><dd><ul>
+<li><p>2D Q1/P0 element for HM materials.</p></li>
+<li><p>4-noded quadrilateral for displacement and element-wise constant pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_2D_HM_21</strong></dt><dd><ul>
+<li><p>2D P2/P1 or Q2/Q1 element for HM materials.</p></li>
+<li><p>Quadratic element for displacement and linear element for pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_2D_SM_221</strong></dt><dd><ul>
+<li><p>2D P2/P1/P2 or Q2/Q1/Q2 element for SM materials.</p></li>
+<li><p>Quadratic element for displacement, linear element for pressure, and quadratic element for magnetic field.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="id3">
+<h3>3D elements<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_3D_HM_10</strong></dt><dd><ul>
+<li><p>3D Q1/P0 element for HM materials.</p></li>
+<li><p>8-noded quadrilateral for displacement and element-wise constant pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_3D_HM_21</strong></dt><dd><ul>
+<li><p>3D P2/P1 or Q2/Q1 element for HM materials.</p></li>
+<li><p>Quadratic element for displacement and linear element for pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>ELEM_MAGNMECH_3D_SM_221</strong></dt><dd><ul>
+<li><p>3D P2/P1/P2 (Tetrahedron) or W2/W1/W2 (Wedge) or Q2/Q1/Q2 (Hexahedron) element for SM materials.</p></li>
+<li><p>Quadratic element for displacement, linear element for pressure, and quadratic element for magnetic field.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+<section id="growth-morphoelasticity">
+<h2>Growth (Morphoelasticity)<a class="headerlink" href="#growth-morphoelasticity" title="Link to this heading"></a></h2>
+<section id="id4">
+<h3>2D elements<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_GROWTH_2D_MIXED21</strong></dt><dd><ul>
+<li><p>2D P2/P1 or Q2/Q1 element for Morphoelasticity.</p></li>
+<li><p>Quadratic element for displacement and linear element for pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="id5">
+<h3>3D elements<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>ELEM_GROWTH_3D_MIXED21</strong></dt><dd><ul>
+<li><p>3D P2/P1 (Tetrahedron) or W2/W1 (Wedge) or Q2/Q1 (Hexahedron) element for Morphoelasticity.</p></li>
+<li><p>Quadratic element for displacement and linear element for pressure.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+</section>
+<section id="electro-mechanics">
+<h2>Electro Mechanics<a class="headerlink" href="#electro-mechanics" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../inputformat/inputfiles.html" class="btn btn-neutral float-left" title="Simulation case" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="materials.html" class="btn btn-neutral float-right" title="Material types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Chennakesava Kadapa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

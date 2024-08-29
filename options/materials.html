@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Material types &mdash; MPHYFEM  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Example 1 - Cook’s membrane in 2D with linear material" href="../examples/SolidMechanics/Example1/example1.html" />
+    <link rel="prev" title="Element types" href="elements.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            MPHYFEM
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation/installation.html">Installation and Execution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">formulation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../formulation/formulation.html">Formulation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">inputformat:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html">Simulation case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#mesh-file">Mesh file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#config-file">Config file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#comments">Comments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inputformat/inputfiles.html#data-blocks">Data blocks</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">options:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="elements.html">Element types</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Material types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#solid-mechanics">Solid Mechanics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#magneto-mechanics">Magneto Mechanics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#growth-morphoelasticity">Growth (Morphoelasticity)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#electro-mechanics">Electro Mechanics</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">examples - Solid Mechanics:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example1/example1.html">Example 1 - Cook’s membrane in 2D with linear material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example2/example2.html">Example 2 - Cook’s membrane in 2D with Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example3/example3.html">Example 3 - Cook’s membrane in 2D with incompressible Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example4/example4.html">Example 4 - Block under compression in 3D with nearly incompressible Neo-Hookean material</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPHYFEM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Material types</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/options/materials.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="material-types">
+<h1>Material types<a class="headerlink" href="#material-types" title="Link to this heading"></a></h1>
+<section id="solid-mechanics">
+<h2>Solid Mechanics<a class="headerlink" href="#solid-mechanics" title="Link to this heading"></a></h2>
+<p>The list of available material types is provided below along with a brief descrption and the options for each material.</p>
+<ul>
+<li><dl>
+<dt><strong>Matl_LinearElastic</strong></dt><dd><ul>
+<li><p>Linear elastic material</p></li>
+<li><p>Young’s modulus and Poisson’s ratio are specified with the field <cite>data</cite> as</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span><span class="p">:</span> <span class="mf">100.0</span>  <span class="mf">0.3</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>where 100.0 is the Young’s modulus and 0.3 is the Poisson’s ratio.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Matl_SaintVenantKirchhoff</strong></dt><dd><ul class="simple">
+<li><p>Saint Venant-Kirchhoff material, which is an extension of the linear elastic material to finite strains.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>Matl_NeoHookean</strong></dt><dd><ul class="simple">
+<li><p>The strain energy function is assumed to be split into deviatoric and volumetric parts.</p></li>
+<li><p>Input data is specified as the parameters for deviatoric part of the strain energy function with <cite>data_deviatoric</cite> field and for the volumetric part with <cite>data_volumetric</cite> field.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_deviatoric</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">shear</span><span class="o">-</span><span class="n">modulus</span><span class="o">&gt;</span>
+<span class="n">data_volumetric</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">U</span><span class="o">-</span><span class="nb">type</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">inverse</span><span class="o">-</span><span class="n">of</span><span class="o">-</span><span class="n">bulk</span><span class="o">-</span><span class="n">modulus</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>For example,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_deviatoric</span><span class="p">:</span> <span class="mf">100.0</span>
+<span class="n">data_volumetric</span><span class="p">:</span> <span class="mi">3</span> <span class="mf">0.000001</span>
+</pre></div>
+</div>
+<p>where 100.0 is the shear modulus, 3 is the type of the volumetric function and 0.000001 is the inverse of bulk modulus.</p>
+<p>We can specify truly incompressible material by specifying <cite>Utype</cite> as -1. That is,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_deviatoric</span><span class="p">:</span> <span class="mf">100.0</span>
+<span class="n">data_volumetric</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>  <span class="mf">0.000001</span>
+</pre></div>
+</div>
+<p>In this case, the inverse of bulk modulus value is ignored as it is not relevant for truly incompressible materials.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Matl_MooneyRivlin</strong></dt><dd><ul class="simple">
+<li><p>Similar to Neo-Hookean material, input is specified with <cite>data_deviatoric</cite> and <cite>data_volumetric</cite> fields.</p></li>
+<li><p><cite>data_deviatoric</cite> takes the coefficients C10 and C01.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Matl_Gent</strong></dt><dd><ul class="simple">
+<li><p>Similar to Neo-Hookean material, input is specified with <cite>data_deviatoric</cite> and <cite>data_volumetric</cite> fields.</p></li>
+<li><p><cite>data_deviatoric</cite> takes the value of Im.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>Matl_ArrudaBoyce</strong></dt><dd><ul class="simple">
+<li><p>Similar to Neo-Hookean material, input is specified with <cite>data_deviatoric</cite> and <cite>data_volumetric</cite> fields.</p></li>
+<li><p><cite>data_deviatoric</cite> takes the coefficients.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<ul>
+<li><dl>
+<dt><strong>Matl_NeoHookean_Viscoelastic</strong></dt><dd><ul>
+<li><p>Similar to Neo-Hookean material, input is specified with <cite>data_deviatoric</cite> and <cite>data_volumetric</cite> fields.</p></li>
+<li><p>Parameters of the viscoelastic part is specified with <cite>data_viscoelastic</cite> as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_viscoelastic</span> <span class="p">:</span>  <span class="o">&lt;</span><span class="n">N</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">mu1</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">tau1</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">mu2</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">tau2</span><span class="o">&gt;</span>  <span class="o">...</span> <span class="o">&lt;</span><span class="n">muN</span><span class="o">&gt;</span>  <span class="o">&lt;</span><span class="n">tauN</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>For example,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_viscoelastic</span> <span class="p">:</span>  <span class="mi">1</span>  <span class="mf">5e5</span>  <span class="mf">0.01</span>
+</pre></div>
+</div>
+<p>specifies one data point with shear modulus of 5e5 and relaxation time of 0.01 seconds.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="magneto-mechanics">
+<h2>Magneto Mechanics<a class="headerlink" href="#magneto-mechanics" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Hard magnetic (HM) materials: the magnetic field is specified as the residual and applied magnetic fields in the input.</p></li>
+<li><p>Soft magnetic (SM) materials: the magnetic field is solved as the solution along with the displacements.</p></li>
+</ul>
+</section>
+<section id="growth-morphoelasticity">
+<h2>Growth (Morphoelasticity)<a class="headerlink" href="#growth-morphoelasticity" title="Link to this heading"></a></h2>
+</section>
+<section id="electro-mechanics">
+<h2>Electro Mechanics<a class="headerlink" href="#electro-mechanics" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="elements.html" class="btn btn-neutral float-left" title="Element types" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../examples/SolidMechanics/Example1/example1.html" class="btn btn-neutral float-right" title="Example 1 - Cook’s membrane in 2D with linear material" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Chennakesava Kadapa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation case &mdash; MPHYFEM  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Element types" href="../options/elements.html" />
+    <link rel="prev" title="Formulation" href="../formulation/formulation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            MPHYFEM
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">installation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation/installation.html">Installation and Execution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">formulation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../formulation/formulation.html">Formulation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">inputformat:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#mesh-file">Mesh file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#config-file">Config file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#comments">Comments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#data-blocks">Data blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#files">Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#model-type">Model Type</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#domains">Domains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#material">Material</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#element">Element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#body-force">Body Force</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#boundary-conditions">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tractions">Tractions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#time-functions">Time functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solver">Solver</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">options:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../options/elements.html">Element types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../options/materials.html">Material types</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">examples - Solid Mechanics:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example1/example1.html">Example 1 - Cook’s membrane in 2D with linear material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example2/example2.html">Example 2 - Cook’s membrane in 2D with Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example3/example3.html">Example 3 - Cook’s membrane in 2D with incompressible Neo-Hookean material</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/SolidMechanics/Example4/example4.html">Example 4 - Block under compression in 3D with nearly incompressible Neo-Hookean material</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MPHYFEM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Simulation case</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inputformat/inputfiles.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-case">
+<h1>Simulation case<a class="headerlink" href="#simulation-case" title="Link to this heading"></a></h1>
+<p>Each case requires three files stored in <cite>inputs</cite> directory.</p>
+<ol class="arabic simple">
+<li><p>Mesh file.</p></li>
+<li><p>Configure file named <cite>config</cite>.</p></li>
+<li><p>Petsc options file named <cite>petsc_options.dat</cite>.</p></li>
+</ol>
+</section>
+<section id="mesh-file">
+<h1>Mesh file<a class="headerlink" href="#mesh-file" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p>The meshes are generated in the <cite>GMSH</cite> software and the input meshes are stored in the <cite>.msh</cite> format.</p></li>
+<li><p>All the domains (volumes in 3D, surfaces in 2D and curves/lines in 1D) should be tagged using <cite>Physical groups</cite> feature in GMSH.</p></li>
+<li><p>No need to tag all the boundaries though. Only those boundaries on which boundary conditions are applied need to be tagged.</p></li>
+</ul>
+</section>
+<section id="config-file">
+<h1>Config file<a class="headerlink" href="#config-file" title="Link to this heading"></a></h1>
+<p>The <cite>config</cite> file contains the details of the simulation such as element type, element properties, material properties, loading, solver, time step, etc.. A sample <cite>config</cite> file is shown below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Files
+{
+  mesh : block3d-P2-nelem2
+}
+
+
+Model Type
+{
+  dimension     : 3
+}
+
+
+Domains
+{
+  block
+  {
+    Material   : 1
+    Element    : 1
+  }
+}
+
+
+Material
+{
+  id               : 1
+  name             : Matl_LinearElastic
+  density          : 1.0
+  data             : 240.565  0.3
+}
+
+
+Material
+{
+  id               : 2
+  name             : Matl_NeoHookean
+  density          : 1.0
+  data_deviatoric :  92.525
+  data_volumetric :  3  0.0049883
+}
+
+Element
+{
+  id           : 1
+  type         : ELEM_SOLID_3D_MIXED1
+
+}
+
+
+Body Force
+{
+    value        :  0  0  0
+    TimeFunction :  1
+}
+
+
+Boundary Conditions
+{
+    symX
+    {
+        type          : specified
+        dof           : UX
+        value         : 0
+    }
+
+    symY
+    {
+        type          : specified
+        dof           : UY
+        value         : 0
+    }
+
+    symZ
+    {
+        type          : specified
+        dof           : UZ
+        value         : 0
+    }
+
+    top
+    {
+        type          : specified
+        dof           : UX
+        value         : 0
+    }
+
+    top
+    {
+        type          : specified
+        dof           : UY
+        value         : 0
+    }
+}
+
+
+Tractions
+{
+    pressure
+    {
+        type          : traction
+        value         : -320  0.0  0.0
+        timefunction  : 1
+    }
+}
+
+
+Time Functions
+{
+
+! lam(t) = p1 + p2*t + p3*sin(p4*t+p5) + p6*cos(p7*t+p8)
+!
+! id   t0      t1     p1   p2     p3    p4    p5    p6    p7    p8
+   1   0.0   1000.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+!   1   0.0      1.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+!   1   1.0   1000.0  1.0  0.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+}
+
+
+Solver
+{
+    solvertype         newton
+
+    !timescheme         BDF1
+    timescheme         STEADY
+
+    spectralRadius     0.0
+
+    finalTime          1.0
+
+    timeStep           0.2
+
+    maximumSteps       10
+
+    maximumIterations  20
+
+    tolerance          1.0e-7
+
+    debug              1
+
+}
+</pre></div>
+</div>
+<p>As shown in the sample <cite>config</cite> file, the input is specified in the form of blocks.</p>
+</section>
+<section id="comments">
+<h1>Comments<a class="headerlink" href="#comments" title="Link to this heading"></a></h1>
+<p>Any line that starts with a <cite>!</cite> in the config file is not effective; it is treated as a comment.
+It helps the user to write useful comments or to try multiple options without having to remember the options.</p>
+</section>
+<section id="data-blocks">
+<h1>Data blocks<a class="headerlink" href="#data-blocks" title="Link to this heading"></a></h1>
+<p>Different blocks are discribed below. Each block starts with <cite>{</cite> and ends with <cite>}</cite> on separate lines.</p>
+<section id="files">
+<h2>Files<a class="headerlink" href="#files" title="Link to this heading"></a></h2>
+<p>Specifies the input mesh file and previous solution file for in case of <cite>restart</cite>. Different fields are</p>
+<ul class="simple">
+<li><p><strong>msh</strong>: Prefix of the mesh file. <em>Compulsory</em>.</p></li>
+<li><p><strong>restart</strong>: the name of the restart file with the solution. <em>Optional</em>.</p></li>
+</ul>
+</section>
+<section id="model-type">
+<h2>Model Type<a class="headerlink" href="#model-type" title="Link to this heading"></a></h2>
+<p>Specifies the dimension and the model type for the 2D problem, e.g., plane stress, plane strain, axisymmetric.</p>
+<ul class="simple">
+<li><p>dimension: dimension of the model. Accepted values are 1, 2 or 3 depending on the problem.</p></li>
+<li><p>behaviour: TODO</p></li>
+</ul>
+</section>
+<section id="domains">
+<h2>Domains<a class="headerlink" href="#domains" title="Link to this heading"></a></h2>
+<p>Defines the element and material types for each of the (solid) domains. A problem can have more than one domain. This is especially the case for problems with multiple materials.</p>
+<p>Each domain (volume in 3D, surface in 2D, line in 1D) should have a tag in the <cite>.msh</cite> file generated with GMSH. Material and element are assigned to each domain in the similar block format. For example, the following block assigns material with id 1 and element with id 1 to the domain named <cite>block</cite>. The material and elements are befined further below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">block</span>
+<span class="p">{</span>
+  <span class="n">Material</span>     <span class="p">:</span>  <span class="mi">1</span>
+  <span class="n">Element</span>      <span class="p">:</span>  <span class="mi">1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="material">
+<h2>Material<a class="headerlink" href="#material" title="Link to this heading"></a></h2>
+<p>Specifies the material type along with the relevant material property values such as Young’s modulus, Poisson’s ratio, density, etc..</p>
+<ul class="simple">
+<li><p><strong>id</strong>: Identification number to keep track of list of materials.</p></li>
+<li><p><strong>name</strong>: Material type name. Available material types are discribed here. TODO.</p></li>
+<li><p><strong>density</strong>: Density of the material.</p></li>
+<li><p><strong>data</strong>: Material property data</p></li>
+<li><p><strong>data_deviatoric</strong>:</p></li>
+<li><p><strong>data_deviatoric</strong>:</p></li>
+</ul>
+</section>
+<section id="element">
+<h2>Element<a class="headerlink" href="#element" title="Link to this heading"></a></h2>
+<p>Specifies the element type along with the relevant element data, if any.</p>
+<ul class="simple">
+<li><p><strong>id</strong>: Identification number to keep track of list of elements.</p></li>
+<li><p><strong>type</strong>: Element type name. Available element types are discribed here. TODO.</p></li>
+</ul>
+</section>
+<section id="body-force">
+<h2>Body Force<a class="headerlink" href="#body-force" title="Link to this heading"></a></h2>
+<p>Specifies the body force.</p>
+<ul class="simple">
+<li><p><strong>value</strong>: Value of the body force as a vector given as three values.</p></li>
+<li><p><strong>TimeFunction</strong>: Time function id in case the body force is to be applied as a function of time. <em>Optional field</em>. Applied as the constant field if the <cite>TimeFunction</cite> is not specified.</p></li>
+</ul>
+</section>
+<section id="boundary-conditions">
+<h2>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading"></a></h2>
+<p>Specifies the Dirichlet boundary conditions on the boundary patches.</p>
+<p>The syntax is</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">patch</span><span class="o">-</span><span class="n">tag</span><span class="o">&gt;</span>
+<span class="p">{</span>
+    <span class="nb">type</span>          <span class="p">:</span> <span class="o">&lt;</span><span class="n">bc</span> <span class="nb">type</span><span class="o">&gt;</span>
+    <span class="n">dof</span>           <span class="p">:</span> <span class="o">&lt;</span><span class="n">DOF</span><span class="o">&gt;</span>
+    <span class="n">value</span>         <span class="p">:</span> <span class="o">&lt;</span><span class="n">value</span><span class="o">&gt;</span>
+    <span class="n">TimeFunction</span>  <span class="p">:</span> <span class="o">&lt;</span><span class="n">value</span><span class="o">&gt;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Available fields are:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>type</strong>: Boundary condition type.</dt><dd><ul>
+<li><p><cite>fixed</cite>: to constrain the patch in all DOFs.</p></li>
+<li><p><cite>specified</cite>: to prescribe a value for a particular DOF.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>dof</strong>: Degree of freedom.</dt><dd><ul>
+<li><p>UX: X-displacement</p></li>
+<li><p>UY: Y-displacement</p></li>
+<li><p>UZ: Z-displacement</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>value</strong>: The value to be applied.</p></li>
+<li><p><strong>timefunction</strong>: To apply the boundary condition as a function of time. If not specified, boundary condition is applied as a constant value over time.</p></li>
+</ul>
+<p>The following block specifies a fixed constraint on the patch tagged as <cite>leftface</cite>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">leftface</span>
+<span class="p">{</span>
+    <span class="nb">type</span>          <span class="p">:</span> <span class="n">fixed</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The following block specifies a value of 0 (zero) for X-displacement (Dirichlet boundary condition) on the patch tagged as <cite>symX</cite>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">symX</span>
+<span class="p">{</span>
+    <span class="nb">type</span>          <span class="p">:</span> <span class="n">specified</span>
+    <span class="n">dof</span>           <span class="p">:</span> <span class="n">UX</span>
+    <span class="n">value</span>         <span class="p">:</span> <span class="mi">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The following block specifies a value of 2.0 for Z-displacement on the patch tagged as <cite>topface</cite>, and it will be applied as a time-varying value as defined by the <cite>time function with id 2</cite>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">topface</span>
+<span class="p">{</span>
+    <span class="nb">type</span>          <span class="p">:</span> <span class="n">specified</span>
+    <span class="n">dof</span>           <span class="p">:</span> <span class="n">UZ</span>
+    <span class="n">value</span>         <span class="p">:</span> <span class="mf">2.0</span>
+    <span class="n">timefunction</span>  <span class="p">:</span> <span class="mi">2</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="tractions">
+<h2>Tractions<a class="headerlink" href="#tractions" title="Link to this heading"></a></h2>
+<p>Specifies traction boundary conditions on boundary patches. Required fields are
+* <strong>type</strong>:
+* <strong>value</strong>: A vector of specified traction values in the normal and trangential directions. The first value is in the normal direction, and the other values are in the trangential directions.
+* <strong>timefunction</strong>: The function id if the traction value is to be applied as a time-varying function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pressure</span>
+<span class="p">{</span>
+    <span class="n">value</span>         <span class="p">:</span> <span class="mf">700.0</span>  <span class="mf">0.0</span>  <span class="mf">0.0</span>
+    <span class="n">timefunction</span>  <span class="p">:</span> <span class="mi">1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="time-functions">
+<h2>Time functions<a class="headerlink" href="#time-functions" title="Link to this heading"></a></h2>
+<p>This block contains the time functions for time-dependent boundary/loading or conditions or other time-dependent parameters. The time functions are specified as shown below by providing the coefficients p1, p2, p3, p4, p5, p6, p7 and p8.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>! f(t) = p1 + p2*t + p3*sin(p4*t+p5) + p6*cos(p7*t+p8)
+!
+! id   t0      t1     p1   p2     p3    p4    p5    p6    p7    p8
+   1   0.0   1000.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+   2   0.0      1.0  0.0  1.0    0.0   0.0   0.0   0.0   0.0   0.0
+   2   1.0   1000.0  1.0  0.0    0.0   0.0   0.0   0.0   0.0   0.0
+
+   3   0.0   1000.0  0.0  0.0    2.0   6.2832   3.1416   0.0   0.0   0.0
+</pre></div>
+</div>
+<p>The above block specifies three different time functions as given by the ids 1, 2 and 3.
+* Time function 1: Constant value until 1000 time units.
+* Time function 2: Linear variation with slope 1 until 1 time unit and then constant after 1 second until 1000 time units.
+* Time function 3: Sinusoidal variation with an amplitude of two frequency f=1.0 Hz and phase angle of 3.1416 radians (180 degrees).</p>
+</section>
+<section id="solver">
+<h2>Solver<a class="headerlink" href="#solver" title="Link to this heading"></a></h2>
+<p>This block specifies what type of solver, nonlinear scheme, time step size, output frequency, max iterations, end time etc. Available fields are</p>
+<ul class="simple">
+<li><p><strong>solvertype</strong>: newton (Newton-Raphson) or arclength (Arc-Length) method.</p></li>
+<li><dl class="simple">
+<dt><strong>timescheme</strong>: time integration scheme to be used.</dt><dd><ul>
+<li><p>STEADY: Quasi-static problem. No time integration.</p></li>
+<li><p>BDF1: Backward-Euler scheme. This is a first-order scheme.</p></li>
+<li><p>BDF2: Backward difference formula, which is of second-order accuracy.</p></li>
+<li><p>CHalpha: CH-alpha scheme for second-order equations for dynamics. Second-order accurate and unconditionally stable.</p></li>
+<li><p>KDPalpha: KDP-alpha scheme. Second-order accurate and unconditionally stable.</p></li>
+<li><p>Newmark: Newmark-beta scheme. Second-order accurate and unconditionally stable.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><strong>spectralRadius</strong>: Spectral radius value for CHalpha and KDPalpha schemes. Range is between 0 and 1, inclusve. A value of zero annihialites all high-frequency modes. A value of one add no numerical damping, similar to the Newmark-beta method.</p></li>
+<li><p><strong>finalTime</strong>: The final time until which the simulation should be run.</p></li>
+<li><p><strong>timeStep</strong>: The time step size.</p></li>
+<li><p><strong>maximumSteps</strong>: Maximum number of time/load steps.</p></li>
+<li><p><strong>maximumIterations</strong>: Maximum number of iterations per time/load step.</p></li>
+<li><p><strong>tolerance</strong>: Convergence tolerance for iterations.</p></li>
+<li><p><strong>debug</strong>: A flag used to print extra output for debugging purposes. 0 for deactivating debugging info and 1 for activating debugging info.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../formulation/formulation.html" class="btn btn-neutral float-left" title="Formulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../options/elements.html" class="btn btn-neutral float-right" title="Element types" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Chennakesava Kadapa.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
